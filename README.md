@@ -1,2 +1,2 @@
 # java-cli
-The command line client for the SWAMP
+The command line client for the SWAMP.
