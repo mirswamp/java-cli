@@ -1,0 +1,96 @@
+<!--
+     This is a sample configuration file for the SWAMP. There are three complete servers configured here.
+     Each server configuration is given a name ("e.g. "dev", "integration")
+     and you must specify that. (If you had a configuration file with exactly one configuration in it, that would
+     be loaded automatically.)
+-->
+    <!--
+          The next entry allows you to specify an alias. This lets you simply invoke, say, the configurations
+          named "default" and you may set the alias to be whatever other configuration in this file is convenient.
+          In this way, you can test
+          several configurations with minimal changes to your tests rather than having to change how they are invoked.
+
+     -->
+<config>
+    <swamp name="default" alias="dev"/>
+
+    <swamp name="dev">
+        <!--
+             The addresses are to the RWS and CSA servers respectively. Both of these are needed for the
+             current release of the SWAMP (although they do not have to be distinct in practice.)
+
+         -->
+        <addresses rws="https://swa-rws-dt-01.cosalab.org"
+                   csa="https://swa-csaweb-dt-02.cosalab.org"/>
+        <!--
+             Username and password fields should be included inside of CDATA sections, since you do not need to worry
+             about having complex ones mis-interpreted by the XML parser.
+        -->
+        <username>![CDATA[YOUR NAME]]</username>
+        <password><![CDATA[YOUR PASSWORD]]></password>
+        <!-- Headers are required only by some servers and must be set on a case by case basis. -->
+        <headers referer="https://dt.cosalab.org/"
+                 origin="https://dt.cosalab.org"
+                 host="swa-rws-dt-01.cosalab.org"/>
+    </swamp>
+
+    <swamp name="integration">
+        <addresses rws="https://swa-rws-it-01.cosalab.org/"
+                   csa="https://swa-csaweb-it-01.cosalab.org/"/>
+        <username><![CDATA[YOUR NAME]]></username>
+        <password><![CDATA[YOUR PASSWORD]]></password>
+        <headers referer="https://it.cosalab.org/"
+                 origin="https://it.cosalab.org/"
+                 host="swa-rws-it-01.cosalab.org"/>
+    </swamp>
+
+    <swamp name="production">
+        <addresses rws="https://swa-rws-pd-01.mir-swamp.org/"
+                   csa="https://swa-csaweb-pd-01.mir-swamp.org"/>
+        <username>![CDATA[YOUR NAME]]</username>
+        <password><![CDATA[YOUR PASSWORD]]></password>
+        <headers referer="https://www.mir-swamp.org/"
+                 origin="https://www.mir-swamp.org"
+                 host="swa-rws-pd-01.mir-swamp.or"/>
+    </swamp>
+    <!--
+         The next block is a sample test configuration. This is used only in unit tests, but is part
+         of this configuration file format.
+    -->
+    <tests name="basic">
+
+        <test name="badpasswords" enabled="false">
+            <data type="list" name="test-list">
+                <![CDATA[hello
+             ohai&lt;html&gt;dere
+             DROP TABLES;
+             aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+             aAaAaAaAaaAaAaAaAaaAaAaAaAaaAaAaAaAaaAaAaAaAaaAaAaAaAa
+             aQ1!
+             <html>foo</html>
+             sql'foo
+             Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!
+             <script>alert(“XSS”)</script>
+             icnhz<=chez]]>
+            </data>
+        </test>
+        <test name="upload-java-bytecode.tar">
+            <data name="filename">/home/ncsa/dev/swamp-git/config/bytecode-test.tar</data>
+        </test>
+        <test name="upload-java-source.Z">
+            <data name="filename">/home/ncsa/dev/swamp-git/config/ncsa-security-all-1.1.2.tar.Z</data>
+        </test>
+
+        <test name="upload-hello-world.c">
+            <data name="filename">/home/ncsa/dev/swamp-git/config/helloworld.c</data>
+        </test>
+        <test name="platform-names" enabled="false">
+            <data name="default">Fedora Linux</data>
+            <data type="list" name="names">
+                <![CDATA[Fedora Linux
+                 Red Hat Enterprise Linux 64-bit
+                 Scientific Linux 64-bit]]>
+            </data>
+        </test>
+    </tests>
+</config>
