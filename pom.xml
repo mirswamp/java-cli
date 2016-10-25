@@ -29,7 +29,7 @@
         <dependency>
             <groupId>edu.uiuc.ncsa.security</groupId>
             <artifactId>ncsa-security-core</artifactId>
-            <version>3.4-SNAPSHOT</version>
+            <version>3.3.0.2</version>
         </dependency>
         <dependency>
             <groupId>commons-cli</groupId>
