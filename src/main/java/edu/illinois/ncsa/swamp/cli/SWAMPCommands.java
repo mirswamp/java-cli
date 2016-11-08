@@ -106,7 +106,7 @@ public class SWAMPCommands extends ConfigurableCommandsImpl {
     }
 
     @Override
-    public boolean use(InputLine inputLine) throws Exception{
+    public boolean use(InputLine inputLine) throws Exception {
         CommonCommands commands = null;
         if (inputLine.hasArg(PROJECTS)) {
             commands = getProjectCommands();
@@ -130,17 +130,25 @@ public class SWAMPCommands extends ConfigurableCommandsImpl {
     }
 
     public CommonCommands getProjectCommands() throws Exception {
-        ProjectCommands projectCommands = new ProjectCommands(getMyLogger(), ((SWAMPServiceEnvironment)getEnvironment()).getProjectStore());
+        ProjectCommands projectCommands = new ProjectCommands(getMyLogger(), ((SWAMPServiceEnvironment) getEnvironment()).getProjectStore());
         return projectCommands;
     }
-    public CommonCommands getPackageCommands() throws Exception{
-        PackageCommands packageCommands = new PackageCommands(getMyLogger(), ((SWAMPServiceEnvironment)getEnvironment()).getPackageStore() );
+
+    public CommonCommands getPackageCommands() throws Exception {
+        PackageCommands packageCommands = new PackageCommands(getMyLogger(), ((SWAMPServiceEnvironment) getEnvironment()).getPackageStore());
         return packageCommands;
     }
 
     @Override
     public void useHelp() {
-
+        say("This is a prototype command line interface to the SWAMP. You must specify which ");
+        say("instance you wish to contact in your configuration file. Currently there are two basic commands implemented.");
+        say("projects: list your projects and do basic editing on them");
+        say("packages: ditto");
+        say("You access these by issuing something like");
+        say("use packages");
+        say("\nNote that you need to correctly specify the server addresses. If this fails you will not get the corresponding");
+        say("prompt for that component.");
     }
 }
 
