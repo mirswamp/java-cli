@@ -48,6 +48,45 @@
                 </configuration>
                 <version>2.3.2</version>
             </plugin>
+  <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>2.4.3</version>
+        <configuration>
+		  <filters>
+            <filter>
+              <artifact>commons-collections:commons-collections</artifact>
+              <excludes>
+				<exclude>org/apache/commons/collections/FastHashMap$EntrySet</exclude>
+				<exclude>org/apache/commons/collections/FastHashMap$KeySet</exclude>
+				<exclude>org/apache/commons/collections/FastHashMap$CollectionView$CollectionViewIterator</exclude>
+				<exclude>org/apache/commons/collections/ArrayStack</exclude>
+				<exclude>org/apache/commons/collections/FastHashMap$Values</exclude>
+				<exclude>org/apache/commons/collections/FastHashMap$CollectionView</exclude>
+				<exclude>org/apache/commons/collections/FastHashMap$1</exclude>
+				<exclude>org/apache/commons/collections/Buffer</exclude>
+				<exclude>org/apache/commons/collections/FastHashMap</exclude>
+				<exclude>org/apache/commons/collections/BufferUnderflowException</exclude>
+              </excludes>
+            </filter>
+          </filters>
+          <!-- put your configurations here -->
+		  <transformers>
+            <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+              <mainClass>edu.wisc.cs.swamp.Cli</mainClass>
+            </transformer>
+          </transformers>
+		  
+        </configuration>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
         </plugins>
     </build>
     <profiles>
@@ -83,22 +122,7 @@
                             </execution>
                         </executions>
                     </plugin>
-                    <!--<plugin>
-                        <groupId>org.dstovall</groupId>
-                        <artifactId>onejar-maven-plugin</artifactId>
-                        <version>1.4.5</version>
-                        <executions>
-                            <execution>
-                                <configuration>
-                                    <mainClass>edu.wisc.cs.swamp.Cli</mainClass>
-                                    <filename>swamp-cli.jar</filename>
-                                </configuration>
-                                <goals>
-                                    <goal>one-jar</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>-->
+
                 </plugins>
             </build>
         </profile>
@@ -130,22 +154,44 @@
                             </execution>
                         </executions>
                     </plugin>
-                    <!--   <plugin>
-                           <groupId>org.dstovall</groupId>
-                           <artifactId>onejar-maven-plugin</artifactId>
-                           <version>1.4.5</version>
-                           <executions>
-                               <execution>
-                                   <configuration>
-                                       <mainClass>edu.illinois.ncsa.swamp.cli.SWAMPCommands</mainClass>
-                                       <filename>swamp-client.jar</filename>
-                                   </configuration>
-                                   <goals>
-                                       <goal>one-jar</goal>
-                                   </goals>
-                               </execution>
-                           </executions>
-                       </plugin>-->
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>client2</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-jar-plugin</artifactId>
+                        <configuration>
+                            <archive>
+                                <manifest>
+                                    <addClasspath>true</addClasspath>
+                                    <classpathPrefix>lib/</classpathPrefix>
+                                    <mainClass>edu.illinois.ncsa.swamp.cli.SWAMPCommands</mainClass>
+                                </manifest>
+                            </archive>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-dependency-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>copy</id>
+                                <phase>install</phase>
+                                <goals>
+                                    <goal>copy-dependencies</goal>
+                                </goals>
+                                <configuration>
+                                    <outputDirectory>
+                                      ${project.build.directory}/lib
+                                    </outputDirectory>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
                 </plugins>
             </build>
         </profile>
