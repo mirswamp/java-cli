@@ -1,30 +1,18 @@
 package org.continuousassurance.swamp.cli;
 
+import edu.uiuc.ncsa.security.core.exceptions.GeneralException;
+import org.continuousassurance.swamp.api.Project;
+import org.continuousassurance.swamp.api.Tool;
+import org.continuousassurance.swamp.session.HTTPException;
+import org.apache.commons.cli.*;
+import org.apache.log4j.varia.NullAppender;
+import org.continuousassurance.swamp.cli.exceptions.*;
+
 import java.io.FileInputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Properties;
-
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.DefaultParser;
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.Option;
-import org.apache.commons.cli.OptionGroup;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
-import org.apache.log4j.varia.NullAppender;
-
-import edu.uiuc.ncsa.security.core.exceptions.GeneralException;
-import edu.uiuc.ncsa.swamp.api.Project;
-import edu.uiuc.ncsa.swamp.api.Tool;
-import edu.uiuc.ncsa.swamp.session.HTTPException;
-import org.continuousassurance.swamp.cli.exceptions.CommandLineOptionException;
-import org.continuousassurance.swamp.cli.exceptions.IncompatibleAssessmentTupleException;
-import org.continuousassurance.swamp.cli.exceptions.InvalidIdentifierException;
-import org.continuousassurance.swamp.cli.exceptions.SessionExpiredException;
-import org.continuousassurance.swamp.cli.exceptions.SwampApiWrapperException;
-import org.continuousassurance.swamp.cli.exceptions.SwampApiWrapperExitCodes;
 
 public class Cli {
 

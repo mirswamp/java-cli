@@ -1,7 +1,7 @@
 package org.continuousassurance.swamp;
 
-import org.continuousassurance.ncsa.swamp.cli.SwampApiWrapper;
-import org.continuousassurance.ncsa.swamp.cli.SwampApiWrapper.HostType;
+import org.continuousassurance.swamp.cli.SwampApiWrapper;
+import org.continuousassurance.swamp.cli.SwampApiWrapper.HostType;
 
 public class TestSwampApiWrapperPro {
 

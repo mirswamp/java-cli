@@ -9,8 +9,8 @@ import edu.uiuc.ncsa.security.util.cli.CLIDriver;
 import edu.uiuc.ncsa.security.util.cli.CommonCommands;
 import edu.uiuc.ncsa.security.util.cli.ConfigurableCommandsImpl;
 import edu.uiuc.ncsa.security.util.cli.InputLine;
-import edu.uiuc.ncsa.swamp.session.util.SWAMPConfigurationLoader;
-import edu.uiuc.ncsa.swamp.session.util.SWAMPServiceEnvironment;
+import org.continuousassurance.swamp.session.util.SWAMPConfigurationLoader;
+import org.continuousassurance.swamp.session.util.SWAMPServiceEnvironment;
 import org.apache.commons.lang.StringUtils;
 
 /**

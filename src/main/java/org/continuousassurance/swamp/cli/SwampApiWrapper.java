@@ -1,12 +1,12 @@
 package org.continuousassurance.swamp.cli;
 
 import edu.uiuc.ncsa.security.util.ssl.SSLConfiguration;
-import edu.uiuc.ncsa.swamp.api.*;
-import edu.uiuc.ncsa.swamp.session.Session;
-import edu.uiuc.ncsa.swamp.session.handlers.HandlerFactory;
-import edu.uiuc.ncsa.swamp.session.handlers.PackageHandler;
-import edu.uiuc.ncsa.swamp.session.util.ConversionMapImpl;
-import edu.uiuc.ncsa.swamp.util.HandlerFactoryUtil;
+import org.continuousassurance.swamp.api.*;
+import org.continuousassurance.swamp.session.Session;
+import org.continuousassurance.swamp.session.handlers.HandlerFactory;
+import org.continuousassurance.swamp.session.handlers.PackageHandler;
+import org.continuousassurance.swamp.session.util.ConversionMapImpl;
+import org.continuousassurance.swamp.util.HandlerFactoryUtil;
 import net.sf.json.JSONException;
 import org.apache.http.client.CookieStore;
 import org.continuousassurance.swamp.cli.exceptions.*;

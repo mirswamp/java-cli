@@ -5,7 +5,7 @@ import edu.uiuc.ncsa.security.core.Store;
 import edu.uiuc.ncsa.security.core.util.Iso8601;
 import edu.uiuc.ncsa.security.core.util.MyLoggingFacade;
 import edu.uiuc.ncsa.security.util.cli.StoreCommands;
-import edu.uiuc.ncsa.swamp.api.Project;
+import org.continuousassurance.swamp.api.Project;
 
 /**
  * <p>Created by Jeff Gaynor<br>

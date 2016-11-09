@@ -9,8 +9,8 @@ from java.lang import NullPointerException
 from edu.wisc.cs.swamp import SwampApiWrapper
 from edu.wisc.cs.swamp.exceptions import InvalidIdentifierException
 from edu.wisc.cs.swamp.exceptions import IncompatibleAssessmentTupleException
-from edu.uiuc.ncsa.swamp.session import HTTPException
-from edu.uiuc.ncsa.security.core.exceptions import GeneralException
+from org.continuousassurance.swamp.session import HTTPException
+from org.continuousassurance.security.core.exceptions import GeneralException
 
 
 class TestSwampApiWrapper(unittest.TestCase):

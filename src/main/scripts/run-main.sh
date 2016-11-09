@@ -15,5 +15,5 @@ function main() {
 
 }
 
-main edu.wisc.cs.swamp.Cli $@
+main edu.continuousassurance.ncsa.swamp.cli.Cli $@
 #echo "exit-code" $?
