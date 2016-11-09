@@ -1,7 +1,7 @@
-package edu.illinois.ncsa.swamp.client;
+package org.continuousassurance.swamp.client;
 
-import edu.illinois.ncsa.swamp.client.commands.PackageCommands;
-import edu.illinois.ncsa.swamp.client.commands.ProjectCommands;
+import org.continuousassurance.swamp.client.commands.PackageCommands;
+import org.continuousassurance.swamp.client.commands.ProjectCommands;
 import edu.uiuc.ncsa.security.core.util.AbstractEnvironment;
 import edu.uiuc.ncsa.security.core.util.ConfigurationLoader;
 import edu.uiuc.ncsa.security.core.util.MyLoggingFacade;

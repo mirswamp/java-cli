@@ -1,6 +1,5 @@
-package edu.illinois.ncsa.swamp.cli;
+package org.continuousassurance.swamp.cli;
 
-import edu.illinois.ncsa.swamp.cli.exceptions.*;
 import edu.uiuc.ncsa.security.util.ssl.SSLConfiguration;
 import edu.uiuc.ncsa.swamp.api.*;
 import edu.uiuc.ncsa.swamp.session.Session;
@@ -10,6 +9,7 @@ import edu.uiuc.ncsa.swamp.session.util.ConversionMapImpl;
 import edu.uiuc.ncsa.swamp.util.HandlerFactoryUtil;
 import net.sf.json.JSONException;
 import org.apache.http.client.CookieStore;
+import org.continuousassurance.swamp.cli.exceptions.*;
 
 import java.io.*;
 import java.util.*;

@@ -1,4 +1,4 @@
-package edu.illinois.ncsa.swamp.client;
+package org.continuousassurance.swamp.client;
 
 import edu.uiuc.ncsa.security.core.configuration.ConfigurationTags;
 

@@ -1,4 +1,4 @@
-package edu.illinois.ncsa.swamp.client.commands;
+package org.continuousassurance.swamp.client.commands;
 
 import edu.uiuc.ncsa.security.core.Identifiable;
 import edu.uiuc.ncsa.security.core.Store;

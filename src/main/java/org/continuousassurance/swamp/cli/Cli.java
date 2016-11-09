@@ -1,4 +1,4 @@
-package edu.illinois.ncsa.swamp.cli;
+package org.continuousassurance.swamp.cli;
 
 import java.io.FileInputStream;
 import java.util.ArrayList;
@@ -19,12 +19,12 @@ import edu.uiuc.ncsa.security.core.exceptions.GeneralException;
 import edu.uiuc.ncsa.swamp.api.Project;
 import edu.uiuc.ncsa.swamp.api.Tool;
 import edu.uiuc.ncsa.swamp.session.HTTPException;
-import edu.illinois.ncsa.swamp.cli.exceptions.CommandLineOptionException;
-import edu.illinois.ncsa.swamp.cli.exceptions.IncompatibleAssessmentTupleException;
-import edu.illinois.ncsa.swamp.cli.exceptions.InvalidIdentifierException;
-import edu.illinois.ncsa.swamp.cli.exceptions.SessionExpiredException;
-import edu.illinois.ncsa.swamp.cli.exceptions.SwampApiWrapperException;
-import edu.illinois.ncsa.swamp.cli.exceptions.SwampApiWrapperExitCodes;
+import org.continuousassurance.swamp.cli.exceptions.CommandLineOptionException;
+import org.continuousassurance.swamp.cli.exceptions.IncompatibleAssessmentTupleException;
+import org.continuousassurance.swamp.cli.exceptions.InvalidIdentifierException;
+import org.continuousassurance.swamp.cli.exceptions.SessionExpiredException;
+import org.continuousassurance.swamp.cli.exceptions.SwampApiWrapperException;
+import org.continuousassurance.swamp.cli.exceptions.SwampApiWrapperExitCodes;
 
 public class Cli {
 

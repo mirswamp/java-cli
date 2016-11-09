@@ -1,4 +1,4 @@
-package edu.illinois.ncsa.swamp.cli.exceptions;
+package org.continuousassurance.swamp.cli.exceptions;
 
 public class SessionRestoreException extends SwampApiWrapperException {
 	public SessionRestoreException(String msg){

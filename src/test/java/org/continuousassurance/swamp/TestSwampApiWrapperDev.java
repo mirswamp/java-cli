@@ -1,7 +1,7 @@
-package edu.wisc.cs.swamp;
+package org.continuousassurance.swamp;
 
-import edu.wisc.cs.swamp.SwampApiWrapper;
-import edu.wisc.cs.swamp.SwampApiWrapper.HostType;
+import org.continuousassurance.ncsa.swamp.cli.SwampApiWrapper;
+import org.continuousassurance.ncsa.swamp.cli.SwampApiWrapper.HostType;
 
 public class TestSwampApiWrapperDev {
 

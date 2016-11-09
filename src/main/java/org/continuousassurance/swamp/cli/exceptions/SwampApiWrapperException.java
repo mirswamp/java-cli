@@ -1,4 +1,4 @@
-package edu.illinois.ncsa.swamp.cli.exceptions;
+package org.continuousassurance.swamp.cli.exceptions;
 
 public abstract class SwampApiWrapperException  extends RuntimeException {
 	SwampApiWrapperExitCodes exit_code;
