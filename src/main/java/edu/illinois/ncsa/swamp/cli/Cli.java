@@ -1,4 +1,4 @@
-package edu.wisc.cs.swamp;
+package edu.illinois.ncsa.swamp.cli;
 
 import java.io.FileInputStream;
 import java.util.ArrayList;
@@ -9,7 +9,6 @@ import java.util.Properties;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.MissingOptionException;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionGroup;
 import org.apache.commons.cli.Options;
@@ -20,13 +19,12 @@ import edu.uiuc.ncsa.security.core.exceptions.GeneralException;
 import edu.uiuc.ncsa.swamp.api.Project;
 import edu.uiuc.ncsa.swamp.api.Tool;
 import edu.uiuc.ncsa.swamp.session.HTTPException;
-import edu.wisc.cs.swamp.SwampApiWrapper.HostType;
-import edu.wisc.cs.swamp.exceptions.CommandLineOptionException;
-import edu.wisc.cs.swamp.exceptions.IncompatibleAssessmentTupleException;
-import edu.wisc.cs.swamp.exceptions.InvalidIdentifierException;
-import edu.wisc.cs.swamp.exceptions.SessionExpiredException;
-import edu.wisc.cs.swamp.exceptions.SwampApiWrapperException;
-import edu.wisc.cs.swamp.exceptions.SwampApiWrapperExitCodes;
+import edu.illinois.ncsa.swamp.cli.exceptions.CommandLineOptionException;
+import edu.illinois.ncsa.swamp.cli.exceptions.IncompatibleAssessmentTupleException;
+import edu.illinois.ncsa.swamp.cli.exceptions.InvalidIdentifierException;
+import edu.illinois.ncsa.swamp.cli.exceptions.SessionExpiredException;
+import edu.illinois.ncsa.swamp.cli.exceptions.SwampApiWrapperException;
+import edu.illinois.ncsa.swamp.cli.exceptions.SwampApiWrapperExitCodes;
 
 public class Cli {
 
@@ -36,7 +34,7 @@ public class Cli {
         api_wrapper = new SwampApiWrapper();
     }
 
-    public Cli(HostType host_type, String host_name) throws Exception {
+    public Cli(SwampApiWrapper.HostType host_type, String host_name) throws Exception {
         api_wrapper = new SwampApiWrapper(host_type, host_name);
     }
 
@@ -74,21 +72,21 @@ public class Cli {
         return cred_map;
     }
 
-    protected HostType chooseSwampHostType(String option_val) {
-        HostType host_type = null;
+    protected SwampApiWrapper.HostType chooseSwampHostType(String option_val) {
+        SwampApiWrapper.HostType host_type = null;
 
         switch(option_val){
         case "DEVELOPMENT":
-            host_type = HostType.DEVELOPMENT;
+            host_type = SwampApiWrapper.HostType.DEVELOPMENT;
             break;
         case "PRODUCTION":
-            host_type = HostType.PRODUCTION;
+            host_type = SwampApiWrapper.HostType.PRODUCTION;
             break;
         case "INTEGRATION":
-            host_type = HostType.INTEGRATION;
+            host_type = SwampApiWrapper.HostType.INTEGRATION;
             break;
         default:
-            host_type = HostType.CUSTOM;
+            host_type = SwampApiWrapper.HostType.CUSTOM;
             break;
         }
         return host_type;
@@ -540,10 +538,10 @@ public class Cli {
     public int executeCommands(String command, HashMap<String, String> opt_map) throws SessionExpiredException, InvalidIdentifierException, IncompatibleAssessmentTupleException {
 
         if (command.equals("login")) {
-            HostType host_type = chooseSwampHostType(opt_map.get("swamp-host"));
+            SwampApiWrapper.HostType host_type = chooseSwampHostType(opt_map.get("swamp-host"));
             String host_name = null;
             
-            if (host_type ==  HostType.CUSTOM){
+            if (host_type ==  SwampApiWrapper.HostType.CUSTOM){
                 host_name = opt_map.get("swamp-host");
             }
             

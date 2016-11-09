@@ -1,4 +1,4 @@
-package edu.wisc.cs.swamp.exceptions;
+package edu.illinois.ncsa.swamp.cli.exceptions;
 
 public class IncompatibleAssessmentTupleException extends SwampApiWrapperException {
 	public IncompatibleAssessmentTupleException(String msg){

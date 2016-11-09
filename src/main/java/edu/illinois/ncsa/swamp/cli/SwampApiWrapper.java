@@ -1,49 +1,18 @@
-package edu.wisc.cs.swamp;
+package edu.illinois.ncsa.swamp.cli;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Properties;
-import java.util.HashMap;
-import java.util.Map;
-
-import org.apache.http.client.CookieStore;
-
+import edu.illinois.ncsa.swamp.cli.exceptions.*;
 import edu.uiuc.ncsa.security.util.ssl.SSLConfiguration;
-import edu.uiuc.ncsa.swamp.api.AssessmentRecord;
-import edu.uiuc.ncsa.swamp.api.AssessmentResults;
-import edu.uiuc.ncsa.swamp.api.AssessmentRun;
-import edu.uiuc.ncsa.swamp.api.PackageThing;
-import edu.uiuc.ncsa.swamp.api.PackageVersion;
-import edu.uiuc.ncsa.swamp.api.Platform;
-import edu.uiuc.ncsa.swamp.api.Project;
-import edu.uiuc.ncsa.swamp.api.Tool;
-import edu.uiuc.ncsa.swamp.api.ToolVersion;
-import edu.uiuc.ncsa.swamp.api.User;
+import edu.uiuc.ncsa.swamp.api.*;
 import edu.uiuc.ncsa.swamp.session.Session;
 import edu.uiuc.ncsa.swamp.session.handlers.HandlerFactory;
 import edu.uiuc.ncsa.swamp.session.handlers.PackageHandler;
 import edu.uiuc.ncsa.swamp.session.util.ConversionMapImpl;
 import edu.uiuc.ncsa.swamp.util.HandlerFactoryUtil;
-import edu.wisc.cs.swamp.exceptions.IncompatibleAssessmentTupleException;
-import edu.wisc.cs.swamp.exceptions.InvalidIdentifierException;
-import edu.wisc.cs.swamp.exceptions.SessionExpiredException;
-import edu.wisc.cs.swamp.exceptions.SessionRestoreException;
-import edu.wisc.cs.swamp.exceptions.SessionSaveException;
 import net.sf.json.JSONException;
+import org.apache.http.client.CookieStore;
+
+import java.io.*;
+import java.util.*;
 
 
 public class SwampApiWrapper {

@@ -1,4 +1,4 @@
-package edu.wisc.cs.swamp.exceptions;
+package edu.illinois.ncsa.swamp.cli.exceptions;
 
 public enum SwampApiWrapperExitCodes {
 	NO_ERRORS(0), 

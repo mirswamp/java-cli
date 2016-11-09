@@ -1,4 +1,4 @@
-package edu.illinois.ncsa.swamp.cli;
+package edu.illinois.ncsa.swamp.client;
 
 import edu.uiuc.ncsa.security.core.configuration.ConfigurationTags;
 
