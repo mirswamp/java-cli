@@ -1,7 +1,9 @@
 #! /bin/bash
 
-DIR_NAME=$(dirname $(dirname $0))
+DIR_NAME="$(dirname $(dirname $0))"
+JAR_FILE="$DIR_NAME/target/swamp-cli-jar-with-dependencies.jar"
 
-[[ ! -f "$DIR_NAME/target/swamp-api-client-1.0-SNAPSHOT.jar" ]] && echo "File not found: $DIR_NAME/target/swamp-api-client-1.0-SNAPSHOT.jar" && exit 1
+[[ ! -f  "$JAR_FILE" ]] && echo "File not found: $JAR_FILE" && exit 1
 
-java -jar "$DIR_NAME/target/swamp-api-client-1.0-SNAPSHOT.jar" "$@"
+java -jar "$JAR_FILE" "$@"
+
