@@ -6,11 +6,11 @@ from org.apache.log4j import BasicConfigurator
 from org.apache.log4j.varia import NullAppender
 from java.lang import NullPointerException
 
-from edu.wisc.cs.swamp import SwampApiWrapper
-from edu.wisc.cs.swamp.exceptions import InvalidIdentifierException
-from edu.wisc.cs.swamp.exceptions import IncompatibleAssessmentTupleException
+from org.continuousassurance.swamp.cli import SwampApiWrapper
+from org.continuousassurance.swamp.cli.exceptions import InvalidIdentifierException
+from org.continuousassurance.swamp.cli.exceptions import IncompatibleAssessmentTupleException
 from org.continuousassurance.swamp.session import HTTPException
-from org.continuousassurance.security.core.exceptions import GeneralException
+from edu.uiuc.ncsa.security.core.exceptions import GeneralException
 
 
 class TestSwampApiWrapper(unittest.TestCase):
@@ -33,7 +33,7 @@ class TestSwampApiWrapper(unittest.TestCase):
         TestSwampApiWrapper.PROJECT = user_conf.get('PROJECT',
                                                     '5bf4d93c-2945-42d0-9311-6507518219f3')
         TestSwampApiWrapper.HOST = SwampApiWrapper.HostType.DEVELOPMENT
-        # TestSwampApiWrapper.HOST = SwampApiWrapper.HostType.PRODUCTION
+        #TestSwampApiWrapper.HOST = SwampApiWrapper.HostType.PRODUCTION
 
 
 class TestLogin(TestSwampApiWrapper):

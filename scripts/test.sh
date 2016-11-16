@@ -1,5 +1,14 @@
+#! /bin/bash
 
-JYTHON_PATH="$HOME/Tools/Jython/jython-standalone-2.7.0.jar"
-CLASSPATH="$JYTHON_PATH:$PWD/target/swamp-api-client-1.0-SNAPSHOT.jar"
+DIR_NAME="$(dirname $(dirname $0))"
+CLI_JAR="$DIR_NAME/target/swamp-cli-jar-with-dependencies.jar"
+
+[[ ! -f  "$CLI_JAR" ]] && echo "File not found: $CLI_JAR" && exit 1
+
+JYTHON_JAR="$HOME/jython/jython-standalone-2.7.0.jar"
+
+[[ ! -f  "$JYTHON_JAR" ]] && echo "File not found: $JYTHON_JAR" && exit 1
+
+CLASSPATH="$JYTHON_JAR:$CLI_JAR"
 
 java -cp "$CLASSPATH" org.python.util.jython "$PWD/scripts/func_tests.py" "$@"
