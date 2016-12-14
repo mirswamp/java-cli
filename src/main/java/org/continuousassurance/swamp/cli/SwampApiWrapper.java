@@ -1,3 +1,21 @@
+/*
+*  java-cli
+*
+*  Copyright 2016 Vamshi Basupalli <vamshi@cs.wisc.edu>, Malcolm Reid <mreid3@wisc.edu>, Jared Sweetland <jsweetland@wisc.edu>
+*
+*  Licensed under the Apache License, Version 2.0 (the "License");
+*  you may not use this file except in compliance with the License.
+*  You may obtain a copy of the License at
+*
+*      http://www.apache.org/licenses/LICENSE-2.0
+*
+*  Unless required by applicable law or agreed to in writing, software
+*  distributed under the License is distributed on an "AS IS" BASIS,
+*  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express implied.
+*  See the License for the specific language governing permissions and
+*  limitations under the License.
+*/
+
 package org.continuousassurance.swamp.cli;
 
 import edu.uiuc.ncsa.security.util.ssl.SSLConfiguration;
@@ -104,7 +122,7 @@ public class SwampApiWrapper {
         this.hostHeader = hostHeader;
     }
 
-    public SwampApiWrapper(HostType host_type, String host_name) throws Exception {
+    public SwampApiWrapper(HostType host_type, String host_name) {
         setHost(host_type, host_name);
         cachedPkgProjectID = "";
         cachedPkgVersionProjectID = "";
@@ -115,7 +133,7 @@ public class SwampApiWrapper {
         this(HostType.DEVELOPMENT, null);
     }
 
-    public void setHost(HostType host_type, String host_name) {
+    public final void setHost(HostType host_type, String host_name) {
         switch(host_type){
         case PRODUCTION:
             //setRwsAddress(HandlerFactoryUtil.PD_RWS_ADDRESS);
@@ -231,7 +249,7 @@ public class SwampApiWrapper {
     }
 
     public String login(String user_name, String password) {
-        //System.setProperty("https.protocols", "TLSv1,TLSv1.1,TLSv1.2");
+        
         SSLConfiguration ssl_config = new SSLConfiguration();
         ssl_config.setTlsVersion("TLSv1.2");
         
@@ -296,7 +314,7 @@ public class SwampApiWrapper {
             serialize(handlerFactory.getRWSSession().getClient().getContext().getCookieStore(),
                     SWAMP_DIR_PATH + "rws_session_cookies.ser");
         }catch(IOException e){
-            throw new SessionSaveException(e.getMessage());
+            throw new SessionSaveException(e);
         }
     }
 
@@ -357,9 +375,9 @@ public class SwampApiWrapper {
             handlerFactory.getRWSSession().getClient().getContext().setCookieStore(rws_cookie_store);
             HandlerFactoryUtil.setHandlerFactory(handlerFactory);
         }catch (IOException e){
-            throw new SessionRestoreException(e.getMessage());
+            throw new SessionRestoreException(e);
         }catch (ClassNotFoundException e){
-            throw new SessionRestoreException(e.getMessage());
+            throw new SessionRestoreException(e);
         }
 
         return (handlerFactory.getUserHandler().getCurrentUser() != null);
@@ -436,15 +454,6 @@ public class SwampApiWrapper {
             packageTypeMap = new HashMap<String, Integer>();
 
             List<String> all_types;
-
-//            if(handlerFactory.getCSASession().getHost().equals(HandlerFactoryUtil.PD_CSA_ADDRESS)){
-//                all_types = Arrays.asList("C/C++", "Java 7 Source Code", "Java 7 Bytecode",
-//                        "Python2", "Python3", "Android Java Source Code", "Ruby",
-//                        "Ruby Sinatra", "Ruby on Rails", "Ruby Padrino",
-//                        "Android .apk","Java 8 Source Code","Java 8 Bytecode");
-//            }else{
-//                all_types = handlerFactory.getPackageHandler().getTypes();
-//            }
 
             try {
                 all_types = handlerFactory.getPackageHandler().getTypes();
@@ -805,18 +814,6 @@ public class SwampApiWrapper {
 
         String default_platform_uuid;
 
-//        if(handlerFactory.getCSASession().getHost().equals(HandlerFactoryUtil.PD_CSA_ADDRESS)){
-//            if (pkg_type.startsWith("Android")) {
-//                // Android
-//                default_platform_uuid = "48f9a9b0-976f-11e4-829b-001a4a81450b";
-//            }else {
-//                // Red Hat Enterprise Linux 64-bit
-//                default_platform_uuid = "fc55810b-09d7-11e3-a239-001a4a81450b";
-//            }
-//        }else{
-//            default_platform_uuid = handlerFactory.getPackageHandler().getDefaultPlatform(pkg_type);
-//        }
-      
         try {
             default_platform_uuid = handlerFactory.getPackageHandler().getDefaultPlatform(pkg_type);
         }catch (JSONException e) {
