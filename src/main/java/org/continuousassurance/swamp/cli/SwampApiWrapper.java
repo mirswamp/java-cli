@@ -24,6 +24,7 @@ import org.continuousassurance.swamp.session.Session;
 import org.continuousassurance.swamp.session.handlers.HandlerFactory;
 import org.continuousassurance.swamp.session.handlers.PackageHandler;
 import org.continuousassurance.swamp.session.util.ConversionMapImpl;
+import org.continuousassurance.swamp.session.util.SWAMPConfigurationLoader;
 import org.continuousassurance.swamp.util.HandlerFactoryUtil;
 import net.sf.json.JSONException;
 import org.apache.http.client.CookieStore;
@@ -130,10 +131,16 @@ public class SwampApiWrapper {
     }
 
     public SwampApiWrapper() throws Exception {
-        this(HostType.DEVELOPMENT, null);
+        this(HostType.PRODUCTION, HandlerFactoryUtil.PD_ORIGIN_HEADER);
     }
 
     public final void setHost(HostType host_type, String host_name) {
+    	
+    	String web_server = SWAMPConfigurationLoader.getWebServiceURL(host_name);
+    	System.out.println("SWAMP SERVER URL: " + host_name);
+    	System.out.println("WEB SERVER URL: " + web_server);
+    	System.out.println("WEB SERVER TYPE: " + host_type);
+    	
         switch(host_type){
         case PRODUCTION:
             //setRwsAddress(HandlerFactoryUtil.PD_RWS_ADDRESS);
@@ -152,7 +159,7 @@ public class SwampApiWrapper {
             setHostHeader(HandlerFactoryUtil.IT_HOST_HEADER);
             break;
         case CUSTOM:
-            setHostName(host_name);
+            setHostName(web_server);
             break;
         case DEVELOPMENT:
         default:
