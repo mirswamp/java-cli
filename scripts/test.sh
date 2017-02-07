@@ -5,7 +5,7 @@ CLI_JAR="$DIR_NAME/target/swamp-cli-jar-with-dependencies.jar"
 
 [[ ! -f  "$CLI_JAR" ]] && echo "File not found: $CLI_JAR" && exit 1
 
-JYTHON_JAR="$HOME/jython/jython-standalone-2.7.0.jar"
+JYTHON_JAR="$HOME/jython/jython/jython-standalone-2.7.0.jar"
 
 [[ ! -f  "$JYTHON_JAR" ]] && echo "File not found: $JYTHON_JAR" && exit 1
 

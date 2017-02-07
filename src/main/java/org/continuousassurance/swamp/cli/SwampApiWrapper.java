@@ -136,8 +136,8 @@ public class SwampApiWrapper {
     		web_server = host_name;
     	}
     	
-    	System.out.println("SWAMP FRONT-END SERVER URL: " + host_name);
-    	System.out.println("SWAMP WEB SERVER URL: " + web_server);
+    	//System.out.println("SWAMP FRONT-END SERVER URL: " + host_name);
+    	//System.out.println("SWAMP WEB SERVER URL: " + web_server);
     	
     	setHostName(web_server);
     }

@@ -1,13 +1,12 @@
 package org.continuousassurance.swamp;
 
 import org.continuousassurance.swamp.cli.SwampApiWrapper;
-import org.continuousassurance.swamp.cli.SwampApiWrapper.HostType;
 
 public class TestSwampApiWrapperPro {
 
 	public static void main(String[] args) {
 		try {
-			SwampApiWrapper test_api = new SwampApiWrapper(HostType.PRODUCTION, null);
+			SwampApiWrapper test_api = new SwampApiWrapper();
 			
 			test_api.login(args[0], args[1]);
 			test_api.printUserInfo();

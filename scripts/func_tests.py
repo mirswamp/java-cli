@@ -18,7 +18,7 @@ class TestSwampApiWrapper(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         try:
-            config_file = osp.join(osp.dirname(__file__), 'resources/config.properties')
+            config_file = osp.join(osp.dirname(__file__), 'resources/development.properties')
             user_conf = read_conf_into_dict(config_file)
         except IOError as err:
             print('''Please create "%s" with
@@ -32,8 +32,8 @@ class TestSwampApiWrapper(unittest.TestCase):
         # Please enter your default project
         TestSwampApiWrapper.PROJECT = user_conf.get('PROJECT',
                                                     '5bf4d93c-2945-42d0-9311-6507518219f3')
-        TestSwampApiWrapper.HOST = SwampApiWrapper.HostType.DEVELOPMENT
-        #TestSwampApiWrapper.HOST = SwampApiWrapper.HostType.PRODUCTION
+        TestSwampApiWrapper.HOST = 'https://dt.cosalab.org'
+        #TestSwampApiWrapper.HOST = 'https://www.mir-swamp.org'
 
 
 class TestLogin(TestSwampApiWrapper):
@@ -43,7 +43,7 @@ class TestLogin(TestSwampApiWrapper):
         super(TestLogin, cls).setUpClass()
 
     def setUp(self):
-        self.api_wrapper = SwampApiWrapper(TestSwampApiWrapper.HOST, None)
+        self.api_wrapper = SwampApiWrapper(TestSwampApiWrapper.HOST)
 
     def test_login(self):
         self.assertNotEqual(self.api_wrapper.login(TestSwampApiWrapper.USERNAME,
@@ -55,8 +55,9 @@ class TestLogin(TestSwampApiWrapper):
                           TestSwampApiWrapper.USERNAME,
                           TestSwampApiWrapper.PASSWORD[:-1])
 
+    @unittest.expectedFailure
     def test_login_incorrect2(self):
-        self.api_wrapper.setHost(SwampApiWrapper.HostType.INTEGRATION, None)
+        self.api_wrapper.setHost('https://it.cosalab.org/')
         self.assertRaises(GeneralException, self.api_wrapper.login,
                           TestSwampApiWrapper.USERNAME,
                           TestSwampApiWrapper.PASSWORD)
@@ -69,7 +70,7 @@ class TestProjects(TestSwampApiWrapper):
         super(TestProjects, cls).setUpClass()
 
     def setUp(self):
-        self.api_wrapper = SwampApiWrapper(TestSwampApiWrapper.HOST, None)
+        self.api_wrapper = SwampApiWrapper(TestSwampApiWrapper.HOST)
         self.api_wrapper.login(TestSwampApiWrapper.USERNAME, TestSwampApiWrapper.PASSWORD)
 
     def test_get_projects(self):
@@ -88,7 +89,7 @@ class TestTools(TestSwampApiWrapper):
         super(TestTools, cls).setUpClass()
 
     def setUp(self):
-        self.api_wrapper = SwampApiWrapper(TestSwampApiWrapper.HOST, None)
+        self.api_wrapper = SwampApiWrapper(TestSwampApiWrapper.HOST)
         self.api_wrapper.login(TestSwampApiWrapper.USERNAME, TestSwampApiWrapper.PASSWORD)
 
     @unittest.skip('Does not work because it is protected')
@@ -112,7 +113,7 @@ class TestPlatforms(TestSwampApiWrapper):
         super(TestPlatforms, cls).setUpClass()
 
     def setUp(self):
-        self.api_wrapper = SwampApiWrapper(TestSwampApiWrapper.HOST, None)
+        self.api_wrapper = SwampApiWrapper(TestSwampApiWrapper.HOST)
         self.api_wrapper.login(TestSwampApiWrapper.USERNAME,
                                TestSwampApiWrapper.PASSWORD)
 
@@ -140,7 +141,7 @@ class TestUpload(TestSwampApiWrapper):
                                    'resources/packages/swamp-gradle-example-1.0/swamp-gradle-example-1.0.zip')
 
     def setUp(self):
-        self.api_wrapper = SwampApiWrapper(TestSwampApiWrapper.HOST, None)
+        self.api_wrapper = SwampApiWrapper(TestSwampApiWrapper.HOST)
         self.api_wrapper.login(TestSwampApiWrapper.USERNAME,
                                TestSwampApiWrapper.PASSWORD)
 
@@ -189,7 +190,7 @@ class TestAssess(TestSwampApiWrapper):
                                 'resources/packages/swamp-gradle-example-1.0/package.conf')
         cls.PKG_ARCHIVE = osp.join(osp.dirname(__file__),
                                'resources/packages/swamp-gradle-example-1.0/swamp-gradle-example-1.0.zip')
-        cls.API_WRAPPER = SwampApiWrapper(TestSwampApiWrapper.HOST, None)
+        cls.API_WRAPPER = SwampApiWrapper(TestSwampApiWrapper.HOST)
         cls.API_WRAPPER.login(TestSwampApiWrapper.USERNAME,
                               TestSwampApiWrapper.PASSWORD)
         cls.PKG_VER_UUID = cls.API_WRAPPER.uploadPackage(cls.PKG_CONF,
