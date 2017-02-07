@@ -40,8 +40,8 @@ public class Cli {
         api_wrapper = new SwampApiWrapper();
     }
 
-    public Cli(SwampApiWrapper.HostType host_type, String host_name) throws Exception {
-        api_wrapper = new SwampApiWrapper(host_type, host_name);
+    public Cli(String host_name) throws Exception {
+        api_wrapper = new SwampApiWrapper(host_name);
     }
 
     public static final ArrayList<String> COMMANDS = new ArrayList<String>(Arrays.asList(
@@ -78,26 +78,6 @@ public class Cli {
         return cred_map;
     }
 
-    protected SwampApiWrapper.HostType chooseSwampHostType(String option_val) {
-        SwampApiWrapper.HostType host_type = null;
-
-        switch(option_val){
-        case "DEVELOPMENT":
-            host_type = SwampApiWrapper.HostType.DEVELOPMENT;
-            break;
-        case "PRODUCTION":
-            host_type = SwampApiWrapper.HostType.PRODUCTION;
-            break;
-        case "INTEGRATION":
-            host_type = SwampApiWrapper.HostType.INTEGRATION;
-            break;
-        default:
-            host_type = SwampApiWrapper.HostType.CUSTOM;
-            break;
-        }
-        return host_type;
-    }
-
     public HashMap<String, String> loginOptionsHandler(ArrayList<String> args) throws ParseException, CommandLineOptionException {
 
         Options options = new Options();
@@ -108,7 +88,7 @@ public class Cli {
         options.addOption(Option.builder("C").required(false).hasArg(false).longOpt("console")
                 .desc("Accepts username and password from the terminal").build());
         options.addOption(Option.builder("S").required(false).hasArg().longOpt("swamp-host").argName("SWAMP_HOST")
-                .desc("SWAMP host type: Must be one of [ DEVELOPMENT, PRODUCTION, INTEGRATION or Enter a Custom URL], default is PRODUCTION").build());
+                .desc("URL for SWAMP host: default is https://www.mir-swamp.org").build());
 
         String[] cmd_args = (String[]) args.toArray(new String[0]);
         CommandLine parsed_options = new DefaultParser().parse(options, cmd_args);
@@ -544,15 +524,11 @@ public class Cli {
     public int executeCommands(String command, HashMap<String, String> opt_map) throws SessionExpiredException, InvalidIdentifierException, IncompatibleAssessmentTupleException {
 
         if (command.equals("login")) {
-            SwampApiWrapper.HostType host_type = chooseSwampHostType(opt_map.get("swamp-host"));
-            String host_name = null;
+        	String host_name = opt_map.get("swamp-host");
             
-            if (host_type ==  SwampApiWrapper.HostType.CUSTOM){
-                host_name = opt_map.get("swamp-host");
-            }
-            
-            String user_uuid = api_wrapper.login(opt_map.get("username"), opt_map.get("password"),
-                    host_type, host_name);
+            String user_uuid = api_wrapper.login(opt_map.get("username"), 
+            		opt_map.get("password"),
+                    host_name);
             
             if (user_uuid != null){
                 System.out.println("Login successful");

@@ -58,20 +58,15 @@ public class SwampApiWrapper {
 
     HandlerFactory handlerFactory;
 
-    public enum HostType {
-        PRODUCTION,
-        INTEGRATION,
-        DEVELOPMENT,
-        CUSTOM
-    }
+//    public enum HostType {
+//        PRODUCTION,
+//        INTEGRATION,
+//        DEVELOPMENT,
+//        CUSTOM
+//    }
     
-    public static final Map<HostType, String> SWAMP_HOST_NAMES_MAP = 
-            Collections.unmodifiableMap(new HashMap<HostType, String>() {{ 
-                put(HostType.PRODUCTION, HandlerFactoryUtil.PD_CSA_ADDRESS);
-                put(HostType.INTEGRATION, HandlerFactoryUtil.IT_CSA_ADDRESS);
-                put(HostType.DEVELOPMENT, HandlerFactoryUtil.DT_CSA_ADDRESS);
-            }});    
-
+    public static final String SWAMP_HOST_NAME  = HandlerFactoryUtil.PD_HOST_HEADER;
+ 
     public Properties getProp(String filepath){
         Properties prop = new Properties();
         try {
@@ -123,55 +118,28 @@ public class SwampApiWrapper {
         this.hostHeader = hostHeader;
     }
 
-    public SwampApiWrapper(HostType host_type, String host_name) {
-        setHost(host_type, host_name);
+    public SwampApiWrapper(String host_name) {
+        setHost(host_name);
         cachedPkgProjectID = "";
         cachedPkgVersionProjectID = "";
         cachedToolProjectID = "";
     }
 
     public SwampApiWrapper() throws Exception {
-        this(HostType.PRODUCTION, HandlerFactoryUtil.PD_ORIGIN_HEADER);
+        this(HandlerFactoryUtil.PD_ORIGIN_HEADER);
     }
 
-    public final void setHost(HostType host_type, String host_name) {
+    public final void setHost(String host_name) {
     	
     	String web_server = SWAMPConfigurationLoader.getWebServiceURL(host_name);
-    	System.out.println("SWAMP SERVER URL: " + host_name);
-    	System.out.println("WEB SERVER URL: " + web_server);
-    	System.out.println("WEB SERVER TYPE: " + host_type);
+    	if (web_server == null) {
+    		web_server = host_name;
+    	}
     	
-        switch(host_type){
-        case PRODUCTION:
-            //setRwsAddress(HandlerFactoryUtil.PD_RWS_ADDRESS);
-            setRwsAddress(HandlerFactoryUtil.PD_CSA_ADDRESS);
-            setCsaAddress(HandlerFactoryUtil.PD_CSA_ADDRESS);
-            setOriginHeader(HandlerFactoryUtil.PD_ORIGIN_HEADER);
-            setRefereHeader(HandlerFactoryUtil.PD_REFERER_HEADER);
-            setHostHeader(HandlerFactoryUtil.PD_HOST_HEADER);
-            break;
-        case INTEGRATION:
-            //setRwsAddress(HandlerFactoryUtil.IT_RWS_ADDRESS);
-            setRwsAddress(HandlerFactoryUtil.IT_CSA_ADDRESS);
-            setCsaAddress(HandlerFactoryUtil.IT_CSA_ADDRESS);
-            setOriginHeader(HandlerFactoryUtil.IT_ORIGIN_HEADER);
-            setRefereHeader(HandlerFactoryUtil.IT_REFERER_HEADER);
-            setHostHeader(HandlerFactoryUtil.IT_HOST_HEADER);
-            break;
-        case CUSTOM:
-            setHostName(web_server);
-            break;
-        case DEVELOPMENT:
-        default:
-            //setRwsAddress(HandlerFactoryUtil.DT_RWS_ADDRESS);
-            setRwsAddress(HandlerFactoryUtil.DT_CSA_ADDRESS);
-            setCsaAddress(HandlerFactoryUtil.DT_CSA_ADDRESS);
-            setOriginHeader(HandlerFactoryUtil.DT_ORIGIN_HEADER);
-            setRefereHeader(HandlerFactoryUtil.DT_REFERER_HEADER);
-            setHostHeader(HandlerFactoryUtil.DT_HOST_HEADER);
-            break;
-            //throw new Exception("Server Type Not Found");
-        }
+    	System.out.println("SWAMP FRONT-END SERVER URL: " + host_name);
+    	System.out.println("SWAMP WEB SERVER URL: " + web_server);
+    	
+    	setHostName(web_server);
     }
     
     public void setHostName(String host_name) {
@@ -250,8 +218,8 @@ public class SwampApiWrapper {
         return getPackageTypes().get(pkg_type);
     }
 
-    public String login(String user_name, String password, HostType host_type, String host_name) {
-        setHost(host_type, host_name);
+    public String login(String user_name, String password, String host_name) {
+        setHost(host_name);
         return login(user_name, password);
     }
 
