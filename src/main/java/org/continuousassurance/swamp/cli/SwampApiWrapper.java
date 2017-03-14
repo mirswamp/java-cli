@@ -1,3 +1,21 @@
+/*
+*  java-cli
+*
+*  Copyright 2016 Vamshi Basupalli <vamshi@cs.wisc.edu>, Malcolm Reid <mreid3@wisc.edu>, Jared Sweetland <jsweetland@wisc.edu>
+*
+*  Licensed under the Apache License, Version 2.0 (the "License");
+*  you may not use this file except in compliance with the License.
+*  You may obtain a copy of the License at
+*
+*      http://www.apache.org/licenses/LICENSE-2.0
+*
+*  Unless required by applicable law or agreed to in writing, software
+*  distributed under the License is distributed on an "AS IS" BASIS,
+*  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express implied.
+*  See the License for the specific language governing permissions and
+*  limitations under the License.
+*/
+
 package org.continuousassurance.swamp.cli;
 
 import edu.uiuc.ncsa.security.util.ssl.SSLConfiguration;
@@ -6,6 +24,7 @@ import org.continuousassurance.swamp.session.Session;
 import org.continuousassurance.swamp.session.handlers.HandlerFactory;
 import org.continuousassurance.swamp.session.handlers.PackageHandler;
 import org.continuousassurance.swamp.session.util.ConversionMapImpl;
+import org.continuousassurance.swamp.session.util.SWAMPConfigurationLoader;
 import org.continuousassurance.swamp.util.HandlerFactoryUtil;
 import net.sf.json.JSONException;
 import org.apache.http.client.CookieStore;
@@ -39,20 +58,15 @@ public class SwampApiWrapper {
 
     HandlerFactory handlerFactory;
 
-    public enum HostType {
-        PRODUCTION,
-        INTEGRATION,
-        DEVELOPMENT,
-        CUSTOM
-    }
+//    public enum HostType {
+//        PRODUCTION,
+//        INTEGRATION,
+//        DEVELOPMENT,
+//        CUSTOM
+//    }
     
-    public static final Map<HostType, String> SWAMP_HOST_NAMES_MAP = 
-            Collections.unmodifiableMap(new HashMap<HostType, String>() {{ 
-                put(HostType.PRODUCTION, HandlerFactoryUtil.PD_CSA_ADDRESS);
-                put(HostType.INTEGRATION, HandlerFactoryUtil.IT_CSA_ADDRESS);
-                put(HostType.DEVELOPMENT, HandlerFactoryUtil.DT_CSA_ADDRESS);
-            }});    
-
+    public static final String SWAMP_HOST_NAME  = HandlerFactoryUtil.PD_HOST_HEADER;
+ 
     public Properties getProp(String filepath){
         Properties prop = new Properties();
         try {
@@ -104,49 +118,28 @@ public class SwampApiWrapper {
         this.hostHeader = hostHeader;
     }
 
-    public SwampApiWrapper(HostType host_type, String host_name) throws Exception {
-        setHost(host_type, host_name);
+    public SwampApiWrapper(String host_name) {
+        setHost(host_name);
         cachedPkgProjectID = "";
         cachedPkgVersionProjectID = "";
         cachedToolProjectID = "";
     }
 
     public SwampApiWrapper() throws Exception {
-        this(HostType.DEVELOPMENT, null);
+        this(HandlerFactoryUtil.PD_ORIGIN_HEADER);
     }
 
-    public void setHost(HostType host_type, String host_name) {
-        switch(host_type){
-        case PRODUCTION:
-            //setRwsAddress(HandlerFactoryUtil.PD_RWS_ADDRESS);
-            setRwsAddress(HandlerFactoryUtil.PD_CSA_ADDRESS);
-            setCsaAddress(HandlerFactoryUtil.PD_CSA_ADDRESS);
-            setOriginHeader(HandlerFactoryUtil.PD_ORIGIN_HEADER);
-            setRefereHeader(HandlerFactoryUtil.PD_REFERER_HEADER);
-            setHostHeader(HandlerFactoryUtil.PD_HOST_HEADER);
-            break;
-        case INTEGRATION:
-            //setRwsAddress(HandlerFactoryUtil.IT_RWS_ADDRESS);
-            setRwsAddress(HandlerFactoryUtil.IT_CSA_ADDRESS);
-            setCsaAddress(HandlerFactoryUtil.IT_CSA_ADDRESS);
-            setOriginHeader(HandlerFactoryUtil.IT_ORIGIN_HEADER);
-            setRefereHeader(HandlerFactoryUtil.IT_REFERER_HEADER);
-            setHostHeader(HandlerFactoryUtil.IT_HOST_HEADER);
-            break;
-        case CUSTOM:
-            setHostName(host_name);
-            break;
-        case DEVELOPMENT:
-        default:
-            //setRwsAddress(HandlerFactoryUtil.DT_RWS_ADDRESS);
-            setRwsAddress(HandlerFactoryUtil.DT_CSA_ADDRESS);
-            setCsaAddress(HandlerFactoryUtil.DT_CSA_ADDRESS);
-            setOriginHeader(HandlerFactoryUtil.DT_ORIGIN_HEADER);
-            setRefereHeader(HandlerFactoryUtil.DT_REFERER_HEADER);
-            setHostHeader(HandlerFactoryUtil.DT_HOST_HEADER);
-            break;
-            //throw new Exception("Server Type Not Found");
-        }
+    public final void setHost(String host_name) {
+    	
+    	String web_server = SWAMPConfigurationLoader.getWebServiceURL(host_name);
+    	if (web_server == null) {
+    		web_server = host_name;
+    	}
+    	
+    	//System.out.println("SWAMP FRONT-END SERVER URL: " + host_name);
+    	//System.out.println("SWAMP WEB SERVER URL: " + web_server);
+    	
+    	setHostName(web_server);
     }
     
     public void setHostName(String host_name) {
@@ -225,13 +218,13 @@ public class SwampApiWrapper {
         return getPackageTypes().get(pkg_type);
     }
 
-    public String login(String user_name, String password, HostType host_type, String host_name) {
-        setHost(host_type, host_name);
+    public String login(String user_name, String password, String host_name) {
+        setHost(host_name);
         return login(user_name, password);
     }
 
     public String login(String user_name, String password) {
-        //System.setProperty("https.protocols", "TLSv1,TLSv1.1,TLSv1.2");
+        
         SSLConfiguration ssl_config = new SSLConfiguration();
         ssl_config.setTlsVersion("TLSv1.2");
         
@@ -296,7 +289,7 @@ public class SwampApiWrapper {
             serialize(handlerFactory.getRWSSession().getClient().getContext().getCookieStore(),
                     SWAMP_DIR_PATH + "rws_session_cookies.ser");
         }catch(IOException e){
-            throw new SessionSaveException(e.getMessage());
+            throw new SessionSaveException(e);
         }
     }
 
@@ -357,9 +350,9 @@ public class SwampApiWrapper {
             handlerFactory.getRWSSession().getClient().getContext().setCookieStore(rws_cookie_store);
             HandlerFactoryUtil.setHandlerFactory(handlerFactory);
         }catch (IOException e){
-            throw new SessionRestoreException(e.getMessage());
+            throw new SessionRestoreException(e);
         }catch (ClassNotFoundException e){
-            throw new SessionRestoreException(e.getMessage());
+            throw new SessionRestoreException(e);
         }
 
         return (handlerFactory.getUserHandler().getCurrentUser() != null);
@@ -436,15 +429,6 @@ public class SwampApiWrapper {
             packageTypeMap = new HashMap<String, Integer>();
 
             List<String> all_types;
-
-//            if(handlerFactory.getCSASession().getHost().equals(HandlerFactoryUtil.PD_CSA_ADDRESS)){
-//                all_types = Arrays.asList("C/C++", "Java 7 Source Code", "Java 7 Bytecode",
-//                        "Python2", "Python3", "Android Java Source Code", "Ruby",
-//                        "Ruby Sinatra", "Ruby on Rails", "Ruby Padrino",
-//                        "Android .apk","Java 8 Source Code","Java 8 Bytecode");
-//            }else{
-//                all_types = handlerFactory.getPackageHandler().getTypes();
-//            }
 
             try {
                 all_types = handlerFactory.getPackageHandler().getTypes();
@@ -805,18 +789,6 @@ public class SwampApiWrapper {
 
         String default_platform_uuid;
 
-//        if(handlerFactory.getCSASession().getHost().equals(HandlerFactoryUtil.PD_CSA_ADDRESS)){
-//            if (pkg_type.startsWith("Android")) {
-//                // Android
-//                default_platform_uuid = "48f9a9b0-976f-11e4-829b-001a4a81450b";
-//            }else {
-//                // Red Hat Enterprise Linux 64-bit
-//                default_platform_uuid = "fc55810b-09d7-11e3-a239-001a4a81450b";
-//            }
-//        }else{
-//            default_platform_uuid = handlerFactory.getPackageHandler().getDefaultPlatform(pkg_type);
-//        }
-      
         try {
             default_platform_uuid = handlerFactory.getPackageHandler().getDefaultPlatform(pkg_type);
         }catch (JSONException e) {

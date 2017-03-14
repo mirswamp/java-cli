@@ -1,13 +1,13 @@
 package org.continuousassurance.swamp;
 
 import org.continuousassurance.swamp.cli.SwampApiWrapper;
-import org.continuousassurance.swamp.cli.SwampApiWrapper.HostType;
+import org.continuousassurance.swamp.util.HandlerFactoryUtil;
 
 public class TestSwampApiWrapperDev {
 
 	public static void main(String[] args) {
 		try {
-			SwampApiWrapper test_api = new SwampApiWrapper(HostType.DEVELOPMENT, null);
+			SwampApiWrapper test_api = new SwampApiWrapper(HandlerFactoryUtil.DT_ORIGIN_HEADER);
 			test_api.login(args[0], args[1]);
 			test_api.printUserInfo();
 			test_api.printAllProjects();
