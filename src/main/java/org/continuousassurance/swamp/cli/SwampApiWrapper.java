@@ -65,7 +65,7 @@ public class SwampApiWrapper {
 //        CUSTOM
 //    }
     
-    public static final String SWAMP_HOST_NAME  = HandlerFactoryUtil.PD_HOST_HEADER;
+    public static final String SWAMP_HOST_NAME  = HandlerFactoryUtil.PD_ORIGIN_HEADER;
  
     public Properties getProp(String filepath){
         Properties prop = new Properties();
@@ -904,23 +904,16 @@ public class SwampApiWrapper {
         return handlerFactory.getAssessmentResultHandler().getAll(project);
     }
 
-    public void getAssessmentResults(String project_uuid, String asssess_result_uuid, String filepath) {
+    public void getAssessmentResults(String project_uuid, String asssess_result_uuid, String filepath) throws FileNotFoundException, IOException {
         Project project = getProject(project_uuid);
         for(AssessmentResults results : handlerFactory.getAssessmentResultHandler().getAll(project)){
             if (results.getUUIDString().equals(asssess_result_uuid)) {
                 ByteArrayOutputStream data = (ByteArrayOutputStream)handlerFactory.getAssessmentResultHandler().getScarfResults(results);
                 if (data != null) {
-                    try(OutputStream outputStream = new FileOutputStream(filepath)) {
-                        data.writeTo(outputStream);
-                        data.close();
-                        outputStream.close();
-                    } catch (FileNotFoundException e) {
-                        // TODO Auto-generated catch block
-                        e.printStackTrace();
-                    } catch (IOException e) {
-                        // TODO Auto-generated catch block
-                        e.printStackTrace();
-                    }
+                    OutputStream outputStream = new FileOutputStream(filepath);
+                    data.writeTo(outputStream);
+                    data.close();
+                    outputStream.close();
                 }
             }
         }
@@ -957,7 +950,7 @@ public class SwampApiWrapper {
     
     public void printAssessmentStatus(String project_uuid, String assessment_uuid) {
         AssessmentRecord assessment_record = getAssessmentRecord(project_uuid, assessment_uuid);        
-        System.out.printf("%s", assessment_record.getStatus());
+        System.out.printf("%s, %d", assessment_record.getStatus(), assessment_record.getWeaknessCount());
 
         if (assessment_record.getAssessmentResultUUID() == null){
             System.out.printf("\n");

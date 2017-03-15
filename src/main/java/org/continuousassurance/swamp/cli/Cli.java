@@ -27,6 +27,7 @@ import org.apache.log4j.varia.NullAppender;
 import org.continuousassurance.swamp.cli.exceptions.*;
 
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -88,7 +89,7 @@ public class Cli {
         options.addOption(Option.builder("C").required(false).hasArg(false).longOpt("console")
                 .desc("Accepts username and password from the terminal").build());
         options.addOption(Option.builder("S").required(false).hasArg().longOpt("swamp-host").argName("SWAMP_HOST")
-                .desc("URL for SWAMP host: default is https://www.mir-swamp.org").build());
+                .desc("URL for SWAMP host: default is " + SwampApiWrapper.SWAMP_HOST_NAME).build());
 
         String[] cmd_args = (String[]) args.toArray(new String[0]);
         CommandLine parsed_options = new DefaultParser().parse(options, cmd_args);
@@ -99,7 +100,7 @@ public class Cli {
         }else if (parsed_options.hasOption("F")) {
             HashMap<String, String> cred_map = getUserCredentials(parsed_options.getOptionValue("F"));
             if ((cred_map.get("username") != null ) && (cred_map.get("password") != null)){
-                cred_map.put("swamp-host", parsed_options.getOptionValue("S", "PRODUCTION"));
+                cred_map.put("swamp-host", parsed_options.getOptionValue("S", SwampApiWrapper.SWAMP_HOST_NAME));
                 return cred_map;
             }else {
                 throw new CommandLineOptionException(String.format("No username or password in the file: %s\n",
@@ -521,7 +522,7 @@ public class Cli {
         return opt_map;
     }
 
-    public int executeCommands(String command, HashMap<String, String> opt_map) throws SessionExpiredException, InvalidIdentifierException, IncompatibleAssessmentTupleException {
+    public int executeCommands(String command, HashMap<String, String> opt_map) throws IOException, SessionExpiredException, InvalidIdentifierException, IncompatibleAssessmentTupleException {
 
         if (command.equals("login")) {
         	String host_name = opt_map.get("swamp-host");
@@ -609,7 +610,8 @@ public class Cli {
                 }
                 break;
             case "results":
-                api_wrapper.getAssessmentResults(opt_map.get("project-uuid"), opt_map.get("results-uuid"),
+                api_wrapper.getAssessmentResults(opt_map.get("project-uuid"), 
+                		opt_map.get("results-uuid"),
                         opt_map.get("file-path"));
                 break;
             case "status":
