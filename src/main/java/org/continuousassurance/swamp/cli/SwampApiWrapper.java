@@ -40,6 +40,7 @@ public class SwampApiWrapper {
     private static final String FILE_SEPARATOR_KEY = System.getProperty("file.separator");
     private static final String SWAMP_DIR_NAME = ".SWAMP_SESSION";
     public static final String SWAMP_DIR_PATH = USER_PATH + FILE_SEPARATOR_KEY + SWAMP_DIR_NAME + FILE_SEPARATOR_KEY;
+    public static final String SWAMP_HOST_NAME  = HandlerFactoryUtil.PD_ORIGIN_HEADER;
 
     private String rwsAddress;
     private String csaAddress;
@@ -56,16 +57,8 @@ public class SwampApiWrapper {
     private String cachedPkgVersionProjectID;
     private String cachedToolProjectID;
 
-    HandlerFactory handlerFactory;
-
-//    public enum HostType {
-//        PRODUCTION,
-//        INTEGRATION,
-//        DEVELOPMENT,
-//        CUSTOM
-//    }
+    private HandlerFactory handlerFactory;
     
-    public static final String SWAMP_HOST_NAME  = HandlerFactoryUtil.PD_ORIGIN_HEADER;
  
     public Properties getProp(String filepath){
         Properties prop = new Properties();
@@ -169,16 +162,16 @@ public class SwampApiWrapper {
                     pkg_type = "Android Java Source Code";
                 }
             }else if(pkg_build_sys.toLowerCase().equals("java-bytecode")) {
-                if (pkg_lang_version.toLowerCase().endsWith("java-8")) {
-                    pkg_type = "Java 8 Bytecode";
+                if (pkg_lang_version.toLowerCase().startsWith("java-7")) {
+                	pkg_type = "Java 7 Bytecode";
                 }else {
-                    pkg_type = "Java 7 Bytecode";
+                	pkg_type = "Java 8 Bytecode";
                 }
             }else {
-                if (pkg_lang_version.toLowerCase().endsWith("java-8")) {
-                    pkg_type = "Java 8 Source Code";
+                if (pkg_lang_version.toLowerCase().startsWith("java-7")) {
+                	pkg_type = "Java 7 Source Code";
                 }else {
-                    pkg_type = "Java 7 Source Code";
+                	pkg_type = "Java 8 Source Code";
                 }
             }
             break;
@@ -777,7 +770,7 @@ public class SwampApiWrapper {
         }
         return supported_plats;
     }
-
+    
     /*
      * pkg_type must be one of the values retured by getPackageTypesList()
      */

@@ -587,7 +587,7 @@ public class Cli {
                             if (opt_map.containsKey("quiet")){
                                 System.out.printf(package_uuid);
                             }else{
-                                System.out.printf("Package UUID: %s\n", package_uuid);
+                                System.out.printf("Package Version UUID: %s\n", package_uuid);
                             }
                 }
                 break;
