@@ -114,7 +114,7 @@ public class Cli {
             HashMap<String, String> cred_map = new HashMap<String, String>();
             cred_map.put("username", username);
             cred_map.put("password", password);
-            cred_map.put("swamp-host", parsed_options.getOptionValue("S", "PRODUCTION"));
+            cred_map.put("swamp-host", parsed_options.getOptionValue("S", SwampApiWrapper.SWAMP_HOST_NAME));
             return cred_map;
         }
     }
