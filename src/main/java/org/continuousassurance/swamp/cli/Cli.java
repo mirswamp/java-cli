@@ -25,12 +25,14 @@ import org.continuousassurance.swamp.session.HTTPException;
 import org.apache.commons.cli.*;
 import org.apache.log4j.varia.NullAppender;
 import org.continuousassurance.swamp.cli.exceptions.*;
+import org.continuousassurance.swamp.cli.util.SwampPlatform;
 
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Properties;
 
 public class Cli {
@@ -63,8 +65,8 @@ public class Cli {
         System.out.println("\t<program> <sub-command> --help or <program> <sub-command> -h");
     }
 
-    protected HashMap<String, String> getUserCredentials(String filename) {
-        HashMap<String, String> cred_map = new HashMap<String, String>();
+    protected HashMap<String, Object> getUserCredentials(String filename) {
+        HashMap<String, Object> cred_map = new HashMap<String, Object>();
         Properties prop = new Properties();
 
         try {
@@ -79,7 +81,7 @@ public class Cli {
         return cred_map;
     }
 
-    public HashMap<String, String> loginOptionsHandler(ArrayList<String> args) throws ParseException, CommandLineOptionException {
+    public HashMap<String, Object> loginOptionsHandler(ArrayList<String> args) throws ParseException, CommandLineOptionException {
 
         Options options = new Options();
         options.addOption(Option.builder("H").required(false).longOpt("help").desc("Shows Help").build());
@@ -98,7 +100,7 @@ public class Cli {
             formatter.printHelp("Command Line Parameters", options);
             return null;
         }else if (parsed_options.hasOption("F")) {
-            HashMap<String, String> cred_map = getUserCredentials(parsed_options.getOptionValue("F"));
+            HashMap<String, Object> cred_map = getUserCredentials(parsed_options.getOptionValue("F"));
             if ((cred_map.get("username") != null ) && (cred_map.get("password") != null)){
                 cred_map.put("swamp-host", parsed_options.getOptionValue("S", SwampApiWrapper.SWAMP_HOST_NAME));
                 return cred_map;
@@ -111,7 +113,7 @@ public class Cli {
             String username = System.console().readLine();
             System.out.print("PASSWORD:");
             String password = new String(System.console().readPassword());
-            HashMap<String, String> cred_map = new HashMap<String, String>();
+            HashMap<String, Object> cred_map = new HashMap<String, Object>();
             cred_map.put("username", username);
             cred_map.put("password", password);
             cred_map.put("swamp-host", parsed_options.getOptionValue("S", SwampApiWrapper.SWAMP_HOST_NAME));
@@ -119,7 +121,7 @@ public class Cli {
         }
     }
 
-    public HashMap<String, String> projectOptionsHandler(ArrayList<String> args) throws ParseException {
+    public HashMap<String, Object> projectOptionsHandler(ArrayList<String> args) throws ParseException {
 
         Options options = new Options();
         OptionGroup opt_grp = new OptionGroup();
@@ -139,7 +141,7 @@ public class Cli {
             formatter.printHelp("Command Line Parameters", options);
             return null;
         }else {
-            HashMap<String, String> cred_map = new HashMap<String, String>();
+            HashMap<String, Object> cred_map = new HashMap<String, Object>();
             if (parsed_options.hasOption("project-name")){
                 cred_map.put("project-name",parsed_options.getOptionValue("project-name"));
             }
@@ -148,7 +150,7 @@ public class Cli {
         }
     }
 
-    public HashMap<String, String> resultsOptionsHandler(ArrayList<String> args) throws ParseException, CommandLineOptionException {
+    public HashMap<String, Object> resultsOptionsHandler(ArrayList<String> args) throws ParseException, CommandLineOptionException {
 
         Options options = new Options();
         OptionGroup opt_grp = new OptionGroup();
@@ -171,7 +173,7 @@ public class Cli {
             formatter.printHelp("Command Line Parameters", options);
             return null;
         }else {
-            HashMap<String, String> cred_map = new HashMap<String, String>();
+            HashMap<String, Object> cred_map = new HashMap<String, Object>();
             if(parsed_options.hasOption("project-uuid") || parsed_options.hasOption("file-path")){
                 cred_map.put("project-uuid", parsed_options.getOptionValue("project-uuid"));
                 cred_map.put("results-uuid", parsed_options.getOptionValue("results-uuid"));
@@ -185,7 +187,7 @@ public class Cli {
         }
     }
 
-    public HashMap<String, String> statusOptionsHandler(ArrayList<String> args) throws ParseException, CommandLineOptionException {
+    public HashMap<String, Object> statusOptionsHandler(ArrayList<String> args) throws ParseException, CommandLineOptionException {
 
         Options options = new Options();
         options.addOption(Option.builder("H").required(false).longOpt("help").desc("Shows Help").build());
@@ -201,7 +203,7 @@ public class Cli {
             formatter.printHelp("Command Line Parameters", options);
             return null;
         }else if(parsed_options.hasOption("project-uuid")){
-            HashMap<String, String> cred_map = new HashMap<String, String>();
+            HashMap<String, Object> cred_map = new HashMap<String, Object>();
             cred_map.put("project-uuid", parsed_options.getOptionValue("project-uuid"));
             if(parsed_options.hasOption("assess-uuid")){
                 cred_map.put("assess-uuid", parsed_options.getOptionValue("assess-uuid"));
@@ -219,7 +221,7 @@ public class Cli {
                 option.getArgName());
     }
 
-    public HashMap<String, String> packageOptionsHandler(ArrayList<String> args) throws ParseException, CommandLineOptionException {
+    public HashMap<String, Object> packageOptionsHandler(ArrayList<String> args) throws ParseException, CommandLineOptionException {
 
         Options options = new Options();
         OptionGroup opt_grp = new OptionGroup();
@@ -253,7 +255,7 @@ public class Cli {
             formatter.printHelp("Command Line Parameters", options);
             return null;
         }else {
-            HashMap<String, String> cred_map = new HashMap<String, String>();
+            HashMap<String, Object> cred_map = new HashMap<String, Object>();
             if (parsed_options.hasOption("Q")){
                 cred_map.put("quiet", "quiet");
             }
@@ -293,7 +295,7 @@ public class Cli {
         }
     }
 
-    public HashMap<String, String> userOptionsHandler(ArrayList<String> args) throws ParseException{
+    public HashMap<String, Object> userOptionsHandler(ArrayList<String> args) throws ParseException{
 
         Options options = new Options();
         options.addOption(Option.builder("H").required(false).longOpt("help").desc("Shows Help").build());
@@ -307,7 +309,7 @@ public class Cli {
             formatter.printHelp("Command Line Parameters", options);
             return null;
         }else {
-            HashMap<String, String> cred_map = new HashMap<String, String>();
+            HashMap<String, Object> cred_map = new HashMap<String, Object>();
             if (parsed_options.hasOption("I")){
                 cred_map.put("info", "info");
             }
@@ -315,7 +317,7 @@ public class Cli {
         }
     }
 
-    public HashMap<String, String> toolsOptionsHandler(ArrayList<String> args) throws ParseException{
+    public HashMap<String, Object> toolsOptionsHandler(ArrayList<String> args) throws ParseException{
 
         Options options = new Options();
         OptionGroup opt_grp = new OptionGroup();
@@ -338,7 +340,7 @@ public class Cli {
             formatter.printHelp("Command Line Parameters", options);
             return null;
         }else {
-            HashMap<String, String> cred_map = new HashMap<String, String>();
+            HashMap<String, Object> cred_map = new HashMap<String, Object>();
             if (parsed_options.hasOption("L")){
                 cred_map.put("list", "list");
             }
@@ -350,7 +352,7 @@ public class Cli {
         }
     }
 
-    public HashMap<String, String> platformOptionsHandler(ArrayList<String> args) throws ParseException{
+    public HashMap<String, Object> platformOptionsHandler(ArrayList<String> args) throws ParseException{
 
         Options options = new Options();
         OptionGroup opt_grp = new OptionGroup();
@@ -372,7 +374,7 @@ public class Cli {
             HelpFormatter formatter = new HelpFormatter();
             formatter.printHelp("Command Line Parameters", options);
         }else {
-            HashMap<String, String> cred_map = new HashMap<String, String>();
+            HashMap<String, Object> cred_map = new HashMap<String, Object>();
             if (parsed_options.hasOption("L")){
                 cred_map.put("list", "list");
             }
@@ -389,7 +391,7 @@ public class Cli {
         return null;
     }
 
-    public HashMap<String, String> logoutOptionsHandler(ArrayList<String> args) throws ParseException{
+    public HashMap<String, Object> logoutOptionsHandler(ArrayList<String> args) throws ParseException{
 
         Options options = new Options();
         options.addOption(Option.builder("H").required(false).longOpt("help").desc("Shows Help").build());
@@ -401,14 +403,14 @@ public class Cli {
             formatter.printHelp("Command Line Parameters", options);
             return null;
         }else {
-            HashMap<String, String> cred_map = new HashMap<String, String>();
+            HashMap<String, Object> cred_map = new HashMap<String, Object>();
             cred_map.put("logout", "logout");
             return cred_map;
         }
 
     }
 
-    public HashMap<String, String> assessmentOptionsHandler(ArrayList<String> args) throws ParseException, CommandLineOptionException{
+    public HashMap<String, Object> assessmentOptionsHandler(ArrayList<String> args) throws ParseException, CommandLineOptionException{
 
         Options options = new Options();
         OptionGroup opt_grp = new OptionGroup();
@@ -427,7 +429,7 @@ public class Cli {
                 .desc("Package uuid provided").build());
         options.addOption(Option.builder("P").required(false).hasArg(true).longOpt("project-uuid")
                 .desc("Project uuid provided").build());
-        options.addOption(Option.builder("T").required(false).hasArg(true).longOpt("tool-uuid")
+        options.addOption(Option.builder("T").required(false).hasArgs().longOpt("tool-uuid")
                 .desc("Tool uuid provided").build());
         options.addOption(Option.builder("F").required(false).hasArg(true).longOpt("platform-uuid")
                 .desc("Platform uuid provided").build());
@@ -441,7 +443,7 @@ public class Cli {
             formatter.printHelp("Command Line Parameters", options);
             return null;
         }
-        HashMap<String, String> cred_map = new HashMap<String, String>();
+        HashMap<String, Object> cred_map = new HashMap<String, Object>();
         if (parsed_options.hasOption("Q")){
             cred_map.put("quiet", "quiet");
         }
@@ -451,12 +453,13 @@ public class Cli {
                 cred_map.put("pkg-uuid", parsed_options.getOptionValue("K"));
                 if (parsed_options.hasOption("T")){
                     if (parsed_options.hasOption("F")){
-                        cred_map.put("platform-uuid", parsed_options.getOptionValue("F"));
+                        cred_map.put("platform-uuid", Arrays.asList(parsed_options.getOptionValues('F')));
                     }
-                    cred_map.put("tool-uuid", parsed_options.getOptionValue("T"));
+                    //cred_map.put("tool-uuid", parsed_options.getOptionValue("T"));
+                    cred_map.put("tool-uuid", Arrays.asList(parsed_options.getOptionValues('T')));
                     if (parsed_options.hasOption("R")){
-                        cred_map.put("run-assess", "run-assess");
-                        return cred_map;
+                    	cred_map.put("run-assess", "run-assess");
+                    	return cred_map;
                     }
                 }
             }
@@ -481,9 +484,9 @@ public class Cli {
         }
     }
 
-    public HashMap<String, String> processCliArgs(String command, ArrayList<String> cli_args) throws CommandLineOptionException, ParseException{
+    public HashMap<String, Object> processCliArgs(String command, ArrayList<String> cli_args) throws CommandLineOptionException, ParseException{
 
-        HashMap<String, String> opt_map = null;
+        HashMap<String, Object> opt_map = null;
 
         switch (command) {
         case "login":
@@ -522,13 +525,13 @@ public class Cli {
         return opt_map;
     }
 
-    public int executeCommands(String command, HashMap<String, String> opt_map) throws IOException, SessionExpiredException, InvalidIdentifierException, IncompatibleAssessmentTupleException {
+    public int executeCommands(String command, HashMap<String, Object> opt_map) throws IOException, SessionExpiredException, InvalidIdentifierException, IncompatibleAssessmentTupleException {
 
         if (command.equals("login")) {
-        	String host_name = opt_map.get("swamp-host");
+        	String host_name = (String)opt_map.get("swamp-host");
             
-            String user_uuid = api_wrapper.login(opt_map.get("username"), 
-            		opt_map.get("password"),
+            String user_uuid = api_wrapper.login((String)opt_map.get("username"), 
+            		(String)opt_map.get("password"),
                     host_name);
             
             if (user_uuid != null){
@@ -541,7 +544,7 @@ public class Cli {
             switch (command) {
             case "project":
                 if (opt_map.containsKey("project-name")) {
-                    Project my_proj = api_wrapper.getProjectFromName(opt_map.get("project-name"));
+                    Project my_proj = api_wrapper.getProjectFromName((String)opt_map.get("project-name"));
                     if (my_proj == null){
                         System.out.printf("Project %s does not exist.\n", opt_map.get("project-name"));
                     }else{
@@ -553,36 +556,40 @@ public class Cli {
                 break;
             case "platform":
                 if (opt_map.containsKey("platform-name")) {
-                    System.out.printf(api_wrapper.getPlatformFromName(opt_map.get("platform-name")).getUUIDString());
+                    System.out.printf(api_wrapper.getPlatformFromName((String)opt_map.get("platform-name")).getUUIDString());
                 }else {
-                    api_wrapper.printAllPlatforms(opt_map.get("pkg-type"));
+                    //api_wrapper.printAllPlatforms(opt_map.get("pkg-type"));
+                	for (SwampPlatform swamp_platform : api_wrapper.getSwampPlatformsList()){
+                		System.out.println(swamp_platform);
+                	}
                 }
                 break;
             case "tools":
                 if (opt_map.containsKey("tool-name")) {
-                    Tool my_tool = api_wrapper.getToolFromName(opt_map.get("tool-name"), opt_map.get("project-uuid"));
+                    Tool my_tool = api_wrapper.getToolFromName((String)opt_map.get("tool-name"), 
+                    		(String)opt_map.get("project-uuid"));
                     if (my_tool == null){
                         System.out.printf("Tool %s does not exist.\n", opt_map.get("tool-name"));
                     }else{
                         System.out.println(my_tool.getUUIDString());
                     }
                 }else{
-                    api_wrapper.printAllTools(opt_map.get("project-uuid"));
+                    api_wrapper.printAllTools((String)opt_map.get("project-uuid"));
                 }
                 break;
             case "package":
                 if (opt_map.containsKey("list")) {
-                    api_wrapper.printAllPackages(opt_map.get("project-uuid"), true);
+                    api_wrapper.printAllPackages((String)opt_map.get("project-uuid"), true);
                 }else if (opt_map.containsKey("pkg-types")) {
                     for (String pkg_type : api_wrapper.getPackageTypesList()) {
                         System.out.println(pkg_type);
                     }
                 }else {
 
-                    String package_uuid = api_wrapper.uploadPackage(opt_map.get("pkg-conf"),
-                            opt_map.get("pkg-archive"),
-                            opt_map.get("project-uuid"),
-                            opt_map.containsKey("new-pkg"));;
+                    String package_uuid = api_wrapper.uploadPackage((String)opt_map.get("pkg-conf"),
+                    		(String)opt_map.get("pkg-archive"),
+                    		(String)opt_map.get("project-uuid"),
+                    		opt_map.containsKey("new-pkg"));
 
                             if (opt_map.containsKey("quiet")){
                                 System.out.printf(package_uuid);
@@ -594,31 +601,34 @@ public class Cli {
 
             case "assess":
                 if (opt_map.containsKey("run-assess")){
-                    String assess_uuid = api_wrapper.runAssessment(opt_map.get("pkg-uuid"), opt_map.get("tool-uuid"),
-                            opt_map.get("project-uuid"), opt_map.get("platform-uuid"));
+                	@SuppressWarnings({"unchecked"})
+                    List<String> assess_uuid = api_wrapper.runAssessment((String)opt_map.get("pkg-uuid"), 
+                    		(List<String>)opt_map.get("tool-uuid"),
+                    		(String)opt_map.get("project-uuid"), 
+                    		(List<String>)opt_map.get("platform-uuid"));
                     if (opt_map.containsKey("quiet")){
-                        System.out.printf(assess_uuid);
+                        System.out.println(assess_uuid);
                     }else{
-                        System.out.printf("Assessment UUID: %s\n", assess_uuid);
+                        System.out.printf("Assessment UUIDs: %s\n", assess_uuid);
                     }
                 }
                 if (opt_map.containsKey("list-assess")){
-                    api_wrapper.printAssessments(opt_map.get("project-uuid"), opt_map.containsKey("quiet"));
+                    api_wrapper.printAssessments((String)opt_map.get("project-uuid"), opt_map.containsKey("quiet"));
                 }
                 if (opt_map.containsKey("assess-uuid")){
-                    api_wrapper.printAssessment(opt_map.get("assess-uuid"), opt_map.get("project-uuid"));
+                    api_wrapper.printAssessment((String)opt_map.get("assess-uuid"), (String)opt_map.get("project-uuid"));
                 }
                 break;
             case "results":
-                api_wrapper.getAssessmentResults(opt_map.get("project-uuid"), 
-                		opt_map.get("results-uuid"),
-                        opt_map.get("file-path"));
+                api_wrapper.getAssessmentResults((String)opt_map.get("project-uuid"), 
+                		(String)opt_map.get("results-uuid"),
+                		(String)opt_map.get("file-path"));
                 break;
             case "status":
                 if (opt_map.containsKey("assess-uuid")){
-                    api_wrapper.printAssessmentStatus(opt_map.get("project-uuid"), opt_map.get("assess-uuid"));
+                    api_wrapper.printAssessmentStatus((String)opt_map.get("project-uuid"), (String)opt_map.get("assess-uuid"));
                 }else{
-                    api_wrapper.printAllAssessmentStatus(opt_map.get("project-uuid"));
+                    api_wrapper.printAllAssessmentStatus((String)opt_map.get("project-uuid"));
                 }
                 break;
             case "user":
@@ -649,7 +659,7 @@ public class Cli {
         String command = cli_args.remove(0);
 
         try {
-            HashMap<String, String> opt_map = cli.processCliArgs(command, cli_args);
+            HashMap<String, Object> opt_map = cli.processCliArgs(command, cli_args);
             if (opt_map != null){
                 cli.executeCommands(command, opt_map);
             }

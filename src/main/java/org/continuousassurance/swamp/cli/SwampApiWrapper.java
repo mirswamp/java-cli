@@ -29,6 +29,7 @@ import org.continuousassurance.swamp.util.HandlerFactoryUtil;
 import net.sf.json.JSONException;
 import org.apache.http.client.CookieStore;
 import org.continuousassurance.swamp.cli.exceptions.*;
+import org.continuousassurance.swamp.cli.util.SwampPlatform;
 
 import java.io.*;
 import java.util.*;
@@ -708,9 +709,16 @@ public class SwampApiWrapper {
         for(Tool tool : getAllTools(project_uuid).values()){
             System.out.printf("%-21s %-38s %-40s %s\n", tool.getName(), tool.getIdentifierString(),
                     tool.getSupportedPkgTypes(), tool.getSupportedPlatforms());
-            for(ToolVersion tool_version : handlerFactory.getToolVersionHandler().getAll(tool)){
-                System.out.printf("\t%-38s %-13s\n", tool_version.getConversionMap().getString("tool_version_uuid"),
-                        tool_version.getConversionMap().getString("version_string"));
+            List<? extends ToolVersion> tool_versions = handlerFactory.getToolVersionHandler().getAll(tool);
+            Collections.sort(tool_versions, 
+            		new Comparator<ToolVersion>() {
+            	public int compare(ToolVersion i1, ToolVersion i2) {
+            		return (i2.getReleaseDate().compareTo(i1.getReleaseDate()));
+            	}
+            });
+            for(ToolVersion tool_version : tool_versions){
+                System.out.printf("\t%-38s %-13s\n", tool_version.getIdentifier(),
+                        tool_version.getVersion());
             }
         }
     }
@@ -726,17 +734,34 @@ public class SwampApiWrapper {
     }
 
     public List<Platform> getPlatformsList() {
-        List<Platform> pkg_list = new ArrayList<Platform>(getAllPlatforms().values());
+        List<Platform> plat_list = new ArrayList<Platform>(getAllPlatforms().values());
 
-        Collections.sort(pkg_list, new Comparator<Platform>() {
+        Collections.sort(plat_list, new Comparator<Platform>() {
             public int compare(Platform i1, Platform i2) {
                 return (i1.getName().compareTo(i2.getName()));
             }
         });
-        return pkg_list;
+        return plat_list;
 
     }
 
+    public List<SwampPlatform> getSwampPlatformsList() {
+    	List<SwampPlatform> swamp_platforms = new ArrayList<SwampPlatform>();
+    	
+        for(Platform platform : getAllPlatforms().values()){
+        	for (PlatformVersion platform_version : handlerFactory.getPlatformVersionHandler().getAll(platform)){
+        		try {
+					swamp_platforms.add(SwampPlatform.convertToSwampPackage(platform_version));
+				} catch (UnkownPlatformException e) {
+					// TODO Auto-generated catch block
+					System.out.println(e);
+				}
+        	}
+        }
+        
+        return swamp_platforms;
+    }
+    
     public Platform getPlatform(String platform_uuid) {
         Platform platform = getAllPlatforms().get(platform_uuid);
         if (platform == null) {
@@ -879,18 +904,86 @@ public class SwampApiWrapper {
         return runAssessment(pkg_ver, tool, proj, plat);
     }
 
+    public List<String> runAssessment(String pkg_ver_uuid,
+    		List<String> tool_uuid_list,
+    		String project_uuid,
+    		List<String> platform_uuid_list) throws IncompatibleAssessmentTupleException, InvalidIdentifierException {
+    	PackageVersion pkg_ver = getPackageVersion(pkg_ver_uuid, project_uuid);
+    	Project project = getProject(project_uuid);
+
+    	List<Platform> platforms = new ArrayList<Platform>();
+    	
+    	if (null == platform_uuid_list || platform_uuid_list.isEmpty()){
+    		platform_uuid_list = new ArrayList<String>(); 
+    		platform_uuid_list.add(getDefaultPlatform(pkg_ver.getPackageThing().getType()).getUUIDString());
+    	}
+    	
+    	for (String platform_uuid: platform_uuid_list) {
+    		Platform platform = null;
+			if(platform_uuid == null) {
+				platform = getDefaultPlatform(pkg_ver.getPackageThing().getType());
+			}else {
+				platform = getPlatform(platform_uuid);
+			}
+    	
+    		for (String tool_uuid: tool_uuid_list) {
+    			Tool tool = getTool(tool_uuid, project_uuid);
+    			
+    			if (!tool.getSupportedPkgTypes().contains(pkg_ver.getPackageThing().getType())) {
+    				throw new IncompatibleAssessmentTupleException(String.format("%s (%s) does not support this package type \"%s\"",
+    						tool.getName(),
+    						tool.getSupportedPkgTypes(),
+    						pkg_ver.getPackageThing().getType()));
+    			}
+
+    			if (!tool.getSupportedPlatforms().contains(platform.getName())) {
+    				throw new IncompatibleAssessmentTupleException(String.format("%s (%s) is not supported on this platform \"%s\"",
+    						tool.getName(),
+    						tool.getSupportedPlatforms(),
+    						platform.getName()));
+    			}
+    		}
+    		platforms.add(platform);
+    	}
+
+    	List<Tool> tools = new ArrayList<Tool>();
+    	for (String tool_uuid: tool_uuid_list) {
+    		tools.add(getTool(tool_uuid, project_uuid));
+    	}
+    	
+    	List<AssessmentRun> arun_list = runAssessment(pkg_ver, tools, project, platforms);
+    	
+    	if (arun_list != null){
+    		List<String> arun_uuid_list = new ArrayList<String>();
+    		for (AssessmentRun arun : arun_list) {
+    			arun_uuid_list.add(arun.getUUIDString());
+    		}
+    		return arun_uuid_list;
+    	}else {
+    		return null;
+    	}
+    }
+
     protected String runAssessment(PackageVersion pkg, Tool tool, Project project, Platform platform) {
         AssessmentRun arun = handlerFactory.getAssessmentHandler().create(project, pkg, platform, tool);
         handlerFactory.getRunRequestHandler().submitOneTimeRequest(arun, true);
         return arun.getUUIDString();
     }
 
-    //  public void getAssessmentResults(String project_uuid) {
-    //          Project project = getProject(project_uuid);
-    //          for(AssessmentResults result : handlerFactory.getAssessmentResultHandler().getAll(project)){
-    //                  System.out.println(result.getUUIDString());
-    //          }
-    //  }
+    protected List<AssessmentRun> runAssessment(PackageVersion pkg, List<Tool> tools, Project project, List<Platform> platforms) {
+    	List<AssessmentRun> arun_list = new ArrayList<AssessmentRun>();
+	    for (Platform platform : platforms) {
+	    	for (Tool tool : tools) {
+	    		arun_list.add(handlerFactory.getAssessmentHandler().create(project, pkg, platform, tool));
+	    	}
+    	}
+        if (handlerFactory.getRunRequestHandler().submitOneTimeRequest(arun_list, true)){
+        	return arun_list;
+        }else {
+        	return null;
+        }
+        
+    }
 
     protected List<? extends AssessmentResults> getAssessmentResults(String project_uuid) {
         Project project = getProject(project_uuid);
@@ -898,8 +991,8 @@ public class SwampApiWrapper {
     }
 
     public void getAssessmentResults(String project_uuid, String asssess_result_uuid, String filepath) throws FileNotFoundException, IOException {
-        Project project = getProject(project_uuid);
-        for(AssessmentResults results : handlerFactory.getAssessmentResultHandler().getAll(project)){
+
+        for(AssessmentResults results : getAssessmentResults(project_uuid)){
             if (results.getUUIDString().equals(asssess_result_uuid)) {
                 ByteArrayOutputStream data = (ByteArrayOutputStream)handlerFactory.getAssessmentResultHandler().getScarfResults(results);
                 if (data != null) {
@@ -935,6 +1028,19 @@ public class SwampApiWrapper {
         for(AssessmentRecord assessment_record : getAllAssessmentRecords(project)) {
             if (assessment_record.getAssessmentRunUUID().equals(assessment_uuid)){
                 return assessment_record;
+            }
+         }
+        
+        throw new InvalidIdentifierException("Invalid Assessment UUID: " + assessment_uuid);
+    }
+    
+    public boolean deleteAssessmentRecord(String project_uuid, String assessment_uuid){
+        Project project = getProject(project_uuid);
+        
+        for(AssessmentRecord assessment_record : getAllAssessmentRecords(project)) {
+            if (assessment_record.getAssessmentRunUUID().equals(assessment_uuid)){
+                return handlerFactory.getassessmentRecordHandler().deleteAssessmentRecord(assessment_record);
+                
             }
          }
         
