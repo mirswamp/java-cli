@@ -114,7 +114,7 @@ public class Cli {
             HashMap<String, String> cred_map = new HashMap<String, String>();
             cred_map.put("username", username);
             cred_map.put("password", password);
-            cred_map.put("swamp-host", parsed_options.getOptionValue("S", "PRODUCTION"));
+            cred_map.put("swamp-host", parsed_options.getOptionValue("S", SwampApiWrapper.SWAMP_HOST_NAME));
             return cred_map;
         }
     }
@@ -587,7 +587,7 @@ public class Cli {
                             if (opt_map.containsKey("quiet")){
                                 System.out.printf(package_uuid);
                             }else{
-                                System.out.printf("Package UUID: %s\n", package_uuid);
+                                System.out.printf("Package Version UUID: %s\n", package_uuid);
                             }
                 }
                 break;
