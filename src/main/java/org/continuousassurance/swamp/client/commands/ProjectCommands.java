@@ -4,14 +4,13 @@ import edu.uiuc.ncsa.security.core.Identifiable;
 import edu.uiuc.ncsa.security.core.Store;
 import edu.uiuc.ncsa.security.core.util.Iso8601;
 import edu.uiuc.ncsa.security.core.util.MyLoggingFacade;
-import edu.uiuc.ncsa.security.util.cli.StoreCommands;
 import org.continuousassurance.swamp.api.Project;
 
 /**
  * <p>Created by Jeff Gaynor<br>
  * on 4/11/16 at  2:55 PM
  */
-public class ProjectCommands extends StoreCommands {
+public class ProjectCommands extends SWAMPStoreCommands {
     public ProjectCommands(MyLoggingFacade logger, String defaultIndent, Store store) {
         super(logger, defaultIndent, store);
     }
@@ -64,17 +63,17 @@ public class ProjectCommands extends StoreCommands {
     @Override
     protected String format(Identifiable identifiable) {
         Project p = (Project) identifiable;
-        String rc = p.getShortName() + " (uuid=" + p.getUUIDString()+")";
+        String rc = p.getShortName() + " (uuid=" + p.getUUIDString() + ")";
         return rc;
     }
 
     @Override
     protected void longFormat(Identifiable identifiable) {
         Project p = (Project) identifiable;
-        say("Project full name= \"" + p.getFullName() + "\"");
-        sayi("short name=\"" + p.getShortName() + "\"");
-        sayi("uuid=" + p.getUUIDString());
-        sayi("description=" + p.getDescription());
-        sayi("owner uuid=" + p.getOwnerUUID());
+        printAttribute("full name", p.getFullName());
+        printAttributei("short name", p.getShortName());
+        printAttributei("uuid", p.getUUIDString());
+        printAttributei("description", p.getDescription(), true);
+        printAttributei("owner uuid", p.getOwnerUUID());
     }
 }
