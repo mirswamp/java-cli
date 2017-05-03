@@ -112,15 +112,19 @@ public class SwampApiWrapper {
         this.hostHeader = hostHeader;
     }
 
+    /*
     public SwampApiWrapper(String host_name) {
-        setHost(host_name);
+    	setHost(host_name);
         cachedPkgProjectID = "";
         cachedPkgVersionProjectID = "";
         cachedToolProjectID = "";
-    }
+    }*/
 
     public SwampApiWrapper() throws Exception {
-        this(HandlerFactoryUtil.PD_ORIGIN_HEADER);
+        //this(HandlerFactoryUtil.PD_ORIGIN_HEADER);
+        cachedPkgProjectID = "";
+        cachedPkgVersionProjectID = "";
+        cachedToolProjectID = "";
     }
 
     public final void setHost(String host_name) {
@@ -129,9 +133,6 @@ public class SwampApiWrapper {
     	if (web_server == null) {
     		web_server = host_name;
     	}
-    	
-    	//System.out.println("SWAMP FRONT-END SERVER URL: " + host_name);
-    	//System.out.println("SWAMP WEB SERVER URL: " + web_server);
     	
     	setHostName(web_server);
     }
@@ -419,27 +420,26 @@ public class SwampApiWrapper {
 
     public Map<String, Integer> getPackageTypes() {
 
-        if (packageTypeMap == null) {
-            packageTypeMap = new HashMap<String, Integer>();
+    	if (packageTypeMap == null) {
 
-            List<String> all_types;
+    		try {
+    			packageTypeMap = handlerFactory.getPackageHandler().getTypes();
+    		}catch (JSONException e) {
 
-            try {
-                all_types = handlerFactory.getPackageHandler().getTypes();
-            }catch (JSONException e) {
-                all_types = Arrays.asList("C/C++", "Java 7 Source Code", "Java 7 Bytecode",
-                        "Python2", "Python3", "Android Java Source Code", "Ruby",
-                        "Ruby Sinatra", "Ruby on Rails", "Ruby Padrino",
-                        "Android .apk","Java 8 Source Code","Java 8 Bytecode");
-            }
+    			packageTypeMap = new HashMap<String, Integer>();
 
-            int i = 0;
-            for (String pkg_type : all_types) {
-                packageTypeMap.put(pkg_type, Integer.valueOf(++i));
-            }
+    			List<String> all_types = Arrays.asList("C/C++", "Java 7 Source Code", "Java 7 Bytecode",
+    					"Python2", "Python3", "Android Java Source Code", "Ruby",
+    					"Ruby Sinatra", "Ruby on Rails", "Ruby Padrino",
+    					"Android .apk","Java 8 Source Code","Java 8 Bytecode");
+    			int i = 0;
+    			for (String pkg_type : all_types) {
+    				packageTypeMap.put(pkg_type, Integer.valueOf(++i));
+    			}
+    		}
 
-        }
-        return packageTypeMap;
+    	}
+    	return packageTypeMap;
     }
 
     public List<String> getPackageTypesList() {
@@ -974,10 +974,14 @@ public class SwampApiWrapper {
     	List<AssessmentRun> arun_list = new ArrayList<AssessmentRun>();
 	    for (Platform platform : platforms) {
 	    	for (Tool tool : tools) {
-	    		arun_list.add(handlerFactory.getAssessmentHandler().create(project, pkg, platform, tool));
+	    		AssessmentRun arun = handlerFactory.getAssessmentHandler().create(project, pkg, platform, tool);
+	    		arun_list.add(arun);
+	    		//TODO: This call should n't be here: This is broken 
+	    		handlerFactory.getRunRequestHandler().submitOneTimeRequest(arun, true);
 	    	}
     	}
-        if (handlerFactory.getRunRequestHandler().submitOneTimeRequest(arun_list, true)){
+	    //TODO: This call does not do anything, this is broken
+	    if (handlerFactory.getRunRequestHandler().submitOneTimeRequest(arun_list, true)){
         	return arun_list;
         }else {
         	return null;

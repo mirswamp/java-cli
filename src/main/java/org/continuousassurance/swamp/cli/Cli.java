@@ -43,9 +43,10 @@ public class Cli {
         api_wrapper = new SwampApiWrapper();
     }
 
+    /*
     public Cli(String host_name) throws Exception {
         api_wrapper = new SwampApiWrapper(host_name);
-    }
+    }*/
 
     public static final ArrayList<String> COMMANDS = new ArrayList<String>(Arrays.asList(
             "login", "logout", "assess", "project",
