@@ -7,8 +7,8 @@ public class TestSwampApiWrapperDev {
 
 	public static void main(String[] args) {
 		try {
-			SwampApiWrapper test_api = new SwampApiWrapper(HandlerFactoryUtil.DT_ORIGIN_HEADER);
-			test_api.login(args[0], args[1]);
+			SwampApiWrapper test_api = new SwampApiWrapper();
+			test_api.login(args[0], args[1], SwampApiWrapper.SWAMP_HOST_NAME);
 			test_api.printUserInfo();
 			test_api.printAllProjects();
 			test_api.printAllPackages(null, true);

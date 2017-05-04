@@ -559,10 +559,12 @@ public class Cli {
                 if (opt_map.containsKey("platform-name")) {
                     System.out.printf(api_wrapper.getPlatformFromName((String)opt_map.get("platform-name")).getUUIDString());
                 }else {
-                    //api_wrapper.printAllPlatforms(opt_map.get("pkg-type"));
-                	for (SwampPlatform swamp_platform : api_wrapper.getSwampPlatformsList()){
+                    api_wrapper.printAllPlatforms((String)opt_map.get("pkg-type"));
+                	/*
+                	 for (SwampPlatform swamp_platform : api_wrapper.getSwampPlatformsList()){
+                	 
                 		System.out.println(swamp_platform);
-                	}
+                	}*/
                 }
                 break;
             case "tools":
