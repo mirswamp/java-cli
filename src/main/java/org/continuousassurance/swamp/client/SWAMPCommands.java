@@ -46,13 +46,19 @@ public class SWAMPCommands extends ConfigurableCommandsImpl {
     }
 
     public static void main(String[] args) {
+        SWAMPCommands swampCommands = new SWAMPCommands(null);
         try {
-            SWAMPCommands swampCommands = new SWAMPCommands(null);
             swampCommands.start(args);
+        } catch (Throwable t) {
+            System.out.println("Unable to start SWAMP session:" + t.getMessage());
+            return;
+        }
+        try {
+
             CLIDriver cli = new CLIDriver(swampCommands);
             cli.start();
         } catch (Throwable t) {
-            t.printStackTrace();
+            swampCommands.getMyLogger().error("Error executing.", t);
         }
     }
 
@@ -124,7 +130,8 @@ public class SWAMPCommands extends ConfigurableCommandsImpl {
     }
 
     public CommonCommands getProjectCommands() throws Exception {
-        ProjectCommands projectCommands = new ProjectCommands(getMyLogger(), ((SWAMPServiceEnvironment) getEnvironment()).getProjectStore());
+        ProjectCommands projectCommands = new ProjectCommands(getMyLogger(),
+                ((SWAMPServiceEnvironment) getEnvironment()).getProjectStore());
         return projectCommands;
     }
 
@@ -142,6 +149,7 @@ public class SWAMPCommands extends ConfigurableCommandsImpl {
         PlatformCommands platformCommands = new PlatformCommands(getMyLogger(), ((SWAMPServiceEnvironment) getEnvironment()).getPlatformStore());
         return platformCommands;
     }
+
     @Override
     public void useHelp() {
         say("This is a prototype command line interface to the SWAMP. You must specify which ");

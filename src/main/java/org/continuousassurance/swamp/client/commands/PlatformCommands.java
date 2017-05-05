@@ -36,7 +36,7 @@ public class PlatformCommands extends SWAMPStoreCommands {
     @Override
     protected String format(Identifiable identifiable) {
         Platform platform = (Platform) identifiable;
-        return platform.getName();
+        return platform.getName() + " (uid" + ATTRIBUTE_DELIMITER + platform.getIdentifierString() + ")";
     }
 
     @Override

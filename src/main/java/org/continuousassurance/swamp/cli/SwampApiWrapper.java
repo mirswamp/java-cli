@@ -220,7 +220,10 @@ public class SwampApiWrapper {
         
         SSLConfiguration ssl_config = new SSLConfiguration();
         ssl_config.setTlsVersion("TLSv1.2");
-        
+        ssl_config.setKeystore("/path/to/keystore.p12");
+        ssl_config.setKeystoreType("PKCS12");
+        ssl_config.setKeystorePassword("XXXXXXXXX");
+        ssl_config.setKeyManagerFactory("X509");
         handlerFactory = HandlerFactoryUtil.createHandlerFactory(getRwsAddress(),
                 getCsaAddress(),
                 getOriginHeader(),

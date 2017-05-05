@@ -50,7 +50,7 @@ public class PackageCommands extends SWAMPStoreCommands {
     @Override
     protected String format(Identifiable identifiable) {
         PackageThing p = (PackageThing) identifiable;
-        String rc = p.getName() + ", " + p.getDescription() + ", " + p.getIdentifierString();
+        String rc = p.getName() + ", " + p.getDescription() + " (uid" + ATTRIBUTE_DELIMITER + p.getIdentifierString() + ")";
         return rc;
     }
 

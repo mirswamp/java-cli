@@ -37,7 +37,7 @@ public class ToolCommands extends SWAMPStoreCommands {
     @Override
     protected String format(Identifiable identifiable) {
         Tool tool = (Tool) identifiable;
-        return tool.getName() + ", uid=" + tool.getIdentifierString();
+        return tool.getName() + " (uid" + ATTRIBUTE_DELIMITER +  tool.getIdentifierString() + ")";
     }
 
     @Override
