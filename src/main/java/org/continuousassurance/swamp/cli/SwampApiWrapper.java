@@ -56,7 +56,8 @@ public class SwampApiWrapper {
 	private String cachedPkgProjectID;
 	private String cachedPkgVersionProjectID;
 	private String cachedToolProjectID;
-
+	private SSLConfiguration sslConfig;
+	
 	private HandlerFactory handlerFactory;
 
 
@@ -120,19 +121,20 @@ public class SwampApiWrapper {
     }*/
 
 	public SwampApiWrapper() throws Exception {
-		//this(HandlerFactoryUtil.PD_ORIGIN_HEADER);
 		cachedPkgProjectID = "";
 		cachedPkgVersionProjectID = "";
 		cachedToolProjectID = "";
+		
+		sslConfig = new SSLConfiguration();
+		sslConfig.setTlsVersion("TLSv1.2");
 	}
 
 	public final void setHost(String host_name) {
 
-		String web_server = SWAMPConfigurationLoader.getWebServiceURL(host_name);
+		String web_server = SWAMPConfigurationLoader.getWebServiceURL(host_name, sslConfig);
 		if (web_server == null) {
 			web_server = host_name;
 		}
-
 		setHostName(web_server);
 	}
 
@@ -219,9 +221,6 @@ public class SwampApiWrapper {
 
 	public String login(String user_name, String password) {
 
-		SSLConfiguration ssl_config = new SSLConfiguration();
-		ssl_config.setTlsVersion("TLSv1.2");
-
 		handlerFactory = HandlerFactoryUtil.createHandlerFactory(getRwsAddress(),
 				getCsaAddress(),
 				getOriginHeader(),
@@ -229,7 +228,7 @@ public class SwampApiWrapper {
 				getHostHeader(),
 				user_name,
 				password,
-				ssl_config);
+				sslConfig);
 
 		if (handlerFactory != null){
 			return handlerFactory.getUserHandler().getCurrentUser().getIdentifierString();
