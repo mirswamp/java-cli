@@ -644,7 +644,7 @@ public class SwampApiWrapper {
 			cachedToolProjectID = project_uuid;
 			toolMap = new HashMap<String, Tool>();
 			for (Tool tool : handlerFactory.getToolHandler().getAll()) {
-				if (tool.getPolicyCode() == "null"){    //FIXME: This is temporary
+				if (tool.getPolicyCode() == null){    //FIXME: This is temporary
 					toolMap.put(tool.getIdentifierString(), tool);
 				}
 			}
@@ -653,7 +653,7 @@ public class SwampApiWrapper {
 				Project proj = getProject(project_uuid);
 
 				for (Tool tool : handlerFactory.getToolHandler().getAll(proj)) {
-					if (tool.getPolicyCode() == "null"){    //FIXME: This is temporary
+					if (tool.getPolicyCode() == null){    //FIXME: This is temporary
 						toolMap.put(tool.getIdentifierString(), tool);
 					}
 				}

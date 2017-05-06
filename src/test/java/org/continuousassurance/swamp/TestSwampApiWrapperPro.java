@@ -13,7 +13,7 @@ public class TestSwampApiWrapperPro {
 			test_api.printAllProjects();
 			test_api.printAllPackages(null, true);
 			test_api.printAllTools(null);
-			test_api.printAllPlatforms(null);
+			//test_api.printAllPlatforms(null);
 
 		}catch (Exception name) {
 			name.printStackTrace(System.out);
