@@ -13,7 +13,7 @@ public class TestSwampApiWrapperDev {
 			test_api.printAllProjects();
 			test_api.printAllPackages(null, true);
 			test_api.printAllTools(null);
-			test_api.printAllPlatforms(null);
+			//test_api.printAllPlatforms(null);
 			test_api.runAssessment("e4dd79ce-9a49-497f-b739-179acd2770cb", 
 					"163d56a7-156e-11e3-a239-001a4a81450b", 
 					"949c3fc8-e83e-11e3-a7ca-001a4a814505", 
