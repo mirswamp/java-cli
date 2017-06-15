@@ -19,8 +19,10 @@
 package org.continuousassurance.swamp.cli;
 
 import edu.uiuc.ncsa.security.core.exceptions.GeneralException;
+import org.continuousassurance.swamp.api.PlatformVersion;
 import org.continuousassurance.swamp.api.Project;
 import org.continuousassurance.swamp.api.Tool;
+import org.continuousassurance.swamp.api.User;
 import org.continuousassurance.swamp.session.HTTPException;
 import org.apache.commons.cli.*;
 import org.apache.log4j.varia.NullAppender;
@@ -525,119 +527,171 @@ public class Cli {
 		return opt_map;
 	}
 
+	public void loginHandler(HashMap<String, Object> opt_map) {
+		String host_name = (String)opt_map.get("swamp-host");
+
+		String user_uuid = api_wrapper.login((String)opt_map.get("username"), 
+				(String)opt_map.get("password"),
+				host_name);
+
+		if (user_uuid != null){
+			System.out.println("Login successful");
+			System.out.printf("User UUID: %s", user_uuid + "\n");
+			api_wrapper.saveSession();
+		}
+	}
+	
+	public void projectHandler(HashMap<String, Object> opt_map) {
+		if (opt_map.containsKey("project-name")) {
+			Project my_proj = api_wrapper.getProjectFromName((String)opt_map.get("project-name"));
+			if (my_proj == null){
+				System.out.printf("Project %s does not exist.\n", opt_map.get("project-name"));
+			}else{
+				System.out.printf(my_proj.getUUIDString());
+			}
+		}else{
+			api_wrapper.printAllProjects();
+		}
+	}
+	
+	public void platformHandler(HashMap<String, Object> opt_map) {
+		if (opt_map.containsKey("platform-name")) {
+			System.out.printf(api_wrapper.getPlatformVersionFromName((String)opt_map.get("platform-name")).getUUIDString());
+		}else {
+			/*
+			 api_wrapper.printAllPlatforms((String)opt_map.get("pkg-type"));
+			
+        	 for (SwampPlatform swamp_platform : api_wrapper.getSwampPlatformsList()){
+
+        		System.out.println(swamp_platform);
+        	}*/
+			System.out.printf("%-30s %-38s\n", "Platform Name", "Platform UUID");
+			for (PlatformVersion platform_version : api_wrapper.getAllPlatformVersionsList()){
+				System.out.printf("%-30s %-38s\n", platform_version.getDisplayString(), platform_version.getIdentifierString());
+			}
+		}
+	}
+	
+	public void toolHandler(HashMap<String, Object> opt_map) {
+		if (opt_map.containsKey("tool-name")) {
+			Tool my_tool = api_wrapper.getToolFromName((String)opt_map.get("tool-name"), 
+					(String)opt_map.get("project-uuid"));
+			if (my_tool == null){
+				System.out.printf("Tool %s does not exist.\n", opt_map.get("tool-name"));
+			}else{
+				System.out.println(my_tool.getUUIDString());
+			}
+		}else{
+			api_wrapper.printAllTools((String)opt_map.get("project-uuid"));
+		}
+	}
+	
+	public void packageHandler(HashMap<String, Object> opt_map) {
+		if (opt_map.containsKey("list")) {
+			api_wrapper.printAllPackages((String)opt_map.get("project-uuid"), true);
+		}else if (opt_map.containsKey("pkg-types")) {
+			for (String pkg_type : api_wrapper.getPackageTypesList()) {
+				System.out.println(pkg_type);
+			}
+		}else {
+
+			String package_uuid = api_wrapper.uploadPackage((String)opt_map.get("pkg-conf"),
+					(String)opt_map.get("pkg-archive"),
+					(String)opt_map.get("project-uuid"),
+					opt_map.containsKey("new-pkg"));
+
+			if (opt_map.containsKey("quiet")){
+				System.out.printf(package_uuid);
+			}else{
+				System.out.printf("Package Version UUID: %s\n", package_uuid);
+			}
+		}
+	}
+	
+	public void assessmentHandler(HashMap<String, Object> opt_map) {
+		if (opt_map.containsKey("run-assess")){
+			@SuppressWarnings({"unchecked"})
+			List<String> assess_uuid = api_wrapper.runAssessment((String)opt_map.get("pkg-uuid"), 
+					(List<String>)opt_map.get("tool-uuid"),
+					(String)opt_map.get("project-uuid"), 
+					(List<String>)opt_map.get("platform-uuid"));
+			if (opt_map.containsKey("quiet")){
+				System.out.println(assess_uuid);
+			}else{
+				System.out.printf("Assessment UUIDs: %s\n", assess_uuid);
+			}
+		}
+		if (opt_map.containsKey("list-assess")){
+			api_wrapper.printAssessments((String)opt_map.get("project-uuid"), opt_map.containsKey("quiet"));
+		}
+		if (opt_map.containsKey("assess-uuid")){
+			api_wrapper.printAssessment((String)opt_map.get("assess-uuid"), (String)opt_map.get("project-uuid"));
+		}
+	}
+	
+	public void resultsHandler(HashMap<String, Object> opt_map) throws IOException{
+		api_wrapper.getAssessmentResults((String)opt_map.get("project-uuid"), 
+				(String)opt_map.get("results-uuid"),
+				(String)opt_map.get("file-path"));
+	}
+	
+	public void assessmentStatusHandler(HashMap<String, Object> opt_map) {
+		if (opt_map.containsKey("assess-uuid")){
+			api_wrapper.printAssessmentStatus((String)opt_map.get("project-uuid"), (String)opt_map.get("assess-uuid"));
+		}else{
+			api_wrapper.printAllAssessmentStatus((String)opt_map.get("project-uuid"));
+		}
+	}
+	
+	public void printUserInfo(HashMap<String, Object> opt_map) {
+		User user = api_wrapper.getUserInfo();
+		System.out.printf("%s\n", "User:\t" + user.getFirstName() + " " + user.getLastName());
+		System.out.printf("%s\n", "Email:\t" + user.getEmail());
+		if (user.getPhone().equals("null")){
+			System.out.printf("%s\n", "Phone:\t<Not provided>");
+		}else{
+			System.out.printf("%s\n", "Phone:\t" + user.getPhone());
+		}
+		System.out.printf("%s\n", "UUID:\t" + user.getUUIDString());
+	}
+	
+	public void logoutHandler(HashMap<String, Object> opt_map) {
+		api_wrapper.logout();
+	}
+	
 	public int executeCommands(String command, HashMap<String, Object> opt_map) throws IOException, SessionExpiredException, InvalidIdentifierException, IncompatibleAssessmentTupleException {
 
 		if (command.equals("login")) {
-			String host_name = (String)opt_map.get("swamp-host");
-
-			String user_uuid = api_wrapper.login((String)opt_map.get("username"), 
-					(String)opt_map.get("password"),
-					host_name);
-
-			if (user_uuid != null){
-				System.out.println("Login successful");
-				System.out.printf("User UUID: %s", user_uuid + "\n");
-				api_wrapper.saveSession();
-			}
+			loginHandler(opt_map);
 		}else {
 			api_wrapper.restoreSession();
 			switch (command) {
 			case "project":
-				if (opt_map.containsKey("project-name")) {
-					Project my_proj = api_wrapper.getProjectFromName((String)opt_map.get("project-name"));
-					if (my_proj == null){
-						System.out.printf("Project %s does not exist.\n", opt_map.get("project-name"));
-					}else{
-						System.out.printf(my_proj.getUUIDString());
-					}
-				}else{
-					api_wrapper.printAllProjects();
-				}
+				projectHandler(opt_map);
 				break;
 			case "platform":
-				if (opt_map.containsKey("platform-name")) {
-					System.out.printf(api_wrapper.getPlatformFromName((String)opt_map.get("platform-name")).getUUIDString());
-				}else {
-					api_wrapper.printAllPlatforms((String)opt_map.get("pkg-type"));
-					/*
-                	 for (SwampPlatform swamp_platform : api_wrapper.getSwampPlatformsList()){
-
-                		System.out.println(swamp_platform);
-                	}*/
-				}
+				platformHandler(opt_map);
 				break;
 			case "tools":
-				if (opt_map.containsKey("tool-name")) {
-					Tool my_tool = api_wrapper.getToolFromName((String)opt_map.get("tool-name"), 
-							(String)opt_map.get("project-uuid"));
-					if (my_tool == null){
-						System.out.printf("Tool %s does not exist.\n", opt_map.get("tool-name"));
-					}else{
-						System.out.println(my_tool.getUUIDString());
-					}
-				}else{
-					api_wrapper.printAllTools((String)opt_map.get("project-uuid"));
-				}
+				toolHandler(opt_map);
 				break;
 			case "package":
-				if (opt_map.containsKey("list")) {
-					api_wrapper.printAllPackages((String)opt_map.get("project-uuid"), true);
-				}else if (opt_map.containsKey("pkg-types")) {
-					for (String pkg_type : api_wrapper.getPackageTypesList()) {
-						System.out.println(pkg_type);
-					}
-				}else {
-
-					String package_uuid = api_wrapper.uploadPackage((String)opt_map.get("pkg-conf"),
-							(String)opt_map.get("pkg-archive"),
-							(String)opt_map.get("project-uuid"),
-							opt_map.containsKey("new-pkg"));
-
-					if (opt_map.containsKey("quiet")){
-						System.out.printf(package_uuid);
-					}else{
-						System.out.printf("Package Version UUID: %s\n", package_uuid);
-					}
-				}
+				packageHandler(opt_map);
 				break;
-
 			case "assess":
-				if (opt_map.containsKey("run-assess")){
-					@SuppressWarnings({"unchecked"})
-					List<String> assess_uuid = api_wrapper.runAssessment((String)opt_map.get("pkg-uuid"), 
-							(List<String>)opt_map.get("tool-uuid"),
-							(String)opt_map.get("project-uuid"), 
-							(List<String>)opt_map.get("platform-uuid"));
-					if (opt_map.containsKey("quiet")){
-						System.out.println(assess_uuid);
-					}else{
-						System.out.printf("Assessment UUIDs: %s\n", assess_uuid);
-					}
-				}
-				if (opt_map.containsKey("list-assess")){
-					api_wrapper.printAssessments((String)opt_map.get("project-uuid"), opt_map.containsKey("quiet"));
-				}
-				if (opt_map.containsKey("assess-uuid")){
-					api_wrapper.printAssessment((String)opt_map.get("assess-uuid"), (String)opt_map.get("project-uuid"));
-				}
+				assessmentHandler(opt_map);
 				break;
 			case "results":
-				api_wrapper.getAssessmentResults((String)opt_map.get("project-uuid"), 
-						(String)opt_map.get("results-uuid"),
-						(String)opt_map.get("file-path"));
+				resultsHandler(opt_map);
 				break;
 			case "status":
-				if (opt_map.containsKey("assess-uuid")){
-					api_wrapper.printAssessmentStatus((String)opt_map.get("project-uuid"), (String)opt_map.get("assess-uuid"));
-				}else{
-					api_wrapper.printAllAssessmentStatus((String)opt_map.get("project-uuid"));
-				}
+				assessmentStatusHandler(opt_map);
 				break;
 			case "user":
-				api_wrapper.printUserInfo();
+				printUserInfo(opt_map);
 				break;
 			case "logout":
-				api_wrapper.logout();
+				logoutHandler(opt_map);
 				break;
 			default:
 				break;

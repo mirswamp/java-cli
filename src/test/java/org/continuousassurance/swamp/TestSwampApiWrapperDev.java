@@ -9,7 +9,7 @@ public class TestSwampApiWrapperDev {
 		try {
 			SwampApiWrapper test_api = new SwampApiWrapper();
 			test_api.login(args[0], args[1], SwampApiWrapper.SWAMP_HOST_NAME);
-			test_api.printUserInfo();
+			//test_api.printUserInfo();
 			test_api.printAllProjects();
 			test_api.printAllPackages(null, true);
 			test_api.printAllTools(null);
