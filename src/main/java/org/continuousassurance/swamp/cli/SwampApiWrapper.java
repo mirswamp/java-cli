@@ -710,15 +710,10 @@ public class SwampApiWrapper {
 					tool.getSupportedPkgTypes(), 
 					getSupportedPlatformVersions(tool.getIdentifierString(), project_uuid));
 			
-			List<? extends ToolVersion> tool_versions = handlerFactory.getToolVersionHandler().getAll(tool);
+			// Uncomment to display tool versions
 			/*
-			Collections.sort(tool_versions, 
-					new Comparator<ToolVersion>() {
-				public int compare(ToolVersion i1, ToolVersion i2) {
-					return (i2.getReleaseDate().compareTo(i1.getReleaseDate()));
-				}
-			});
-			*/
+			List<? extends ToolVersion> tool_versions = handlerFactory.getToolVersionHandler().getAll(tool);
+			
 			Collections.sort(tool_versions, 
 					new Comparator<ToolVersion>() {
 				public int compare(ToolVersion i1, ToolVersion i2) {
@@ -728,7 +723,7 @@ public class SwampApiWrapper {
 			for(ToolVersion tool_version : tool_versions){
 				System.out.printf("\t%-38s %-13s\n", tool_version.getIdentifier(),
 						tool_version.getVersion());
-			}
+			}*/
 		}
 	}
 
@@ -828,7 +823,8 @@ public class SwampApiWrapper {
                     return (i2.getName().compareTo(i1.getName()));
                 }
             });
-            return platform_versions.get(platform_versions.size()-1);
+            //return platform_versions.get(platform_versions.size()-1);
+            return platform_versions.get(0);
         }else {
         	return null;
         }
@@ -1071,26 +1067,7 @@ public class SwampApiWrapper {
         }
         
     }
-
-    /*
-    protected List<AssessmentRun> runAssessment(PackageVersion pkg, List<Tool> tools, 
-    		Project project, List<PlatformVersion> platform_versions) {
-    	List<AssessmentRun> arun_list = new ArrayList<AssessmentRun>();
-	    for (PlatformVersion platform_version : platform_versions) {
-	    	for (Tool tool : tools) {
-	    		arun_list.add(runAssessment(pkg, tool, project, platform_version));
-	    	}
-    	}
-        if (handlerFactory.getRunRequestHandler().submitOneTimeRequest(arun_list, true)){
-        	return arun_list;
-        }else {
-        	return null;
-        }
         
-    }*/
-    
-    //TODO: Multiple assessments java-api does not work
-    
     protected List<AssessmentRun> runAssessment(PackageVersion pkg, List<Tool> tools, 
     		Project project, List<PlatformVersion> platform_versions) {
     	List<AssessmentRun> arun_list = new ArrayList<AssessmentRun>();
