@@ -744,7 +744,8 @@ public class SwampApiWrapper {
 			Collections.sort(tool_versions, 
 					new Comparator<ToolVersion>() {
 				public int compare(ToolVersion i1, ToolVersion i2) {
-					return (i2.getVersion().compareTo(i1.getVersion()));
+					//return (i2.getReleaseDate().compareTo(i1.getReleaseDate()));
+                    return i2.getVersion().compareTo(i1.getVersion());
 				}
 			});
 			for(ToolVersion tool_version : tool_versions){
