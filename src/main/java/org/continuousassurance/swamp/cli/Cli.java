@@ -73,8 +73,8 @@ public class Cli {
 
 		try {
 			prop.load(new FileInputStream(filename));
-			cred_map.put("username",prop.getProperty("USERNAME"));
-			cred_map.put("password", prop.getProperty("PASSWORD"));
+			cred_map.put("username",prop.getProperty("username"));
+			cred_map.put("password", prop.getProperty("password"));
 		} catch (Exception e) {
 			e.printStackTrace();
 			return null;
@@ -236,9 +236,9 @@ public class Cli {
 				.desc("File path to the package archive file").build());
 		opt_grp.addOption(Option.builder("T").required(false).hasArg(false).longOpt("pkg-types")
 				.desc("list all package types").build());
-		opt_grp.addOption(Option.builder("K").required(false).hasArgs().argName("PACKAGE_UUID").longOpt("pkg-uuid")
+		opt_grp.addOption(Option.builder("D").required(false).hasArgs().argName("PACKAGE_UUID").longOpt("pkg-uuid")
 				.desc("Package UUID").build());
-
+		
 		options.addOptionGroup(opt_grp);
 
 		options.addOption(Option.builder("C").required(false).hasArg().argName("PACKAGE_CONF_FILEPATH").longOpt("pkg-conf")
@@ -284,12 +284,12 @@ public class Cli {
 					throw new CommandLineOptionException(optionMissingStr(options.getOption("P")));
 				}
 			}else {
-				if (parsed_options.hasOption("K") && parsed_options.hasOption("P")) {
-					cred_map.put("project-uuid", parsed_options.getOptionValue("P", null));
-					cred_map.put("package-uuid", parsed_options.getOptionValue("K", null));
+				// if (parsed_options.hasOption("D")) 
+				if (parsed_options.hasOption("P")) {
+					cred_map.put("delete", "delete");
+					cred_map.put("project-uuid", parsed_options.getOptionValue("P"));
+					cred_map.put("package-uuids", Arrays.asList(parsed_options.getOptionValues("D")));
 					return cred_map;
-				}else if (!parsed_options.hasOption("K")){
-					throw new CommandLineOptionException(optionMissingStr(options.getOption("K")));
 				}else {
 					throw new CommandLineOptionException(optionMissingStr(options.getOption("P")));
 				}
@@ -593,8 +593,12 @@ public class Cli {
 			for (String pkg_type : api_wrapper.getPackageTypesList()) {
 				System.out.println(pkg_type);
 			}
+		}else if (opt_map.containsKey("delete")) {
+			for (Object pkg_uuid : (List<String>)opt_map.get("package-uuids")) {
+				api_wrapper.deletePackage((String) pkg_uuid, (String)opt_map.get("project-uuid"));
+			}
 		}else {
-
+		
 			String package_uuid = api_wrapper.uploadPackage((String)opt_map.get("pkg-conf"),
 					(String)opt_map.get("pkg-archive"),
 					(String)opt_map.get("project-uuid"),

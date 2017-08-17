@@ -32,11 +32,10 @@ public enum AssessmentStatus {
 	
 	private static boolean inList(List<String> status_list, String status_str) {
 		for (String str : status_list) {
-			if (str.equals(status_list)) {
+			if (str.equals(status_str)) {
 				return true;
 			}
 		}
-		
 		return false;
 	}
 	

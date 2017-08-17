@@ -29,6 +29,7 @@ import org.continuousassurance.swamp.util.HandlerFactoryUtil;
 import net.sf.json.JSONException;
 import org.apache.http.client.CookieStore;
 import org.continuousassurance.swamp.cli.exceptions.*;
+import org.continuousassurance.swamp.cli.util.AssessmentStatus;
 
 import java.io.*;
 import java.util.*;
@@ -159,55 +160,65 @@ public class SwampApiWrapper {
 			String pkg_lang_version,
 			String pkg_build_sys,
 			String package_type) {
-
+		
 		String pkg_type = null;
 
-		switch (pkg_lang){
-		case "Java":
-			if(pkg_build_sys.toLowerCase().startsWith("android")) {
-				if (pkg_lang_version.toLowerCase().equals("android-apk")) {
-					pkg_type = "Android .apk";
-				}else {
+		if (pkg_build_sys.toLowerCase().equals("android-apk")) {
+			pkg_type = "Android .apk";
+		}else {
+			if (pkg_lang != null) {
+				pkg_lang = pkg_lang.split(" ")[0];
+			}
+			switch (pkg_lang){
+			case "Java":
+				if(pkg_build_sys.toLowerCase().startsWith("android")) {
 					pkg_type = "Android Java Source Code";
-				}
-			}else if(pkg_build_sys.toLowerCase().equals("java-bytecode")) {
-				if (pkg_lang_version.toLowerCase().startsWith("java-7")) {
-					pkg_type = "Java 7 Bytecode";
+				}else if(pkg_build_sys.toLowerCase().equals("java-bytecode")) {
+					if (pkg_lang_version.toLowerCase().startsWith("java-7")) {
+						pkg_type = "Java 7 Bytecode";
+					}else {
+						pkg_type = "Java 8 Bytecode";
+					}
 				}else {
-					pkg_type = "Java 8 Bytecode";
+					if (pkg_lang_version.toLowerCase().startsWith("java-7")) {
+						pkg_type = "Java 7 Source Code";
+					}else {
+						pkg_type = "Java 8 Source Code";
+					}
 				}
-			}else {
-				if (pkg_lang_version.toLowerCase().startsWith("java-7")) {
-					pkg_type = "Java 7 Source Code";
-				}else {
-					pkg_type = "Java 8 Source Code";
+				break;
+			case "C":
+			case "C++":
+				pkg_type = "C/C++";
+				break;
+			case "Python-2":
+				pkg_type = "Python2";
+				break;
+			case "Python-2 Python-3":
+				pkg_type = "Python3";
+				break;
+			case "Python-3":
+				pkg_type = "Python3";
+				break;
+			case "Ruby":
+				if (package_type == null) {
+					pkg_type = "Ruby";
+				}else if (package_type.toLowerCase().equals("rails")) {
+					pkg_type = "Ruby on Rails";
+				}else if (package_type.toLowerCase().equals("sinatra")) {
+					pkg_type = "Ruby Sinatra";
+				}else if (package_type.toLowerCase().equals("padrino")) {
+					pkg_type = "Ruby Padrino";
 				}
+				break;
+			case "PHP":
+			case "JavaScript":
+			case "HTML":
+			case "CSS":
+			case "XML":
+				pkg_type = "Web Scripting";
+				break;
 			}
-			break;
-		case "C":
-		case "C++":
-			pkg_type = "C/C++";
-			break;
-		case "Python-2":
-			pkg_type = "Python2";
-			break;
-		case "Python-2 Python-3":
-			pkg_type = "Python3";
-			break;
-		case "Python-3":
-			pkg_type = "Python3";
-			break;
-		case "Ruby":
-			if (package_type == null) {
-				pkg_type = "Ruby";
-			}else if (package_type.toLowerCase().equals("rails")) {
-				pkg_type = "Ruby on Rails";
-			}else if (package_type.toLowerCase().equals("sinatra")) {
-				pkg_type = "Ruby Sinatra";
-			}else if (package_type.toLowerCase().equals("padrino")) {
-				pkg_type = "Ruby Padrino";
-			}
-			break;
 		}
 		return pkg_type;
 	}
@@ -446,15 +457,29 @@ public class SwampApiWrapper {
 		ConversionMapImpl map = new ConversionMapImpl();
 		map.put("version_string", pkg_conf.getProperty("package-version"));
 		map.put("source_path", pkg_conf.getProperty("package-dir"));
+		
 		map.put("config_dir", pkg_conf.getProperty("config-dir", null));
 		map.put("config_cmd", pkg_conf.getProperty("config-cmd", null));
 		map.put("config_opt", pkg_conf.getProperty("config-opt", null));
+		
 		map.put("build_dir", pkg_conf.getProperty("build-dir", null));
 		map.put("build_system", pkg_conf.getProperty("build-sys", null));
 		map.put("build_file", pkg_conf.getProperty("build-file", null));
 		map.put("build_target", pkg_conf.getProperty("build-target", null));
 		map.put("build_opt", pkg_conf.getProperty("build-opt", null));
+		
+		map.put("language_version", pkg_conf.getProperty("package-language-version", null));
+		map.put("bytecode_class_path", pkg_conf.getProperty("package-classpath", null));
+		map.put("bytecode_aux_class_path", pkg_conf.getProperty("package-auxclasspath", null));
+		map.put("bytecode_source_path", pkg_conf.getProperty("package-srcdir", null));
+		
 		map.put("use_gradle_wrapper", pkg_conf.getProperty("gradle-wrapper", "false"));
+		map.put("android_sdk_target", pkg_conf.getProperty("android-sdk-target", null));
+		map.put("android_lint_target", pkg_conf.getProperty("android-lint-target", null));
+		map.put("android_redo_build", pkg_conf.getProperty("android-redo-build", "false"));
+		map.put("android_maven_plugin", pkg_conf.getProperty("android-maven-plugin", null));
+		map.put("maven_version", pkg_conf.getProperty("maven_version", null));
+		
 		return map;
 	}
 
@@ -464,10 +489,12 @@ public class SwampApiWrapper {
 
 		PackageThing pkg_thing = pkg_handler.create(pkg_conf.getProperty("package-short-name"),
 				pkg_conf.getProperty("package-description", "No Description Available"),
+				pkg_conf.getProperty("external-url", null),
 				getPkgTypeId(pkg_conf.getProperty("package-language"),
 						pkg_conf.getProperty("package-language-version", ""),
 						pkg_conf.getProperty("build-sys"),
-						pkg_conf.getProperty("package-type")));
+						pkg_conf.getProperty("package-type")),
+				pkg_conf.getProperty("package-language"));
 
 		ConversionMapImpl map = getPkgConfMap(pkg_conf);
 		map.put("project_uuid", project_uuid);
@@ -1148,7 +1175,9 @@ public class SwampApiWrapper {
 
 	public void printAssessmentStatus(String project_uuid, String assessment_uuid) {
 		AssessmentRecord assessment_record = getAssessmentRecord(project_uuid, assessment_uuid);        
-		System.out.printf("%s, %d", assessment_record.getStatus(), assessment_record.getWeaknessCount());
+		System.out.printf("%s, %d", 
+				AssessmentStatus.translateAssessmentStatus(assessment_record.getStatus()), 
+				assessment_record.getWeaknessCount());
 
 		if (assessment_record.getAssessmentResultUUID() == null){
 			System.out.printf("\n");
