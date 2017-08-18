@@ -20,8 +20,6 @@ class TestSwampApiWrapper(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         try:
-            #config_file = osp.join(osp.dirname(__file__),
-            #'resources/development.properties')
             config_file = osp.join(osp.dirname(__file__),
                                    'resources/userinfo.properties')
             user_conf = read_conf_into_dict(config_file)
@@ -177,53 +175,53 @@ class TestUpload(TestSwampApiWrapper):
     def test_upload_new_pkg1(self):
 
         pkg_conf = osp.join(osp.dirname(__file__),
-                            'resources/packages/swamp-gradle-example-1.0/package.conf')
+                            'resources/test_packages/swamp-gradle-example-1.0/package.conf')
         pkg_archive = osp.join(osp.dirname(__file__),
-                               'resources/packages/swamp-gradle-example-1.0/swamp-gradle-example-1.0.zip')
+                               'resources/test_packages/swamp-gradle-example-1.0/swamp-gradle-example-1.0.zip')
 
-        self.pkg_uuid = TestUpload.api_wrapper.uploadPackage(pkg_conf,
+        pkg_uuid = TestUpload.api_wrapper.uploadPackage(pkg_conf,
                                                              pkg_archive,
                                                              TestSwampApiWrapper.PROJECT,
                                                              True)
-        self.assertIsNotNone(self.pkg_uuid)
-        TestUpload.PKG_LIST.append(self.pkg_uuid)
+        self.assertIsNotNone(pkg_uuid)
+        TestUpload.PKG_LIST.append(pkg_uuid)
 
     def test_upload_new_pkg2(self):
-        pkg_conf = osp.join(osp.dirname(__file__), 'resources/packages/2048-android-1.8/package.conf')
-        pkg_archive = osp.join(osp.dirname(__file__), 'resources/packages/2048-android-1.8/v1.8.zip')
+        pkg_conf = osp.join(osp.dirname(__file__), 'resources/test_packages/2048-android-1.8/package.conf')
+        pkg_archive = osp.join(osp.dirname(__file__), 'resources/test_packages/2048-android-1.8/v1.8.zip')
 
-        self.pkg_uuid = TestUpload.api_wrapper.uploadPackage(pkg_conf,
+        pkg_uuid = TestUpload.api_wrapper.uploadPackage(pkg_conf,
                                                              pkg_archive,
                                                              TestSwampApiWrapper.PROJECT,
                                                              True)
-        self.assertIsNotNone(self.pkg_uuid)
-        TestUpload.PKG_LIST.append(self.pkg_uuid)
+        self.assertIsNotNone(pkg_uuid)
+        TestUpload.PKG_LIST.append(pkg_uuid)
 
     def test_upload_new_pkg3(self):
-        pkg_conf = osp.join(osp.dirname(__file__), 'resources/packages/beautifulsoup4-4.3.2/package.conf')
-        pkg_archive = osp.join(osp.dirname(__file__), 'resources/packages/beautifulsoup4-4.3.2/beautifulsoup4-4.3.2.tar.gz')
+        pkg_conf = osp.join(osp.dirname(__file__), 'resources/test_packages/beautifulsoup4-4.3.2/package.conf')
+        pkg_archive = osp.join(osp.dirname(__file__), 'resources/test_packages/beautifulsoup4-4.3.2/beautifulsoup4-4.3.2.tar.gz')
 
-        self.pkg_uuid = TestUpload.api_wrapper.uploadPackage(pkg_conf,
+        pkg_uuid = TestUpload.api_wrapper.uploadPackage(pkg_conf,
                                                              pkg_archive,
                                                              TestSwampApiWrapper.PROJECT,
                                                              True)
-        self.assertIsNotNone(self.pkg_uuid)
-        TestUpload.PKG_LIST.append(self.pkg_uuid)
+        self.assertIsNotNone(pkg_uuid)
+        TestUpload.PKG_LIST.append(pkg_uuid)
 
     def test_upload_new_pkg4(self):
-        pkg_conf = osp.join(osp.dirname(__file__), 'resources/packages/capistrano-3.4.0/package.conf')
-        pkg_archive = osp.join(osp.dirname(__file__), 'resources/packages/capistrano-3.4.0/capistrano-3.4.0.gem')
+        pkg_conf = osp.join(osp.dirname(__file__), 'resources/test_packages/capistrano-3.4.0/package.conf')
+        pkg_archive = osp.join(osp.dirname(__file__), 'resources/test_packages/capistrano-3.4.0/capistrano-3.4.0.gem')
 
-        self.pkg_uuid = TestUpload.api_wrapper.uploadPackage(pkg_conf,
+        pkg_uuid = TestUpload.api_wrapper.uploadPackage(pkg_conf,
                                                              pkg_archive,
                                                              TestSwampApiWrapper.PROJECT,
                                                              True)
-        self.assertIsNotNone(self.pkg_uuid)
-        TestUpload.PKG_LIST.append(self.pkg_uuid)
+        self.assertIsNotNone(pkg_uuid)
+        TestUpload.PKG_LIST.append(pkg_uuid)
 
     def test_upload_new_pkg5(self):
-        pkg_conf = osp.join(osp.dirname(__file__), 'resources/packages/java-cli-1.3.0/package.conf')
-        pkg_archive = osp.join(osp.dirname(__file__), 'resources/packages/java-cli-1.3.0/java-cli-1.1.zip')
+        pkg_conf = osp.join(osp.dirname(__file__), 'resources/test_packages/java-cli-1.3.0/package.conf')
+        pkg_archive = osp.join(osp.dirname(__file__), 'resources/test_packages/java-cli-1.3.0/java-cli-1.1.zip')
 
         pkg_uuid = TestUpload.api_wrapper.uploadPackage(pkg_conf,
                                                         pkg_archive,
@@ -234,8 +232,8 @@ class TestUpload(TestSwampApiWrapper):
 
     def test_upload_new_pkg6(self):
 
-        pkg_conf = osp.join(osp.dirname(__file__), 'resources/packages/lighttpd-1.4.45/package.conf')
-        pkg_archive = osp.join(osp.dirname(__file__), 'resources/packages/lighttpd-1.4.45/lighttpd-1.4.45.tar.xz')
+        pkg_conf = osp.join(osp.dirname(__file__), 'resources/test_packages/lighttpd-1.4.45/package.conf')
+        pkg_archive = osp.join(osp.dirname(__file__), 'resources/test_packages/lighttpd-1.4.45/lighttpd-1.4.45.tar.xz')
 
         pkg_uuid = TestUpload.api_wrapper.uploadPackage(pkg_conf,
                                                         pkg_archive,
@@ -246,8 +244,8 @@ class TestUpload(TestSwampApiWrapper):
 
     def test_upload_new_pkg7(self):
 
-        pkg_conf = osp.join(osp.dirname(__file__), 'resources/packages/moodle-3.1.1/package.conf')
-        pkg_archive = osp.join(osp.dirname(__file__), 'resources/packages/moodle-3.1.1/moodle-3.1.1.zip')
+        pkg_conf = osp.join(osp.dirname(__file__), 'resources/test_packages/moodle-3.1.1/package.conf')
+        pkg_archive = osp.join(osp.dirname(__file__), 'resources/test_packages/moodle-3.1.1/moodle-3.1.1.zip')
 
         pkg_uuid = TestUpload.api_wrapper.uploadPackage(pkg_conf,
                                                         pkg_archive,
@@ -258,8 +256,8 @@ class TestUpload(TestSwampApiWrapper):
 
     def test_upload_new_pkg8(self):
 
-        pkg_conf = osp.join(osp.dirname(__file__), 'resources/packages/pylxc-0.0.3/package.conf')
-        pkg_archive = osp.join(osp.dirname(__file__), 'resources/packages/pylxc-0.0.3/pylxc-0.0.3.tar.gz')
+        pkg_conf = osp.join(osp.dirname(__file__), 'resources/test_packages/pylxc-0.0.3/package.conf')
+        pkg_archive = osp.join(osp.dirname(__file__), 'resources/test_packages/pylxc-0.0.3/pylxc-0.0.3.tar.gz')
 
         pkg_uuid = TestUpload.api_wrapper.uploadPackage(pkg_conf,
                                                         pkg_archive,
@@ -270,8 +268,8 @@ class TestUpload(TestSwampApiWrapper):
 
     def test_upload_new_pkg9(self):
 
-        pkg_conf = osp.join(osp.dirname(__file__), 'resources/packages/railsgoat-9052b4fcf0/package.conf')
-        pkg_archive = osp.join(osp.dirname(__file__), 'resources/packages/railsgoat-9052b4fcf0/railsgoat-9052b4fcf0.zip')
+        pkg_conf = osp.join(osp.dirname(__file__), 'resources/test_packages/railsgoat-9052b4fcf0/package.conf')
+        pkg_archive = osp.join(osp.dirname(__file__), 'resources/test_packages/railsgoat-9052b4fcf0/railsgoat-9052b4fcf0.zip')
 
         pkg_uuid = TestUpload.api_wrapper.uploadPackage(pkg_conf,
                                                         pkg_archive,
@@ -282,8 +280,8 @@ class TestUpload(TestSwampApiWrapper):
 
     def test_upload_new_pkg10(self):
 
-        pkg_conf = osp.join(osp.dirname(__file__), 'resources/packages/sandrorat-apk-unknown/package.conf')
-        pkg_archive = osp.join(osp.dirname(__file__), 'resources/packages/sandrorat-apk-unknown/SandroRat.apk')
+        pkg_conf = osp.join(osp.dirname(__file__), 'resources/test_packages/sandrorat-apk-unknown/package.conf')
+        pkg_archive = osp.join(osp.dirname(__file__), 'resources/test_packages/sandrorat-apk-unknown/SandroRat.apk')
 
         pkg_uuid = TestUpload.api_wrapper.uploadPackage(pkg_conf,
                                                         pkg_archive,
@@ -294,8 +292,8 @@ class TestUpload(TestSwampApiWrapper):
 
     def test_upload_new_pkg11(self):
 
-        pkg_conf = osp.join(osp.dirname(__file__), 'resources/packages/scarf-io-1.0/package.conf')
-        pkg_archive = osp.join(osp.dirname(__file__), 'resources/packages/scarf-io-1.0/scarf-io.zip')
+        pkg_conf = osp.join(osp.dirname(__file__), 'resources/test_packages/scarf-io-1.0/package.conf')
+        pkg_archive = osp.join(osp.dirname(__file__), 'resources/test_packages/scarf-io-1.0/scarf-io.zip')
 
         pkg_uuid = TestUpload.api_wrapper.uploadPackage(pkg_conf,
                                                         pkg_archive,
@@ -305,8 +303,8 @@ class TestUpload(TestSwampApiWrapper):
         TestUpload.PKG_LIST.append(pkg_uuid)
 
     def test_upload_new_pkg12(self):
-        pkg_conf = osp.join(osp.dirname(__file__), 'resources/packages/sinatra-starter-2ad9cba672/package.conf')
-        pkg_archive = osp.join(osp.dirname(__file__), 'resources/packages/sinatra-starter-2ad9cba672/sinatra-starter-2ad9cba672.zip')
+        pkg_conf = osp.join(osp.dirname(__file__), 'resources/test_packages/sinatra-starter-2ad9cba672/package.conf')
+        pkg_archive = osp.join(osp.dirname(__file__), 'resources/test_packages/sinatra-starter-2ad9cba672/sinatra-starter-2ad9cba672.zip')
 
         pkg_uuid = TestUpload.api_wrapper.uploadPackage(pkg_conf,
                                                         pkg_archive,
@@ -317,8 +315,8 @@ class TestUpload(TestSwampApiWrapper):
 
     def test_upload_new_pkg13(self):
 
-        pkg_conf = osp.join(osp.dirname(__file__), 'resources/packages/swamp-gradle-example-1.0/package.conf')
-        pkg_archive = osp.join(osp.dirname(__file__), 'resources/packages/swamp-gradle-example-1.0/swamp-gradle-example-1.0.zip')
+        pkg_conf = osp.join(osp.dirname(__file__), 'resources/test_packages/swamp-gradle-example-1.0/package.conf')
+        pkg_archive = osp.join(osp.dirname(__file__), 'resources/test_packages/swamp-gradle-example-1.0/swamp-gradle-example-1.0.zip')
 
         pkg_uuid = TestUpload.api_wrapper.uploadPackage(pkg_conf,
                                                         pkg_archive,
@@ -328,8 +326,8 @@ class TestUpload(TestSwampApiWrapper):
         TestUpload.PKG_LIST.append(pkg_uuid)
 
     def test_upload_new_pkg14(self):
-        pkg_conf = osp.join(osp.dirname(__file__), 'resources/packages/tomcat-coyote-7.0.27/package.conf')
-        pkg_archive = osp.join(osp.dirname(__file__), 'resources/packages/tomcat-coyote-7.0.27/tomcat-coyote-7.0.27.tar.gz')
+        pkg_conf = osp.join(osp.dirname(__file__), 'resources/test_packages/tomcat-coyote-7.0.27/package.conf')
+        pkg_archive = osp.join(osp.dirname(__file__), 'resources/test_packages/tomcat-coyote-7.0.27/tomcat-coyote-7.0.27.tar.gz')
 
         pkg_uuid = TestUpload.api_wrapper.uploadPackage(pkg_conf,
                                                         pkg_archive,
@@ -339,8 +337,8 @@ class TestUpload(TestSwampApiWrapper):
         TestUpload.PKG_LIST.append(pkg_uuid)
 
     def test_upload_new_pkg15(self):
-        pkg_conf = osp.join(osp.dirname(__file__), 'resources/packages/wordpress-4.5.1/package.conf')
-        pkg_archive = osp.join(osp.dirname(__file__), 'resources/packages/wordpress-4.5.1/WordPress-4.5.1.zip')
+        pkg_conf = osp.join(osp.dirname(__file__), 'resources/test_packages/wordpress-4.5.1/package.conf')
+        pkg_archive = osp.join(osp.dirname(__file__), 'resources/test_packages/wordpress-4.5.1/WordPress-4.5.1.zip')
 
         pkg_uuid = TestUpload.api_wrapper.uploadPackage(pkg_conf,
                                                         pkg_archive,
@@ -384,9 +382,9 @@ class TestAssess(TestSwampApiWrapper):
     def test_get_run_assess1(self):
 
         pkg_conf = osp.join(osp.dirname(__file__),
-                            'resources/packages/swamp-gradle-example-1.0/package.conf')
+                            'resources/test_packages/swamp-gradle-example-1.0/package.conf')
         pkg_archive = osp.join(osp.dirname(__file__),
-                               'resources/packages/swamp-gradle-example-1.0/swamp-gradle-example-1.0.zip')
+                               'resources/test_packages/swamp-gradle-example-1.0/swamp-gradle-example-1.0.zip')
 
         pkg_uuid = TestAssess.API_WRAPPER.uploadPackage(pkg_conf,
                                                         pkg_archive,
@@ -404,8 +402,8 @@ class TestAssess(TestSwampApiWrapper):
         self.assertIsNotNone(arun_uuid)
 
     def test_get_run_assess2(self):
-        pkg_conf = osp.join(osp.dirname(__file__), 'resources/packages/2048-android-1.8/package.conf')
-        pkg_archive = osp.join(osp.dirname(__file__), 'resources/packages/2048-android-1.8/v1.8.zip')
+        pkg_conf = osp.join(osp.dirname(__file__), 'resources/test_packages/2048-android-1.8/package.conf')
+        pkg_archive = osp.join(osp.dirname(__file__), 'resources/test_packages/2048-android-1.8/v1.8.zip')
 
         pkg_uuid = TestAssess.API_WRAPPER.uploadPackage(pkg_conf,
                                                         pkg_archive,
@@ -423,8 +421,8 @@ class TestAssess(TestSwampApiWrapper):
         self.assertIsNotNone(arun_uuid)
 
     def test_get_run_assess3(self):
-        pkg_conf = osp.join(osp.dirname(__file__), 'resources/packages/beautifulsoup4-4.3.2/package.conf')
-        pkg_archive = osp.join(osp.dirname(__file__), 'resources/packages/beautifulsoup4-4.3.2/beautifulsoup4-4.3.2.tar.gz')
+        pkg_conf = osp.join(osp.dirname(__file__), 'resources/test_packages/beautifulsoup4-4.3.2/package.conf')
+        pkg_archive = osp.join(osp.dirname(__file__), 'resources/test_packages/beautifulsoup4-4.3.2/beautifulsoup4-4.3.2.tar.gz')
 
         pkg_uuid = TestAssess.API_WRAPPER.uploadPackage(pkg_conf,
                                                         pkg_archive,
@@ -442,8 +440,8 @@ class TestAssess(TestSwampApiWrapper):
         self.assertIsNotNone(arun_uuid)
 
     def test_get_run_assess4(self):
-        pkg_conf = osp.join(osp.dirname(__file__), 'resources/packages/capistrano-3.4.0/package.conf')
-        pkg_archive = osp.join(osp.dirname(__file__), 'resources/packages/capistrano-3.4.0/capistrano-3.4.0.gem')
+        pkg_conf = osp.join(osp.dirname(__file__), 'resources/test_packages/capistrano-3.4.0/package.conf')
+        pkg_archive = osp.join(osp.dirname(__file__), 'resources/test_packages/capistrano-3.4.0/capistrano-3.4.0.gem')
 
         pkg_uuid = TestAssess.API_WRAPPER.uploadPackage(pkg_conf,
                                                         pkg_archive,
@@ -461,8 +459,8 @@ class TestAssess(TestSwampApiWrapper):
         self.assertIsNotNone(arun_uuid)
 
     def test_get_run_assess5(self):
-        pkg_conf = osp.join(osp.dirname(__file__), 'resources/packages/java-cli-1.3.0/package.conf')
-        pkg_archive = osp.join(osp.dirname(__file__), 'resources/packages/java-cli-1.3.0/java-cli-1.1.zip')
+        pkg_conf = osp.join(osp.dirname(__file__), 'resources/test_packages/java-cli-1.3.0/package.conf')
+        pkg_archive = osp.join(osp.dirname(__file__), 'resources/test_packages/java-cli-1.3.0/java-cli-1.1.zip')
 
         pkg_uuid = TestAssess.API_WRAPPER.uploadPackage(pkg_conf,
                                                         pkg_archive,
@@ -481,8 +479,8 @@ class TestAssess(TestSwampApiWrapper):
 
     def test_get_run_assess6(self):
 
-        pkg_conf = osp.join(osp.dirname(__file__), 'resources/packages/lighttpd-1.4.45/package.conf')
-        pkg_archive = osp.join(osp.dirname(__file__), 'resources/packages/lighttpd-1.4.45/lighttpd-1.4.45.tar.xz')
+        pkg_conf = osp.join(osp.dirname(__file__), 'resources/test_packages/lighttpd-1.4.45/package.conf')
+        pkg_archive = osp.join(osp.dirname(__file__), 'resources/test_packages/lighttpd-1.4.45/lighttpd-1.4.45.tar.xz')
 
         pkg_uuid = TestAssess.API_WRAPPER.uploadPackage(pkg_conf,
                                                         pkg_archive,
@@ -501,8 +499,8 @@ class TestAssess(TestSwampApiWrapper):
 
     def test_get_run_assess7(self):
 
-        pkg_conf = osp.join(osp.dirname(__file__), 'resources/packages/moodle-3.1.1/package.conf')
-        pkg_archive = osp.join(osp.dirname(__file__), 'resources/packages/moodle-3.1.1/moodle-3.1.1.zip')
+        pkg_conf = osp.join(osp.dirname(__file__), 'resources/test_packages/moodle-3.1.1/package.conf')
+        pkg_archive = osp.join(osp.dirname(__file__), 'resources/test_packages/moodle-3.1.1/moodle-3.1.1.zip')
 
         pkg_uuid = TestAssess.API_WRAPPER.uploadPackage(pkg_conf,
                                                         pkg_archive,
@@ -521,8 +519,8 @@ class TestAssess(TestSwampApiWrapper):
 
     def test_get_run_assess8(self):
 
-        pkg_conf = osp.join(osp.dirname(__file__), 'resources/packages/pylxc-0.0.3/package.conf')
-        pkg_archive = osp.join(osp.dirname(__file__), 'resources/packages/pylxc-0.0.3/pylxc-0.0.3.tar.gz')
+        pkg_conf = osp.join(osp.dirname(__file__), 'resources/test_packages/pylxc-0.0.3/package.conf')
+        pkg_archive = osp.join(osp.dirname(__file__), 'resources/test_packages/pylxc-0.0.3/pylxc-0.0.3.tar.gz')
 
         pkg_uuid = TestAssess.API_WRAPPER.uploadPackage(pkg_conf,
                                                         pkg_archive,
@@ -541,8 +539,8 @@ class TestAssess(TestSwampApiWrapper):
 
     def test_get_run_assess9(self):
 
-        pkg_conf = osp.join(osp.dirname(__file__), 'resources/packages/railsgoat-9052b4fcf0/package.conf')
-        pkg_archive = osp.join(osp.dirname(__file__), 'resources/packages/railsgoat-9052b4fcf0/railsgoat-9052b4fcf0.zip')
+        pkg_conf = osp.join(osp.dirname(__file__), 'resources/test_packages/railsgoat-9052b4fcf0/package.conf')
+        pkg_archive = osp.join(osp.dirname(__file__), 'resources/test_packages/railsgoat-9052b4fcf0/railsgoat-9052b4fcf0.zip')
 
         pkg_uuid = TestAssess.API_WRAPPER.uploadPackage(pkg_conf,
                                                         pkg_archive,
@@ -561,8 +559,8 @@ class TestAssess(TestSwampApiWrapper):
 
     def test_get_run_assess10(self):
 
-        pkg_conf = osp.join(osp.dirname(__file__), 'resources/packages/sandrorat-apk-unknown/package.conf')
-        pkg_archive = osp.join(osp.dirname(__file__), 'resources/packages/sandrorat-apk-unknown/SandroRat.apk')
+        pkg_conf = osp.join(osp.dirname(__file__), 'resources/test_packages/sandrorat-apk-unknown/package.conf')
+        pkg_archive = osp.join(osp.dirname(__file__), 'resources/test_packages/sandrorat-apk-unknown/SandroRat.apk')
 
         pkg_uuid = TestAssess.API_WRAPPER.uploadPackage(pkg_conf,
                                                         pkg_archive,
@@ -581,8 +579,8 @@ class TestAssess(TestSwampApiWrapper):
 
     def test_get_run_assess11(self):
 
-        pkg_conf = osp.join(osp.dirname(__file__), 'resources/packages/scarf-io-1.0/package.conf')
-        pkg_archive = osp.join(osp.dirname(__file__), 'resources/packages/scarf-io-1.0/scarf-io.zip')
+        pkg_conf = osp.join(osp.dirname(__file__), 'resources/test_packages/scarf-io-1.0/package.conf')
+        pkg_archive = osp.join(osp.dirname(__file__), 'resources/test_packages/scarf-io-1.0/scarf-io.zip')
 
         pkg_uuid = TestAssess.API_WRAPPER.uploadPackage(pkg_conf,
                                                         pkg_archive,
@@ -600,8 +598,8 @@ class TestAssess(TestSwampApiWrapper):
         self.assertIsNotNone(arun_uuid)
 
     def test_get_run_assess12(self):
-        pkg_conf = osp.join(osp.dirname(__file__), 'resources/packages/sinatra-starter-2ad9cba672/package.conf')
-        pkg_archive = osp.join(osp.dirname(__file__), 'resources/packages/sinatra-starter-2ad9cba672/sinatra-starter-2ad9cba672.zip')
+        pkg_conf = osp.join(osp.dirname(__file__), 'resources/test_packages/sinatra-starter-2ad9cba672/package.conf')
+        pkg_archive = osp.join(osp.dirname(__file__), 'resources/test_packages/sinatra-starter-2ad9cba672/sinatra-starter-2ad9cba672.zip')
 
         pkg_uuid = TestAssess.API_WRAPPER.uploadPackage(pkg_conf,
                                                         pkg_archive,
@@ -620,8 +618,8 @@ class TestAssess(TestSwampApiWrapper):
 
     def test_get_run_assess13(self):
 
-        pkg_conf = osp.join(osp.dirname(__file__), 'resources/packages/swamp-gradle-example-1.0/package.conf')
-        pkg_archive = osp.join(osp.dirname(__file__), 'resources/packages/swamp-gradle-example-1.0/swamp-gradle-example-1.0.zip')
+        pkg_conf = osp.join(osp.dirname(__file__), 'resources/test_packages/swamp-gradle-example-1.0/package.conf')
+        pkg_archive = osp.join(osp.dirname(__file__), 'resources/test_packages/swamp-gradle-example-1.0/swamp-gradle-example-1.0.zip')
 
         pkg_uuid = TestAssess.API_WRAPPER.uploadPackage(pkg_conf,
                                                         pkg_archive,
@@ -639,8 +637,8 @@ class TestAssess(TestSwampApiWrapper):
         self.assertIsNotNone(arun_uuid)
 
     def test_get_run_assess14(self):
-        pkg_conf = osp.join(osp.dirname(__file__), 'resources/packages/tomcat-coyote-7.0.27/package.conf')
-        pkg_archive = osp.join(osp.dirname(__file__), 'resources/packages/tomcat-coyote-7.0.27/tomcat-coyote-7.0.27.tar.gz')
+        pkg_conf = osp.join(osp.dirname(__file__), 'resources/test_packages/tomcat-coyote-7.0.27/package.conf')
+        pkg_archive = osp.join(osp.dirname(__file__), 'resources/test_packages/tomcat-coyote-7.0.27/tomcat-coyote-7.0.27.tar.gz')
 
         pkg_uuid = TestAssess.API_WRAPPER.uploadPackage(pkg_conf,
                                                         pkg_archive,
@@ -658,8 +656,8 @@ class TestAssess(TestSwampApiWrapper):
         self.assertIsNotNone(arun_uuid)
 
     def test_get_run_assess15(self):
-        pkg_conf = osp.join(osp.dirname(__file__), 'resources/packages/wordpress-4.5.1/package.conf')
-        pkg_archive = osp.join(osp.dirname(__file__), 'resources/packages/wordpress-4.5.1/WordPress-4.5.1.zip')
+        pkg_conf = osp.join(osp.dirname(__file__), 'resources/test_packages/wordpress-4.5.1/package.conf')
+        pkg_archive = osp.join(osp.dirname(__file__), 'resources/test_packages/wordpress-4.5.1/WordPress-4.5.1.zip')
 
         pkg_uuid = TestAssess.API_WRAPPER.uploadPackage(pkg_conf,
                                                         pkg_archive,
@@ -695,9 +693,9 @@ class TestReporting(TestSwampApiWrapper):
     def test_get_results1(self):
 
         pkg_conf = osp.join(osp.dirname(__file__),
-                            'resources/packages/swamp-gradle-example-1.0/package.conf')
+                            'resources/test_packages/swamp-gradle-example-1.0/package.conf')
         pkg_archive = osp.join(osp.dirname(__file__),
-                               'resources/packages/swamp-gradle-example-1.0/swamp-gradle-example-1.0.zip')
+                               'resources/test_packages/swamp-gradle-example-1.0/swamp-gradle-example-1.0.zip')
 
         pkg_uuid = TestReporting.API_WRAPPER.uploadPackage(pkg_conf,
                                                         pkg_archive,
@@ -719,13 +717,13 @@ class TestReporting(TestSwampApiWrapper):
             assessment_record = TestReporting.API_WRAPPER.getAssessmentRecord(TestSwampApiWrapper.PROJECT,
                                                                                assessment_run.getUUIDString())
             status = AssessmentStatus.translateAssessmentStatus(assessment_record.getStatus())
-            print(status, assessment_record.getStatus())
+            #print(status, assessment_record.getStatus())
             time.sleep(10);
             if status == AssessmentStatus.FAILED or status == AssessmentStatus.SUCCESS:
                 arun_results_uuid = assessment_record.getAssessmentResultUUID()
                 break;
 
-        outfile = osp.join(os.getcwd(), 'outfile.xml')
+        outfile = osp.join(osp.dirname(__file__), 'outfile.xml')
         TestReporting.API_WRAPPER.getAssessmentResults(TestSwampApiWrapper.PROJECT,
                                                        arun_results_uuid,
                                                        outfile)
@@ -733,4 +731,4 @@ class TestReporting(TestSwampApiWrapper):
 
 if __name__ == '__main__':
     BasicConfigurator.configure(NullAppender())
-    unittest.main()
+    unittest.main(verbosity=2)
