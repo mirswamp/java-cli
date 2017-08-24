@@ -184,6 +184,7 @@ class TestUpload(TestSwampApiWrapper):
         pkg_uuid = TestUpload.api_wrapper.uploadPackage(pkg_conf,
                                                         pkg_archive,
                                                         TestSwampApiWrapper.PROJECT,
+                                                        None,
                                                         True)
         self.assertIsNotNone(pkg_uuid)
         TestUpload.PKG_LIST.append(pkg_uuid)
@@ -197,6 +198,7 @@ class TestUpload(TestSwampApiWrapper):
         pkg_uuid = TestUpload.api_wrapper.uploadPackage(pkg_conf,
                                                         pkg_archive,
                                                         TestSwampApiWrapper.PROJECT,
+                                                        None,
                                                         True)
         self.assertIsNotNone(pkg_uuid)
         TestUpload.PKG_LIST.append(pkg_uuid)
@@ -210,7 +212,9 @@ class TestUpload(TestSwampApiWrapper):
         pkg_uuid = TestUpload.api_wrapper.uploadPackage(pkg_conf,
                                                         pkg_archive,
                                                         TestSwampApiWrapper.PROJECT,
+                                                        None,
                                                         True)
+
         self.assertIsNotNone(pkg_uuid)
         TestUpload.PKG_LIST.append(pkg_uuid)
 
@@ -223,7 +227,9 @@ class TestUpload(TestSwampApiWrapper):
         pkg_uuid = TestUpload.api_wrapper.uploadPackage(pkg_conf,
                                                         pkg_archive,
                                                         TestSwampApiWrapper.PROJECT,
+                                                        None,
                                                         True)
+
         self.assertIsNotNone(pkg_uuid)
         TestUpload.PKG_LIST.append(pkg_uuid)
 
@@ -236,6 +242,7 @@ class TestUpload(TestSwampApiWrapper):
         pkg_uuid = TestUpload.api_wrapper.uploadPackage(pkg_conf,
                                                         pkg_archive,
                                                         TestSwampApiWrapper.PROJECT,
+                                                        None,
                                                         True)
         self.assertIsNotNone(pkg_uuid)
         TestUpload.PKG_LIST.append(pkg_uuid)
@@ -250,6 +257,7 @@ class TestUpload(TestSwampApiWrapper):
         pkg_uuid = TestUpload.api_wrapper.uploadPackage(pkg_conf,
                                                         pkg_archive,
                                                         TestSwampApiWrapper.PROJECT,
+                                                        None,
                                                         True)
         self.assertIsNotNone(pkg_uuid)
         TestUpload.PKG_LIST.append(pkg_uuid)
@@ -264,6 +272,7 @@ class TestUpload(TestSwampApiWrapper):
         pkg_uuid = TestUpload.api_wrapper.uploadPackage(pkg_conf,
                                                         pkg_archive,
                                                         TestSwampApiWrapper.PROJECT,
+                                                        None,
                                                         True)
         self.assertIsNotNone(pkg_uuid)
         TestUpload.PKG_LIST.append(pkg_uuid)
@@ -278,6 +287,7 @@ class TestUpload(TestSwampApiWrapper):
         pkg_uuid = TestUpload.api_wrapper.uploadPackage(pkg_conf,
                                                         pkg_archive,
                                                         TestSwampApiWrapper.PROJECT,
+                                                        None,
                                                         True)
         self.assertIsNotNone(pkg_uuid)
         TestUpload.PKG_LIST.append(pkg_uuid)
@@ -289,9 +299,12 @@ class TestUpload(TestSwampApiWrapper):
         pkg_archive = osp.join(osp.dirname(__file__),
                                'resources/test_packages/railsgoat-9052b4fcf0/railsgoat-9052b4fcf0.zip')
 
+        pkg_deps = osp.join(osp.dirname(__file__),
+                            'resources/test_packages/railsgoat-9052b4fcf0/pkg-os-dependencies.conf')
         pkg_uuid = TestUpload.api_wrapper.uploadPackage(pkg_conf,
                                                         pkg_archive,
                                                         TestSwampApiWrapper.PROJECT,
+                                                        pkg_deps,
                                                         True)
         self.assertIsNotNone(pkg_uuid)
         TestUpload.PKG_LIST.append(pkg_uuid)
@@ -306,6 +319,7 @@ class TestUpload(TestSwampApiWrapper):
         pkg_uuid = TestUpload.api_wrapper.uploadPackage(pkg_conf,
                                                         pkg_archive,
                                                         TestSwampApiWrapper.PROJECT,
+                                                        None,
                                                         True)
         self.assertIsNotNone(pkg_uuid)
         TestUpload.PKG_LIST.append(pkg_uuid)
@@ -320,6 +334,7 @@ class TestUpload(TestSwampApiWrapper):
         pkg_uuid = TestUpload.api_wrapper.uploadPackage(pkg_conf,
                                                         pkg_archive,
                                                         TestSwampApiWrapper.PROJECT,
+                                                        None,
                                                         True)
         self.assertIsNotNone(pkg_uuid)
         TestUpload.PKG_LIST.append(pkg_uuid)
@@ -333,6 +348,7 @@ class TestUpload(TestSwampApiWrapper):
         pkg_uuid = TestUpload.api_wrapper.uploadPackage(pkg_conf,
                                                         pkg_archive,
                                                         TestSwampApiWrapper.PROJECT,
+                                                        None,
                                                         True)
         self.assertIsNotNone(pkg_uuid)
         TestUpload.PKG_LIST.append(pkg_uuid)
@@ -347,6 +363,7 @@ class TestUpload(TestSwampApiWrapper):
         pkg_uuid = TestUpload.api_wrapper.uploadPackage(pkg_conf,
                                                         pkg_archive,
                                                         TestSwampApiWrapper.PROJECT,
+                                                        None,
                                                         True)
         self.assertIsNotNone(pkg_uuid)
         TestUpload.PKG_LIST.append(pkg_uuid)
@@ -360,6 +377,7 @@ class TestUpload(TestSwampApiWrapper):
         pkg_uuid = TestUpload.api_wrapper.uploadPackage(pkg_conf,
                                                         pkg_archive,
                                                         TestSwampApiWrapper.PROJECT,
+                                                        None,
                                                         True)
         self.assertIsNotNone(pkg_uuid)
         TestUpload.PKG_LIST.append(pkg_uuid)
@@ -373,6 +391,7 @@ class TestUpload(TestSwampApiWrapper):
         pkg_uuid = TestUpload.api_wrapper.uploadPackage(pkg_conf,
                                                         pkg_archive,
                                                         TestSwampApiWrapper.PROJECT,
+                                                        None,
                                                         True)
         self.assertIsNotNone(pkg_uuid)
         TestUpload.PKG_LIST.append(pkg_uuid)
@@ -388,6 +407,7 @@ class TestUpload(TestSwampApiWrapper):
                           pkg_conf,
                           pkg_archive,
                           'd47380ea-a4ef-0a88-0a17-aab43d80fdbe',
+                          None,
                           True)
 
 
@@ -427,6 +447,7 @@ class TestAssess(TestSwampApiWrapper):
         pkg_uuid = TestAssess.API_WRAPPER.uploadPackage(pkg_conf,
                                                         pkg_archive,
                                                         TestSwampApiWrapper.PROJECT,
+                                                        None,
                                                         True)
         self.assertIsNotNone(pkg_uuid)
         TestAssess.PKG_LIST.append(pkg_uuid)
@@ -448,6 +469,7 @@ class TestAssess(TestSwampApiWrapper):
         pkg_uuid = TestAssess.API_WRAPPER.uploadPackage(pkg_conf,
                                                         pkg_archive,
                                                         TestSwampApiWrapper.PROJECT,
+                                                        None,
                                                         True)
         self.assertIsNotNone(pkg_uuid)
         TestAssess.PKG_LIST.append(pkg_uuid)
@@ -469,6 +491,7 @@ class TestAssess(TestSwampApiWrapper):
         pkg_uuid = TestAssess.API_WRAPPER.uploadPackage(pkg_conf,
                                                         pkg_archive,
                                                         TestSwampApiWrapper.PROJECT,
+                                                        None,
                                                         True)
         self.assertIsNotNone(pkg_uuid)
         TestAssess.PKG_LIST.append(pkg_uuid)
@@ -490,6 +513,7 @@ class TestAssess(TestSwampApiWrapper):
         pkg_uuid = TestAssess.API_WRAPPER.uploadPackage(pkg_conf,
                                                         pkg_archive,
                                                         TestSwampApiWrapper.PROJECT,
+                                                        None,
                                                         True)
         self.assertIsNotNone(pkg_uuid)
         TestAssess.PKG_LIST.append(pkg_uuid)
@@ -511,6 +535,7 @@ class TestAssess(TestSwampApiWrapper):
         pkg_uuid = TestAssess.API_WRAPPER.uploadPackage(pkg_conf,
                                                         pkg_archive,
                                                         TestSwampApiWrapper.PROJECT,
+                                                        None,
                                                         True)
         self.assertIsNotNone(pkg_uuid)
         TestAssess.PKG_LIST.append(pkg_uuid)
@@ -533,6 +558,7 @@ class TestAssess(TestSwampApiWrapper):
         pkg_uuid = TestAssess.API_WRAPPER.uploadPackage(pkg_conf,
                                                         pkg_archive,
                                                         TestSwampApiWrapper.PROJECT,
+                                                        None,
                                                         True)
         self.assertIsNotNone(pkg_uuid)
         TestAssess.PKG_LIST.append(pkg_uuid)
@@ -555,6 +581,7 @@ class TestAssess(TestSwampApiWrapper):
         pkg_uuid = TestAssess.API_WRAPPER.uploadPackage(pkg_conf,
                                                         pkg_archive,
                                                         TestSwampApiWrapper.PROJECT,
+                                                        None,
                                                         True)
         self.assertIsNotNone(pkg_uuid)
         TestAssess.PKG_LIST.append(pkg_uuid)
@@ -577,6 +604,7 @@ class TestAssess(TestSwampApiWrapper):
         pkg_uuid = TestAssess.API_WRAPPER.uploadPackage(pkg_conf,
                                                         pkg_archive,
                                                         TestSwampApiWrapper.PROJECT,
+                                                        None,
                                                         True)
         self.assertIsNotNone(pkg_uuid)
         TestAssess.PKG_LIST.append(pkg_uuid)
@@ -595,10 +623,13 @@ class TestAssess(TestSwampApiWrapper):
                             'resources/test_packages/railsgoat-9052b4fcf0/package.conf')
         pkg_archive = osp.join(osp.dirname(__file__),
                                'resources/test_packages/railsgoat-9052b4fcf0/railsgoat-9052b4fcf0.zip')
+        pkg_deps = osp.join(osp.dirname(__file__),
+                            'resources/test_packages/railsgoat-9052b4fcf0/pkg-os-dependencies.conf')
 
         pkg_uuid = TestAssess.API_WRAPPER.uploadPackage(pkg_conf,
                                                         pkg_archive,
                                                         TestSwampApiWrapper.PROJECT,
+                                                        pkg_deps,
                                                         True)
         self.assertIsNotNone(pkg_uuid)
         TestAssess.PKG_LIST.append(pkg_uuid)
@@ -621,6 +652,7 @@ class TestAssess(TestSwampApiWrapper):
         pkg_uuid = TestAssess.API_WRAPPER.uploadPackage(pkg_conf,
                                                         pkg_archive,
                                                         TestSwampApiWrapper.PROJECT,
+                                                        None,
                                                         True)
         self.assertIsNotNone(pkg_uuid)
         TestAssess.PKG_LIST.append(pkg_uuid)
@@ -643,6 +675,7 @@ class TestAssess(TestSwampApiWrapper):
         pkg_uuid = TestAssess.API_WRAPPER.uploadPackage(pkg_conf,
                                                         pkg_archive,
                                                         TestSwampApiWrapper.PROJECT,
+                                                        None,
                                                         True)
         self.assertIsNotNone(pkg_uuid)
         TestAssess.PKG_LIST.append(pkg_uuid)
@@ -664,6 +697,7 @@ class TestAssess(TestSwampApiWrapper):
         pkg_uuid = TestAssess.API_WRAPPER.uploadPackage(pkg_conf,
                                                         pkg_archive,
                                                         TestSwampApiWrapper.PROJECT,
+                                                        None,
                                                         True)
         self.assertIsNotNone(pkg_uuid)
         TestAssess.PKG_LIST.append(pkg_uuid)
@@ -686,6 +720,7 @@ class TestAssess(TestSwampApiWrapper):
         pkg_uuid = TestAssess.API_WRAPPER.uploadPackage(pkg_conf,
                                                         pkg_archive,
                                                         TestSwampApiWrapper.PROJECT,
+                                                        None,
                                                         True)
         self.assertIsNotNone(pkg_uuid)
         TestAssess.PKG_LIST.append(pkg_uuid)
@@ -707,6 +742,7 @@ class TestAssess(TestSwampApiWrapper):
         pkg_uuid = TestAssess.API_WRAPPER.uploadPackage(pkg_conf,
                                                         pkg_archive,
                                                         TestSwampApiWrapper.PROJECT,
+                                                        None,
                                                         True)
         self.assertIsNotNone(pkg_uuid)
         TestAssess.PKG_LIST.append(pkg_uuid)
@@ -728,6 +764,7 @@ class TestAssess(TestSwampApiWrapper):
         pkg_uuid = TestAssess.API_WRAPPER.uploadPackage(pkg_conf,
                                                         pkg_archive,
                                                         TestSwampApiWrapper.PROJECT,
+                                                        None,
                                                         True)
         self.assertIsNotNone(pkg_uuid)
         TestAssess.PKG_LIST.append(pkg_uuid)
@@ -764,9 +801,10 @@ class TestReporting(TestSwampApiWrapper):
                                'resources/test_packages/swamp-gradle-example-1.0/swamp-gradle-example-1.0.zip')
 
         pkg_uuid = TestReporting.API_WRAPPER.uploadPackage(pkg_conf,
-                                                        pkg_archive,
-                                                        TestSwampApiWrapper.PROJECT,
-                                                        True)
+                                                           pkg_archive,
+                                                           TestSwampApiWrapper.PROJECT,
+	                                                       None,
+                                                           True)
         self.assertIsNotNone(pkg_uuid)
 
         tool = TestReporting.API_WRAPPER.getToolFromName('Findbugs',

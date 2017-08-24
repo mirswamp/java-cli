@@ -33,6 +33,7 @@ import org.continuousassurance.swamp.cli.util.AssessmentStatus;
 
 import java.io.*;
 import java.util.*;
+import java.util.Map.Entry;
 
 
 public class SwampApiWrapper {
@@ -483,7 +484,10 @@ public class SwampApiWrapper {
 		return map;
 	}
 
-	public String uploadNewPackage(String pkg_conf_file, String pkg_archive_file, String project_uuid) {
+	public String uploadNewPackage(String pkg_conf_file, 
+			String pkg_archive_file, 
+			String project_uuid,
+			String os_deps_file) {
 		PackageHandler<? extends PackageThing> pkg_handler = handlerFactory.getPackageHandler();
 		Properties pkg_conf = getProp(pkg_conf_file);
 
@@ -503,13 +507,35 @@ public class SwampApiWrapper {
 				new File(pkg_archive_file),
 				map);
 
-		getAllPackageVersions(project_uuid).put(pkg_version.getIdentifierString(), pkg_version);
-		getAllPackages(project_uuid).put(pkg_thing.getIdentifierString(), pkg_thing);
+		if (os_deps_file != null){
+			File file = new File(os_deps_file);
+			if (file.isFile()) {
+				Properties os_deps = getProp(os_deps_file);
+				ConversionMapImpl dep_map = new ConversionMapImpl();
+				
+				for (PlatformVersion platform_version : getAllPlatformVersionsList()) {
+					String plat_name = platform_version.getDisplayString();
+					String deps = os_deps.getProperty("dependencies-" + plat_name);
+					if (deps != null) {
+						dep_map.put(platform_version.getIdentifierString(), deps);
+					}
+				}
+				handlerFactory.getPackageVersionHandler().addPackageVersionDependencies(pkg_version, dep_map);
+			}
+		}
+		
+		packageVersionMap = null;
+		packageMap = null;
+		//getAllPackageVersions(project_uuid).put(pkg_version.getIdentifierString(), pkg_version);
+		//getAllPackages(project_uuid).put(pkg_thing.getIdentifierString(), pkg_thing);
 
 		return pkg_version.getUUIDString();
 	}
 
-	public String uploadPackageVersion(String pkg_conf_file, String pkg_archive_file, String project_uuid) {
+	public String uploadPackageVersion(String pkg_conf_file, 
+			String pkg_archive_file, 
+			String project_uuid,
+			String os_deps_file) {
 		Properties pkg_conf = getProp(pkg_conf_file);
 		PackageThing pkg_thing = null;
 
@@ -521,7 +547,7 @@ public class SwampApiWrapper {
 		}
 
 		if (pkg_thing == null){
-			return uploadNewPackage(pkg_conf_file, pkg_archive_file, project_uuid);
+			return uploadNewPackage(pkg_conf_file, pkg_archive_file, project_uuid, os_deps_file);
 		}else{
 			ConversionMapImpl map = getPkgConfMap(pkg_conf);
 			map.put("project_uuid", project_uuid);
@@ -530,22 +556,25 @@ public class SwampApiWrapper {
 					new File(pkg_archive_file),
 					map);
 
-
-			getAllPackageVersions(project_uuid).put(pkg_version.getIdentifierString(), pkg_version);
+			packageVersionMap = null;
+			//getAllPackageVersions(project_uuid);
 
 			return pkg_version.getUUIDString();
 		}
 	}
 
-	public String uploadPackage(String pkg_conf_file, String pkg_archive_file,
-			String project_uuid, boolean isNew) throws InvalidIdentifierException {
+	public String uploadPackage(String pkg_conf_file, 
+			String pkg_archive_file,
+			String project_uuid,
+			String os_deps_file,
+			boolean isNew) throws InvalidIdentifierException {
 
 		getProject(project_uuid);
 
 		if(isNew) {
-			return uploadNewPackage(pkg_conf_file, pkg_archive_file, project_uuid);
+			return uploadNewPackage(pkg_conf_file, pkg_archive_file, project_uuid, os_deps_file);
 		}else{
-			return uploadPackageVersion(pkg_conf_file, pkg_archive_file, project_uuid);
+			return uploadPackageVersion(pkg_conf_file, pkg_archive_file, project_uuid, os_deps_file);
 		}
 	}
 

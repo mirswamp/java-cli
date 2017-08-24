@@ -245,6 +245,8 @@ public class Cli {
 				.desc("File path to the package conf file").build());
 		options.addOption(Option.builder("P").required(false).hasArg().argName("PROJECT_UUID").longOpt("project-uuid")
 				.desc("Project UUID to add the package to").build());
+		options.addOption(Option.builder("O").required(false).hasArg().argName("OS_DEPENDENCIES_CONF_FILEPATH").longOpt("os-deps-conf")
+				.desc("Path to OS depedencies conf file").build());
 		options.addOption(Option.builder("N").required(false).hasArg(false).longOpt("new-pkg")
 				.desc("Flag that indicates if the package must be added as a fresh package, and not a package version").build());
 		options.addOption(Option.builder("Q").required(false).hasArg(false).longOpt("quiet")
@@ -275,7 +277,10 @@ public class Cli {
 					cred_map.put("pkg-conf", parsed_options.getOptionValue("C"));
 					cred_map.put("project-uuid", parsed_options.getOptionValue("P"));
 					if(parsed_options.hasOption("N")){
-						cred_map.put("new-pkg", "");
+						cred_map.put("new-pkg", "");						
+					}
+					if(parsed_options.hasOption("O")){
+						cred_map.put("os-deps-conf", parsed_options.getOptionValue("O"));
 					}
 					return cred_map;
 				}else if (!parsed_options.hasOption("C")){
@@ -602,6 +607,7 @@ public class Cli {
 			String package_uuid = api_wrapper.uploadPackage((String)opt_map.get("pkg-conf"),
 					(String)opt_map.get("pkg-archive"),
 					(String)opt_map.get("project-uuid"),
+					(String)opt_map.get("os-deps-conf"),
 					opt_map.containsKey("new-pkg"));
 
 			if (opt_map.containsKey("quiet")){
