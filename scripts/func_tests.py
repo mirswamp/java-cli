@@ -134,8 +134,9 @@ class TestPlatforms(TestSwampApiWrapper):
         self.assertIsNotNone(plat_map)
 
     def test_get_plats_supported(self):
-        tool_uuid = '738b81f0-a828-11e5-865f-001a4a81450b'
-        plat_list = self.api_wrapper.getSupportedPlatformVersions(tool_uuid,
+        tool = self.api_wrapper.getToolFromName('Findbugs',
+                                                TestSwampApiWrapper.PROJECT)
+        plat_list = self.api_wrapper.getSupportedPlatformVersions(tool.getIdentifierString(),
                                                                   TestSwampApiWrapper.PROJECT)
         for plat in plat_list:
             print(plat)
@@ -156,11 +157,11 @@ class TestUpload(TestSwampApiWrapper):
     @classmethod
     def tearDownClass(cls):
         super(TestUpload, cls).setUpClass()
-        for pkg_uuid in cls.PKG_LIST:
-            pkg_ver = cls.api_wrapper.getPackageVersion(pkg_uuid,
-                                                        TestSwampApiWrapper.PROJECT)
-            cls.api_wrapper.deletePackage(pkg_ver.getPackageThing().getIdentifierString(),
-                                          TestSwampApiWrapper.PROJECT)
+        # for pkg_uuid in cls.PKG_LIST:
+        #     pkg_ver = cls.api_wrapper.getPackageVersion(pkg_uuid,
+        #                                                 TestSwampApiWrapper.PROJECT)
+        #     cls.api_wrapper.deletePackage(pkg_ver.getPackageThing().getIdentifierString(),
+        #                                   TestSwampApiWrapper.PROJECT)
 
     def test_get_pkg_types(self):
         pkg_types = TestUpload.api_wrapper.getPackageTypesList()
@@ -425,16 +426,16 @@ class TestAssess(TestSwampApiWrapper):
 
     @classmethod
     def tearDownClass(cls):
-        try:
-            print("Waiting 60 seconds to delete a package")
-            time.sleep(60)
-            for pkg_ver_uuid in cls.PKG_LIST:
-                pkg_ver = cls.API_WRAPPER.getPackageVersion(pkg_ver_uuid,
-                                                            TestSwampApiWrapper.PROJECT)
-                cls.API_WRAPPER.deletePackage(pkg_ver.getPackageThing().getIdentifierString(),
-                                              TestSwampApiWrapper.PROJECT)
-        except InvalidIdentifierException as err:
-            print(err)
+        # try:
+            # print("Waiting 60 seconds to delete a package")
+
+            # for pkg_ver_uuid in cls.PKG_LIST:
+            #     pkg_ver = cls.API_WRAPPER.getPackageVersion(pkg_ver_uuid,
+            #                                                 TestSwampApiWrapper.PROJECT)
+            #      cls.API_WRAPPER.deletePackage(pkg_ver.getPackageThing().getIdentifierString(),
+            #                                    TestSwampApiWrapper.PROJECT)
+        # except InvalidIdentifierException as err:
+        #    print(err)
         cls.API_WRAPPER.logout()
 
     def test_get_run_assess1(self):

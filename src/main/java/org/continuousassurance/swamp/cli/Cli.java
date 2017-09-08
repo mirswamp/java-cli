@@ -19,6 +19,11 @@
 package org.continuousassurance.swamp.cli;
 
 import edu.uiuc.ncsa.security.core.exceptions.GeneralException;
+
+import org.continuousassurance.swamp.api.AssessmentRecord;
+import org.continuousassurance.swamp.api.AssessmentRun;
+import org.continuousassurance.swamp.api.PackageThing;
+import org.continuousassurance.swamp.api.PackageVersion;
 import org.continuousassurance.swamp.api.PlatformVersion;
 import org.continuousassurance.swamp.api.Project;
 import org.continuousassurance.swamp.api.Tool;
@@ -27,6 +32,7 @@ import org.continuousassurance.swamp.session.HTTPException;
 import org.apache.commons.cli.*;
 import org.apache.log4j.varia.NullAppender;
 import org.continuousassurance.swamp.cli.exceptions.*;
+import org.continuousassurance.swamp.cli.util.AssessmentStatus;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -587,13 +593,13 @@ public class Cli {
 				System.out.println(my_tool.getUUIDString());
 			}
 		}else{
-			api_wrapper.printAllTools((String)opt_map.get("project-uuid"));
+			printAllTools((String)opt_map.get("project-uuid"));
 		}
 	}
 	
 	public void packageHandler(HashMap<String, Object> opt_map) {
 		if (opt_map.containsKey("list")) {
-			api_wrapper.printAllPackages((String)opt_map.get("project-uuid"), true);
+			printAllPackages((String)opt_map.get("project-uuid"), true);
 		}else if (opt_map.containsKey("pkg-types")) {
 			for (String pkg_type : api_wrapper.getPackageTypesList()) {
 				System.out.println(pkg_type);
@@ -632,10 +638,10 @@ public class Cli {
 			}
 		}
 		if (opt_map.containsKey("list-assess")){
-			api_wrapper.printAssessments((String)opt_map.get("project-uuid"), opt_map.containsKey("quiet"));
+			printAssessments((String)opt_map.get("project-uuid"), opt_map.containsKey("quiet"));
 		}
 		if (opt_map.containsKey("assess-uuid")){
-			api_wrapper.printAssessment((String)opt_map.get("assess-uuid"), (String)opt_map.get("project-uuid"));
+			printAssessment((String)opt_map.get("assess-uuid"), (String)opt_map.get("project-uuid"));
 		}
 	}
 	
@@ -647,9 +653,9 @@ public class Cli {
 	
 	public void assessmentStatusHandler(HashMap<String, Object> opt_map) {
 		if (opt_map.containsKey("assess-uuid")){
-			api_wrapper.printAssessmentStatus((String)opt_map.get("project-uuid"), (String)opt_map.get("assess-uuid"));
+			printAssessmentStatus((String)opt_map.get("project-uuid"), (String)opt_map.get("assess-uuid"));
 		}else{
-			api_wrapper.printAllAssessmentStatus((String)opt_map.get("project-uuid"));
+			printAllAssessmentStatus((String)opt_map.get("project-uuid"));
 		}
 	}
 	
@@ -708,6 +714,116 @@ public class Cli {
 			}
 		}
 		return 0;
+	}
+
+	public void printAllPackagesSummary(String project_uuid) {
+		System.out.printf("\n\n%-21s %-38s %-20s %-30s\n", "Package Name", "Package UUID", "Package Versions", "Package Description");
+		for(PackageThing pkg : api_wrapper.getPackagesList(project_uuid)){
+			System.out.printf("%-21s %-38s %-20s %-30s\n", pkg.getName(), pkg.getIdentifierString(),
+					pkg.getVersions(), pkg.getDescription());
+		}
+	}
+
+	public void printAllPackagesVerbose(String project_uuid) {
+		for(PackageThing pkg : api_wrapper.getAllPackages(project_uuid).values()){
+			System.out.printf("\n\n%-21s %-38s %-30s\n", pkg.getName(), pkg.getIdentifierString(), pkg.getDescription());
+			for(PackageVersion pkg_ver : api_wrapper.getPackageVersionsList(project_uuid)){
+				if (pkg_ver.getPackageThing().getUUIDString().equals(pkg.getUUIDString())) {
+					System.out.printf("\t%-13s %-38s\n", pkg_ver.getVersionString(), pkg_ver.getUUIDString());
+				}
+			}
+		}
+	}
+
+	public void printAllPackages(String project_uuid, boolean verbose) {
+		if(verbose){
+			printAllPackagesVerbose(project_uuid);
+		}else {
+			printAllPackagesSummary(project_uuid);
+		}
+	}
+
+	public void printAllTools(String project_uuid) throws InvalidIdentifierException {
+		System.out.printf("\n\n%-21s %-38s %-40s %s\n", "Tool Name", "Tool UUID", 
+				"Supported Package Types", "Supported Platforms");
+		for(Tool tool : api_wrapper.getAllTools(project_uuid).values()){
+			
+			System.out.printf("%-21s %-38s %-40s %s\n", tool.getName(), 
+					tool.getIdentifierString(),
+					tool.getSupportedPkgTypes(), 
+					api_wrapper.getSupportedPlatformVersions(tool.getIdentifierString(), project_uuid));
+		}
+	}
+
+	public void printAllPlatformVersions(String pkg_type) {
+
+		System.out.printf("\n%-40s %-38s\n", "Platform Name", "Platform UUID");
+		if (pkg_type != null) {
+			PlatformVersion platform_version = api_wrapper.getDefaultPlatformVersion(pkg_type);
+			System.out.printf("%-40s %-38s\n", platform_version.getDisplayString(), 
+					platform_version.getIdentifierString());
+		}else {
+			for(PlatformVersion platform_version : api_wrapper.getAllPlatformVersions().values()){
+				System.out.printf("%-40s %-38s\n", platform_version.getName(), 
+						platform_version.getIdentifierString());
+			}
+		}
+	}
+
+
+	public void printAssessments(String project_uuid, boolean quiet) {
+		
+		for (AssessmentRun arun : api_wrapper.getAllAssessments(project_uuid)){
+			if (quiet){
+				System.out.printf(arun.getUUIDString() + "\n");
+			}else{
+				System.out.printf("Assessment on " + arun.getFilename() +":\n\tUUID: " + arun.getUUIDString() + "\n");
+			}
+		}
+	}
+
+	public void printAssessment(String assessment_uuid, String project_uuid) {
+		AssessmentRun arun = api_wrapper.getAssessment(assessment_uuid, project_uuid);
+		if (arun == null){
+			System.out.println("Assessment " + assessment_uuid + " not found. Please verify the UUID");
+		}else{
+			System.out.println("Assessment Results on " + arun.getIdentifierString());
+			System.out.println("Package: \t" + (arun.getPkg() == null ? "N/A" : arun.getPkg().getName()));
+			System.out.println("Project: \t" + (arun.getProject() == null ? "N/A" : arun.getProject().getFullName()));
+			System.out.println("Tool:    \t" + (arun.getTool() == null ? "N/A" : arun.getTool().getName()));
+			//TODO: this must be platform version
+			System.out.println("Platform:\t" + (arun.getPlatform() == null ? "N/A" : arun.getPlatform().getName()));
+		}
+	}
+
+	public void printAssessmentStatus(String project_uuid, String assessment_uuid) {
+		AssessmentRecord assessment_record = api_wrapper.getAssessmentRecord(project_uuid, assessment_uuid);        
+		System.out.printf("%s, %d", 
+				AssessmentStatus.translateAssessmentStatus(assessment_record.getStatus()), 
+				assessment_record.getWeaknessCount());
+
+		if (assessment_record.getAssessmentResultUUID() == null){
+			System.out.printf("\n");
+		}else{
+			System.out.printf(", %-38s\n", assessment_record.getAssessmentResultUUID());
+		}
+	}
+
+	public void printAssessmentResultsUUID(String project_uuid, String assessment_uuid) {
+		System.out.println(api_wrapper.getAssessmentRecord(project_uuid, assessment_uuid).getAssessmentResultUUID());
+	}
+	
+	public void printAllAssessmentStatus(String project_uuid) {
+
+		System.out.printf("\n\n%-38s %-38s %-22s %s\n", 
+				"ASSESSMENT RUN UUID", "ASSESSMENT RESULT UUID", 
+				"STATUS", "WEAKNESS COUNT");
+		for(AssessmentRecord assessment_record : api_wrapper.getAllAssessmentRecords(project_uuid)) {
+			System.out.printf("%-38s %-38s %-22s %d\n", assessment_record.getAssessmentRunUUID(),
+					assessment_record.getAssessmentResultUUID(),
+					assessment_record.getStatus(),
+					assessment_record.getWeaknessCount());
+		}
 	}
 
 

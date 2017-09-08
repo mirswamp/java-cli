@@ -129,12 +129,12 @@ public class SwampApiWrapper {
 
 		sslConfig = new SSLConfiguration();
 		sslConfig.setTlsVersion("TLSv1.2");
-	    //sslConfig.setKeystore("/Users/vamshi/scratch-space/cacerts");
-	    //sslConfig.setKeystoreType("pkcs12");
-	    //sslConfig.setKeystoreType("jks");
-	    //sslConfig.setKeystorePassword("changeit");
-	    //sslConfig.setKeyManagerFactory("SunX509");
-	    //sslConfig.setUseDefaultJavaTrustStore(true); 
+		//sslConfig.setKeystore("/Users/vamshi/scratch-space/cacerts");
+		//sslConfig.setKeystoreType("pkcs12");
+		//sslConfig.setKeystoreType("jks");
+		//sslConfig.setKeystorePassword("changeit");
+		//sslConfig.setKeyManagerFactory("SunX509");
+		//sslConfig.setUseDefaultJavaTrustStore(true); 
 	}
 
 	protected final void setHost(String host_name) {
@@ -161,7 +161,7 @@ public class SwampApiWrapper {
 			String pkg_lang_version,
 			String pkg_build_sys,
 			String package_type) {
-		
+
 		String pkg_type = null;
 
 		if (pkg_build_sys.toLowerCase().equals("android-apk")) {
@@ -305,7 +305,6 @@ public class SwampApiWrapper {
 	}
 
 	private static boolean fileExists(String filepath) {
-		// return new File(filepath).exists();
 		return new File(filepath).isFile();
 	}
 
@@ -458,29 +457,29 @@ public class SwampApiWrapper {
 		ConversionMapImpl map = new ConversionMapImpl();
 		map.put("version_string", pkg_conf.getProperty("package-version"));
 		map.put("source_path", pkg_conf.getProperty("package-dir"));
-		
+
 		map.put("config_dir", pkg_conf.getProperty("config-dir", null));
 		map.put("config_cmd", pkg_conf.getProperty("config-cmd", null));
 		map.put("config_opt", pkg_conf.getProperty("config-opt", null));
-		
+
 		map.put("build_dir", pkg_conf.getProperty("build-dir", null));
 		map.put("build_system", pkg_conf.getProperty("build-sys", null));
 		map.put("build_file", pkg_conf.getProperty("build-file", null));
 		map.put("build_target", pkg_conf.getProperty("build-target", null));
 		map.put("build_opt", pkg_conf.getProperty("build-opt", null));
-		
+
 		map.put("language_version", pkg_conf.getProperty("package-language-version", null));
 		map.put("bytecode_class_path", pkg_conf.getProperty("package-classpath", null));
 		map.put("bytecode_aux_class_path", pkg_conf.getProperty("package-auxclasspath", null));
 		map.put("bytecode_source_path", pkg_conf.getProperty("package-srcdir", null));
-		
+
 		map.put("use_gradle_wrapper", pkg_conf.getProperty("gradle-wrapper", "false"));
 		map.put("android_sdk_target", pkg_conf.getProperty("android-sdk-target", null));
 		map.put("android_lint_target", pkg_conf.getProperty("android-lint-target", null));
 		map.put("android_redo_build", pkg_conf.getProperty("android-redo-build", "false"));
 		map.put("android_maven_plugin", pkg_conf.getProperty("android-maven-plugin", null));
 		map.put("maven_version", pkg_conf.getProperty("maven_version", null));
-		
+
 		return map;
 	}
 
@@ -512,7 +511,7 @@ public class SwampApiWrapper {
 			if (file.isFile()) {
 				Properties os_deps = getProp(os_deps_file);
 				ConversionMapImpl dep_map = new ConversionMapImpl();
-				
+
 				for (PlatformVersion platform_version : getAllPlatformVersionsList()) {
 					String plat_name = platform_version.getDisplayString();
 					String deps = os_deps.getProperty("dependencies-" + plat_name);
@@ -523,7 +522,7 @@ public class SwampApiWrapper {
 				handlerFactory.getPackageVersionHandler().addPackageVersionDependencies(pkg_version, dep_map);
 			}
 		}
-		
+
 		packageVersionMap = null;
 		packageMap = null;
 		//getAllPackageVersions(project_uuid).put(pkg_version.getIdentifierString(), pkg_version);
@@ -582,20 +581,18 @@ public class SwampApiWrapper {
 
 		getProject(project_uuid);
 
-		PackageThing pkg_thing = null;
-
 		for(PackageThing pkg : getAllPackages(project_uuid).values()){
 			if (pkg.getUUIDString().equals(pkg_uuid)){
-				pkg_thing = pkg;
-				break;
+				return deletePackage(pkg);
 			}
 		}
-		if (pkg_thing == null) {
-			throw new InvalidIdentifierException("Invalid package UUID: " + pkg_uuid);
-		}
-		return handlerFactory.getPackageHandler().deletePackage(pkg_thing);
+
+		throw new InvalidIdentifierException("Invalid package UUID: " + pkg_uuid);
 	}
 
+	public boolean deletePackage(PackageThing pkg) throws InvalidIdentifierException {
+		return handlerFactory.getPackageHandler().deletePackage(pkg);
+	}
 
 	protected Map<String, PackageThing> getAllPackages(String project_uuid) {
 		if ((packageMap == null) || (!stringsAreEqual(cachedPkgProjectID, project_uuid))) {
@@ -665,33 +662,6 @@ public class SwampApiWrapper {
 		return pkg_ver;
 	}
 
-	public void printAllPackagesSummary(String project_uuid) {
-		System.out.printf("\n\n%-21s %-38s %-20s %-30s\n", "Package Name", "Package UUID", "Package Versions", "Package Description");
-		for(PackageThing pkg : getPackagesList(project_uuid)){
-			System.out.printf("%-21s %-38s %-20s %-30s\n", pkg.getName(), pkg.getIdentifierString(),
-					pkg.getVersions(), pkg.getDescription());
-		}
-	}
-
-	public void printAllPackagesVerbose(String project_uuid) {
-		for(PackageThing pkg : getAllPackages(project_uuid).values()){
-			System.out.printf("\n\n%-21s %-38s %-30s\n", pkg.getName(), pkg.getIdentifierString(), pkg.getDescription());
-			for(PackageVersion pkg_ver : getPackageVersionsList(project_uuid)){
-				if (pkg_ver.getPackageThing().getUUIDString().equals(pkg.getUUIDString())) {
-					System.out.printf("\t%-13s %-38s\n", pkg_ver.getVersionString(), pkg_ver.getUUIDString());
-				}
-			}
-		}
-	}
-
-	public void printAllPackages(String project_uuid, boolean verbose) {
-		if(verbose){
-			printAllPackagesVerbose(project_uuid);
-		}else {
-			printAllPackagesSummary(project_uuid);
-		}
-	}
-
 	protected Map<String, Tool> getAllTools(String project_uuid) throws InvalidIdentifierException {
 
 		if ((toolMap == null) || (!stringsAreEqual(cachedToolProjectID, project_uuid))) {
@@ -756,41 +726,13 @@ public class SwampApiWrapper {
 		return null;
 	}
 
-	public void printAllTools(String project_uuid) throws InvalidIdentifierException {
-		System.out.printf("\n\n%-21s %-38s %-40s %s\n", "Tool Name", "Tool UUID", 
-				"Supported Package Types", "Supported Platforms");
-		for(Tool tool : getAllTools(project_uuid).values()){
-			
-			System.out.printf("%-21s %-38s %-40s %s\n", tool.getName(), 
-					tool.getIdentifierString(),
-					tool.getSupportedPkgTypes(), 
-					getSupportedPlatformVersions(tool.getIdentifierString(), project_uuid));
-			
-			// Uncomment to display tool versions
-			/*
-			List<? extends ToolVersion> tool_versions = handlerFactory.getToolVersionHandler().getAll(tool);
-			
-			Collections.sort(tool_versions, 
-					new Comparator<ToolVersion>() {
-				public int compare(ToolVersion i1, ToolVersion i2) {
-					//return (i2.getReleaseDate().compareTo(i1.getReleaseDate()));
-                    return i2.getVersion().compareTo(i1.getVersion());
-				}
-			});
-			for(ToolVersion tool_version : tool_versions){
-				System.out.printf("\t%-38s %-13s\n", tool_version.getIdentifier(),
-						tool_version.getVersion());
-			}*/
-		}
-	}
-
 	public Platform getPlatform(String platform_uuid) {
 		return getAllPlatforms().get(platform_uuid);
 	}
-	
+
 	public Map<String, Platform> getAllPlatforms() {
 		HashMap<String, Platform> platforms = new HashMap<String, Platform>();
-		
+
 		for (Platform plat : handlerFactory.getPlatformHandler().getAll()) {
 			platforms.put(plat.getIdentifierString(), plat);
 		}
@@ -807,102 +749,87 @@ public class SwampApiWrapper {
 		}
 		return platformMap;
 	}	
-	
 
-    public List<PlatformVersion> getAllPlatformVersionsList() {
-        List<PlatformVersion> platform_versions = new ArrayList<PlatformVersion>(getAllPlatformVersions().values());
 
-        Collections.sort(platform_versions, new Comparator<PlatformVersion>() {
-            public int compare(PlatformVersion i1, PlatformVersion i2) {
-                return (i1.getDisplayString().compareTo(i2.getDisplayString()));
-            }
-        });
-        return platform_versions;
-    }
+	public List<PlatformVersion> getAllPlatformVersionsList() {
+		List<PlatformVersion> platform_versions = new ArrayList<PlatformVersion>(getAllPlatformVersions().values());
 
-    public PlatformVersion getPlatformVersion(String platform_version_uuid) {
-    	PlatformVersion platform = getAllPlatformVersions().get(platform_version_uuid);
-        if (platform == null) {
-            throw new InvalidIdentifierException("Invalid Platform UUID: " + platform_version_uuid);
-        }
-        return platform;
-    }
+		Collections.sort(platform_versions, new Comparator<PlatformVersion>() {
+			public int compare(PlatformVersion i1, PlatformVersion i2) {
+				return (i1.getDisplayString().compareTo(i2.getDisplayString()));
+			}
+		});
+		return platform_versions;
+	}
 
-     public PlatformVersion getPlatformVersionFromName (String platform_version_name) throws InvalidIdentifierException  {
-        Map<String, PlatformVersion> platform_version_list = getAllPlatformVersions();
-        Iterator<PlatformVersion> platform_iterator = platform_version_list.values().iterator();
-        while (platform_iterator.hasNext()){
-        	PlatformVersion next_platform = platform_iterator.next();
-            if (next_platform.getDisplayString().equals(platform_version_name)){
-                return next_platform;
-            }
-        }
+	public PlatformVersion getPlatformVersion(String platform_version_uuid) {
+		PlatformVersion platform = getAllPlatformVersions().get(platform_version_uuid);
+		if (platform == null) {
+			throw new InvalidIdentifierException("Invalid Platform UUID: " + platform_version_uuid);
+		}
+		return platform;
+	}
 
-        throw new InvalidIdentifierException(String.format("Platform %s does not exist.\n", platform_version_name));
-    }
+	public PlatformVersion getPlatformVersionFromName (String platform_version_name) throws InvalidIdentifierException  {
+		Map<String, PlatformVersion> platform_version_list = getAllPlatformVersions();
+		Iterator<PlatformVersion> platform_iterator = platform_version_list.values().iterator();
+		while (platform_iterator.hasNext()){
+			PlatformVersion next_platform = platform_iterator.next();
+			if (next_platform.getDisplayString().equals(platform_version_name)){
+				return next_platform;
+			}
+		}
 
-    public List<PlatformVersion> getSupportedPlatformVersions(String tool_uuid, 
-    		String project_uuid) throws InvalidIdentifierException {
-        Tool tool = getTool(tool_uuid, project_uuid);
-        List<PlatformVersion> supported_platforms = new ArrayList<>();
-        for (PlatformVersion platform_version : new ArrayList<PlatformVersion>(getAllPlatformVersions().values())){
-            for (String supp_plat_name : tool.getSupportedPlatforms()){
-                if (supp_plat_name.equals(platform_version.getPlatform().getName())){
-                    supported_platforms.add(platform_version);
-                }
-            }
-        }
-        return supported_platforms;
-    }
-    
-    /*
-     * pkg_type must be one of the values retured by getPackageTypesList()
-     */
-    public PlatformVersion getDefaultPlatformVersion(String pkg_type) {
+		throw new InvalidIdentifierException(String.format("Platform %s does not exist.\n", platform_version_name));
+	}
 
-        if(!getPackageTypesList().contains(pkg_type)) {
-            throw new InvalidIdentifierException(String.format("Invalid package type: %s", pkg_type));
-        }
+	public List<PlatformVersion> getSupportedPlatformVersions(String tool_uuid, 
+			String project_uuid) throws InvalidIdentifierException {
+		Tool tool = getTool(tool_uuid, project_uuid);
+		List<PlatformVersion> supported_platforms = new ArrayList<>();
+		for (PlatformVersion platform_version : new ArrayList<PlatformVersion>(getAllPlatformVersions().values())){
+			for (String supp_plat_name : tool.getSupportedPlatforms()){
+				if (supp_plat_name.equals(platform_version.getPlatform().getName())){
+					supported_platforms.add(platform_version);
+				}
+			}
+		}
+		return supported_platforms;
+	}
 
-        String default_platform_uuid;
+	/*
+	 * pkg_type must be one of the values retured by getPackageTypesList()
+	 */
+	public PlatformVersion getDefaultPlatformVersion(String pkg_type) {
 
-        try {
-            default_platform_uuid = handlerFactory.getPackageHandler().getDefaultPlatform(pkg_type);
-        }catch (JSONException e) {
-        	throw new NoDefaultPlatformException("No default platform set for package type: " + pkg_type);
-        }
-        
-        if (default_platform_uuid != null) {
-        	Platform platform = getPlatform(default_platform_uuid);
-            List<PlatformVersion> platform_versions = (List<PlatformVersion>) handlerFactory.getPlatformVersionHandler().getAll(platform);
-            Collections.sort(platform_versions, new Comparator<PlatformVersion>() {
-                public int compare(PlatformVersion i1, PlatformVersion i2) {
-                    return (i2.getName().compareTo(i1.getName()));
-                }
-            });
-            //return platform_versions.get(platform_versions.size()-1);
-            return platform_versions.get(0);
-        }else {
-        	return null;
-        }
-    }
+		if(!getPackageTypesList().contains(pkg_type)) {
+			throw new InvalidIdentifierException(String.format("Invalid package type: %s", pkg_type));
+		}
 
-    public void printAllPlatformVersions(String pkg_type) {
+		String default_platform_uuid;
 
-    	System.out.printf("\n%-40s %-38s\n", "Platform Name", "Platform UUID");
-        if (pkg_type != null) {
-            PlatformVersion platform_version = getDefaultPlatformVersion(pkg_type);
-            System.out.printf("%-40s %-38s\n", platform_version.getDisplayString(), 
-            		platform_version.getIdentifierString());
-        }else {
-            for(PlatformVersion platform_version : getAllPlatformVersions().values()){
-                System.out.printf("%-40s %-38s\n", platform_version.getName(), 
-                		platform_version.getIdentifierString());
-            }
-        }
-    }
+		try {
+			default_platform_uuid = handlerFactory.getPackageHandler().getDefaultPlatform(pkg_type);
+		}catch (JSONException e) {
+			throw new NoDefaultPlatformException("No default platform set for package type: " + pkg_type);
+		}
 
-    /*
+		if (default_platform_uuid != null) {
+			Platform platform = getPlatform(default_platform_uuid);
+			List<PlatformVersion> platform_versions = (List<PlatformVersion>) handlerFactory.getPlatformVersionHandler().getAll(platform);
+			Collections.sort(platform_versions, new Comparator<PlatformVersion>() {
+				public int compare(PlatformVersion i1, PlatformVersion i2) {
+					return (i2.getName().compareTo(i1.getName()));
+				}
+			});
+
+			return platform_versions.get(0);
+		}else {
+			return null;
+		}
+	}
+
+	/*
 	public List<Platform> getPlatformsList() {
 		List<Platform> platforms = new ArrayList<Platform>(getAllPlatforms().values());
 
@@ -973,53 +900,34 @@ public class SwampApiWrapper {
 		return default_platform;
 	}
 
-	public void printAllPlatforms(String pkg_type) {
+	 */
 
-		if (pkg_type != null) {
-			Platform plat = getDefaultPlatform(pkg_type);
-			System.out.printf("\n%-40s %-38s %26s\n", "Project Name", "Platform UUID", "Platform Create Date");
-			System.out.printf("%-40s %-38s %s\n", plat.getName(), plat.getIdentifierString(), plat.getCreateDate());
-		}else {
-			System.out.printf("\n%-40s %-38s %26s\n", "Project Name", "Platform UUID", "Platform Create Date");
-			for(Platform plat : getAllPlatforms().values()){
-				System.out.printf("%-40s %-38s %s\n", plat.getName(), plat.getIdentifierString(), plat.getCreateDate());
-			}
-		}
+	public List<? extends AssessmentRun> getAllAssessments(String project_uuid) {
+		Project project = getProject(project_uuid);
+		return (List<AssessmentRun>) handlerFactory.getAssessmentHandler().getAllAssessments(project);
 	}
-	*/
-	
-	public AssessmentRun getAssessment(String assess_uuid, Project project) {
-		for (AssessmentRun arun : handlerFactory.getAssessmentHandler().getAllAssessments(project)){
+
+	public AssessmentRun getAssessment(String assess_uuid, String project_uuid) {
+		for (AssessmentRun arun : getAllAssessments(project_uuid)){
 			if (arun.getIdentifierString().equals(assess_uuid)){
 				return arun;
 			}
 		}
-		return null;
+		throw new InvalidIdentifierException("Invalid assessment UUID: " + assess_uuid);
 	}
 
-	public void printAssessments(String project_uuid, boolean quiet) {
-		Project proj = getProject(project_uuid);
-		for (AssessmentRun arun : handlerFactory.getAssessmentHandler().getAllAssessments(proj)){
-			if (quiet){
-				System.out.printf(arun.getUUIDString() + "\n");
-			}else{
-				System.out.printf("Assessment on " + arun.getFilename() +":\n\tUUID: " + arun.getUUIDString() + "\n");
+	public boolean deleteAssessment(AssessmentRun arun) {
+		return handlerFactory.getAssessmentHandler().delete(arun);
+	}
+
+	public boolean deleteAssessment(String assess_uuid, String project_uuid) {
+
+		for (AssessmentRun arun : getAllAssessments(project_uuid)){
+			if (arun.getIdentifierString().equalsIgnoreCase(assess_uuid)) {
+				return deleteAssessment(arun);
 			}
 		}
-	}
-
-	public void printAssessment(String assessment_uuid, String project_uuid) {
-		AssessmentRun arun = getAssessment(assessment_uuid, getProject(project_uuid));
-		if (arun == null){
-			System.out.println("Assessment " + assessment_uuid + " not found. Please verify the UUID");
-		}else{
-			System.out.println("Assessment Results on " + arun.getIdentifierString());
-			System.out.println("Package: \t" + (arun.getPkg() == null ? "N/A" : arun.getPkg().getName()));
-			System.out.println("Project: \t" + (arun.getProject() == null ? "N/A" : arun.getProject().getFullName()));
-			System.out.println("Tool:    \t" + (arun.getTool() == null ? "N/A" : arun.getTool().getName()));
-			//TODO: this must be platform version
-			System.out.println("Platform:\t" + (arun.getPlatform() == null ? "N/A" : arun.getPlatform().getName()));
-		}
+		throw new InvalidIdentifierException("Invalid Assessment UUID: " + assess_uuid);
 	}
 
 	public AssessmentRun runAssessment(String pkg_ver_uuid,
@@ -1055,91 +963,91 @@ public class SwampApiWrapper {
 		return runAssessment(package_version, tool, proj, platform_version);
 	}
 
-    public List<String> runAssessment(String pkg_ver_uuid,
-    		List<String> tool_uuid_list,
-    		String project_uuid,
-    		List<String> platform_uuid_list) throws IncompatibleAssessmentTupleException, InvalidIdentifierException {
-    	PackageVersion pkg_ver = getPackageVersion(pkg_ver_uuid, project_uuid);
-    	Project project = getProject(project_uuid);
+	public List<String> runAssessment(String pkg_ver_uuid,
+			List<String> tool_uuid_list,
+			String project_uuid,
+			List<String> platform_uuid_list) throws IncompatibleAssessmentTupleException, InvalidIdentifierException {
+		PackageVersion pkg_ver = getPackageVersion(pkg_ver_uuid, project_uuid);
+		Project project = getProject(project_uuid);
 
-    	List<PlatformVersion> platforms = new ArrayList<PlatformVersion>();
-    	
-    	if (null == platform_uuid_list || platform_uuid_list.isEmpty()){
-    		platform_uuid_list = new ArrayList<String>(); 
-    		platform_uuid_list.add(getDefaultPlatformVersion(pkg_ver.getPackageThing().getType()).getUUIDString());
-    	}
-    	
-    	for (String platform_uuid: platform_uuid_list) {
-    		PlatformVersion platform_version = null;
+		List<PlatformVersion> platforms = new ArrayList<PlatformVersion>();
+
+		if (null == platform_uuid_list || platform_uuid_list.isEmpty()){
+			platform_uuid_list = new ArrayList<String>(); 
+			platform_uuid_list.add(getDefaultPlatformVersion(pkg_ver.getPackageThing().getType()).getUUIDString());
+		}
+
+		for (String platform_uuid: platform_uuid_list) {
+			PlatformVersion platform_version = null;
 			if(platform_uuid == null) {
 				platform_version = getDefaultPlatformVersion(pkg_ver.getPackageThing().getType());
 			}else {
 				platform_version = getPlatformVersion(platform_uuid);
 			}
-    	
-    		for (String tool_uuid: tool_uuid_list) {
-    			Tool tool = getTool(tool_uuid, project_uuid);
-    			
-    			if (!tool.getSupportedPkgTypes().contains(pkg_ver.getPackageThing().getType())) {
-    				throw new IncompatibleAssessmentTupleException(String.format("%s (%s) does not support this package type \"%s\"",
-    						tool.getName(),
-    						tool.getSupportedPkgTypes(),
-    						pkg_ver.getPackageThing().getType()));
-    			}
 
-    			if (!tool.getSupportedPlatforms().contains(platform_version.getPlatform().getName())) {
-    				throw new IncompatibleAssessmentTupleException(String.format("%s (%s) is not supported on this platform \"%s\"",
-    						tool.getName(),
-    						tool.getSupportedPlatforms(),
-    						platform_version.getName()));
-    			}
-    		}
-    		platforms.add(platform_version);
-    	}
+			for (String tool_uuid: tool_uuid_list) {
+				Tool tool = getTool(tool_uuid, project_uuid);
 
-    	List<Tool> tools = new ArrayList<Tool>();
-    	for (String tool_uuid: tool_uuid_list) {
-    		tools.add(getTool(tool_uuid, project_uuid));
-    	}
-    	
-    	List<AssessmentRun> arun_list = runAssessment(pkg_ver, tools, project, platforms);
-    	
-    	if (arun_list != null){
-    		List<String> arun_uuid_list = new ArrayList<String>();
-    		for (AssessmentRun arun : arun_list) {
-    			arun_uuid_list.add(arun.getUUIDString());
-    		}
-    		return arun_uuid_list;
-    	}else {
-    		return null;
-    	}
-    }
+				if (!tool.getSupportedPkgTypes().contains(pkg_ver.getPackageThing().getType())) {
+					throw new IncompatibleAssessmentTupleException(String.format("%s (%s) does not support this package type \"%s\"",
+							tool.getName(),
+							tool.getSupportedPkgTypes(),
+							pkg_ver.getPackageThing().getType()));
+				}
 
-    protected AssessmentRun runAssessment(PackageVersion pkg, Tool tool, Project project, PlatformVersion platform) {
-        AssessmentRun arun = handlerFactory.getAssessmentHandler().create(project, pkg, platform, tool);
-        if (handlerFactory.getRunRequestHandler().submitOneTimeRequest(arun, true)) {
-        	return arun;
-        }else{
-        	return null;
-        }
-        
-    }
-        
-    protected List<AssessmentRun> runAssessment(PackageVersion pkg, List<Tool> tools, 
-    		Project project, List<PlatformVersion> platform_versions) {
-    	List<AssessmentRun> arun_list = new ArrayList<AssessmentRun>();
-	    for (PlatformVersion platform_version : platform_versions) {
-	    	for (Tool tool : tools) {
-	    		arun_list.add(handlerFactory.getAssessmentHandler().create(project, pkg, platform_version, tool));
-	    	}
-    	}
-        if (handlerFactory.getRunRequestHandler().submitOneTimeRequest(arun_list, true)){
-        	return arun_list;
-        }else {
-        	return null;
-        }
-        
-    }
+				if (!tool.getSupportedPlatforms().contains(platform_version.getPlatform().getName())) {
+					throw new IncompatibleAssessmentTupleException(String.format("%s (%s) is not supported on this platform \"%s\"",
+							tool.getName(),
+							tool.getSupportedPlatforms(),
+							platform_version.getName()));
+				}
+			}
+			platforms.add(platform_version);
+		}
+
+		List<Tool> tools = new ArrayList<Tool>();
+		for (String tool_uuid: tool_uuid_list) {
+			tools.add(getTool(tool_uuid, project_uuid));
+		}
+
+		List<AssessmentRun> arun_list = runAssessment(pkg_ver, tools, project, platforms);
+
+		if (arun_list != null){
+			List<String> arun_uuid_list = new ArrayList<String>();
+			for (AssessmentRun arun : arun_list) {
+				arun_uuid_list.add(arun.getUUIDString());
+			}
+			return arun_uuid_list;
+		}else {
+			return null;
+		}
+	}
+
+	protected AssessmentRun runAssessment(PackageVersion pkg, Tool tool, Project project, PlatformVersion platform) {
+		AssessmentRun arun = handlerFactory.getAssessmentHandler().create(project, pkg, platform, tool);
+		if (handlerFactory.getRunRequestHandler().submitOneTimeRequest(arun, true)) {
+			return arun;
+		}else{
+			return null;
+		}
+
+	}
+
+	protected List<AssessmentRun> runAssessment(PackageVersion pkg, List<Tool> tools, 
+			Project project, List<PlatformVersion> platform_versions) {
+		List<AssessmentRun> arun_list = new ArrayList<AssessmentRun>();
+		for (PlatformVersion platform_version : platform_versions) {
+			for (Tool tool : tools) {
+				arun_list.add(handlerFactory.getAssessmentHandler().create(project, pkg, platform_version, tool));
+			}
+		}
+		if (handlerFactory.getRunRequestHandler().submitOneTimeRequest(arun_list, true)){
+			return arun_list;
+		}else {
+			return null;
+		}
+
+	}
 
 	protected List<? extends AssessmentResults> getAssessmentResults(String project_uuid) {
 		Project project = getProject(project_uuid);
@@ -1161,27 +1069,14 @@ public class SwampApiWrapper {
 		}
 	}
 
-	public List<? extends AssessmentRecord> getAllAssessmentRecords(Project project) {
+	public List<? extends AssessmentRecord> getAllAssessmentRecords(String project_uuid) {
+		Project project = getProject(project_uuid);
 		return handlerFactory.getassessmentRecordHandler().getExecutionRecords(project);
 	}
 
-	public void printAllAssessmentStatus(String project_uuid) {
-		Project project = getProject(project_uuid);
-		System.out.printf("\n\n%-38s %-38s %-22s %s\n", 
-				"ASSESSMENT RUN UUID", "ASSESSMENT RESULT UUID", 
-				"STATUS", "WEAKNESS COUNT");
-		for(AssessmentRecord assessment_record : getAllAssessmentRecords(project)) {
-			System.out.printf("%-38s %-38s %-22s %d\n", assessment_record.getAssessmentRunUUID(),
-					assessment_record.getAssessmentResultUUID(),
-					assessment_record.getStatus(),
-					assessment_record.getWeaknessCount());
-		}
-	}
-
 	public AssessmentRecord getAssessmentRecord(String project_uuid, String assessment_uuid){
-		Project project = getProject(project_uuid);
 
-		for(AssessmentRecord assessment_record : getAllAssessmentRecords(project)) {
+		for(AssessmentRecord assessment_record : getAllAssessmentRecords(project_uuid)) {
 			if (assessment_record.getAssessmentRunUUID().equals(assessment_uuid)){
 				return assessment_record;
 			}
@@ -1189,13 +1084,17 @@ public class SwampApiWrapper {
 
 		throw new InvalidIdentifierException("Invalid Assessment UUID: " + assessment_uuid);
 	}
+	
+	public boolean deleteAssessmentRecord(AssessmentRecord assessment_record){
+		return handlerFactory.getassessmentRecordHandler().deleteAssessmentRecord(assessment_record);
+	}
+	
+	//TODO: public boolean deleteAssessmentRecord(String project_uuid, String assessment_uuid){
+	public boolean deleteAssessmentRecord(String assessment_uuid, String project_uuid){
 
-	public boolean deleteAssessmentRecord(String project_uuid, String assessment_uuid){
-		Project project = getProject(project_uuid);
-
-		for(AssessmentRecord assessment_record : getAllAssessmentRecords(project)) {
+		for(AssessmentRecord assessment_record : getAllAssessmentRecords(project_uuid)) {
 			if (assessment_record.getAssessmentRunUUID().equals(assessment_uuid)){
-				return handlerFactory.getassessmentRecordHandler().deleteAssessmentRecord(assessment_record);
+				return deleteAssessmentRecord(assessment_record);
 
 			}
 		}
@@ -1203,20 +1102,4 @@ public class SwampApiWrapper {
 		throw new InvalidIdentifierException("Invalid Assessment UUID: " + assessment_uuid);
 	}
 
-	public void printAssessmentStatus(String project_uuid, String assessment_uuid) {
-		AssessmentRecord assessment_record = getAssessmentRecord(project_uuid, assessment_uuid);        
-		System.out.printf("%s, %d", 
-				AssessmentStatus.translateAssessmentStatus(assessment_record.getStatus()), 
-				assessment_record.getWeaknessCount());
-
-		if (assessment_record.getAssessmentResultUUID() == null){
-			System.out.printf("\n");
-		}else{
-			System.out.printf(", %-38s\n", assessment_record.getAssessmentResultUUID());
-		}
-	}
-
-	public void printAssessmentResultsUUID(String project_uuid, String assessment_uuid) {
-		System.out.println(getAssessmentRecord(project_uuid, assessment_uuid).getAssessmentResultUUID());
-	}
 }
