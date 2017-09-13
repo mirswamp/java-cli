@@ -38,6 +38,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Properties;
@@ -267,7 +269,7 @@ public class Cli {
 		}else {
 			HashMap<String, Object> cred_map = new HashMap<String, Object>();
 			if (parsed_options.hasOption("Q")){
-				cred_map.put("quiet", "quiet");
+				cred_map.put("quiet", false);
 			}
 
 			if (parsed_options.hasOption("L")){
@@ -599,9 +601,18 @@ public class Cli {
 	
 	public void packageHandler(HashMap<String, Object> opt_map) {
 		if (opt_map.containsKey("list")) {
-			printAllPackages((String)opt_map.get("project-uuid"), true);
+			printAllPackages((String)opt_map.get("project-uuid"), 
+							(boolean)opt_map.get("quiet"));
 		}else if (opt_map.containsKey("pkg-types")) {
-			for (String pkg_type : api_wrapper.getPackageTypesList()) {
+			List<String> pkg_types = api_wrapper.getPackageTypesList();
+			
+			Collections.sort(pkg_types, new Comparator<String>() {
+				public int compare(String i1, String i2) {
+					return (i1.compareTo(i2));
+				}
+			});
+			
+			for (String pkg_type : pkg_types) {
 				System.out.println(pkg_type);
 			}
 		}else if (opt_map.containsKey("delete")) {
@@ -717,10 +728,11 @@ public class Cli {
 	}
 
 	public void printAllPackagesSummary(String project_uuid) {
-		System.out.printf("\n\n%-21s %-38s %-20s %-30s\n", "Package Name", "Package UUID", "Package Versions", "Package Description");
+		System.out.printf("\n\n%-21s %-38s %-30s\n", "Package Name", "Package UUID", "Package Description");
 		for(PackageThing pkg : api_wrapper.getPackagesList(project_uuid)){
-			System.out.printf("%-21s %-38s %-20s %-30s\n", pkg.getName(), pkg.getIdentifierString(),
-					pkg.getVersions(), pkg.getDescription());
+			System.out.printf("%-21s %-38s %-30s\n", pkg.getName(), 
+					pkg.getIdentifierString(),
+					pkg.getDescription());
 		}
 	}
 
