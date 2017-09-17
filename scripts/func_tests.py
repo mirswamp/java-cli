@@ -64,7 +64,7 @@ class TestLogin(TestSwampApiWrapper):
     @unittest.expectedFailure
     def test_login_incorrect2(self):
         #self.api_wrapper.setHost()
-        self.assertRaises(GeneralException, self.api_wrapper.login,
+        self.assertRaises(HTTPException, self.api_wrapper.login,
                           TestSwampApiWrapper.USERNAME,
                           TestSwampApiWrapper.PASSWORD,
                           'https://it.cosalab.org/')
@@ -822,7 +822,7 @@ class TestReporting(TestSwampApiWrapper):
             assessment_record = TestReporting.API_WRAPPER.getAssessmentRecord(TestSwampApiWrapper.PROJECT,
                                                                                assessment_run.getUUIDString())
             status = AssessmentStatus.translateAssessmentStatus(assessment_record.getStatus())
-            #print(status, assessment_record.getStatus())
+            print(status, assessment_record.getStatus())
             time.sleep(10);
             if status == AssessmentStatus.FAILED or status == AssessmentStatus.SUCCESS:
                 arun_results_uuid = assessment_record.getAssessmentResultUUID()
