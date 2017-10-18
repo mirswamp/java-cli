@@ -164,7 +164,6 @@ public class Cli {
 			HashMap<String, Object> cred_map = new HashMap<String, Object>();
 			if (parsed_options.hasOption("uuid")){
 				if(!parsed_options.hasOption("project-name")){
-					//throw new CommandLineOptionException("Required -N --project-name <PROJECT_NAME> option");
 					throw new CommandLineOptionException(optionMissingStr(options.getOption("N")));
 				}
 				cred_map.put("project-name", parsed_options.getOptionValue("project-name"));
@@ -176,17 +175,12 @@ public class Cli {
 	public HashMap<String, Object> resultsOptionsHandler(ArrayList<String> args) throws ParseException, CommandLineOptionException {
 
 		Options options = new Options();
-		OptionGroup opt_grp = new OptionGroup();
-		opt_grp.setRequired(true);
-
-		opt_grp.addOption(Option.builder("H").required(false).longOpt("help").desc("Shows Help").build());
-		opt_grp.addOption(Option.builder("R").required(false).hasArg(true).longOpt("results-uuid")
+		options.addOption(Option.builder("H").required(false).longOpt("help").desc("Shows Help").build());
+		options.addOption(Option.builder("R").required(false).hasArg(true).longOpt("results-uuid").argName("RESULTS_UUID")
 				.desc("Assessment Results UUID of a project").build());
-		options.addOptionGroup(opt_grp);
-
-		options.addOption(Option.builder("P").required(false).hasArg(true).longOpt("project-uuid")
+		options.addOption(Option.builder("P").required(false).hasArg(true).longOpt("project-uuid").argName("PROJECT_UUID")
 				.desc("Project UUID of a project").build());
-		options.addOption(Option.builder("F").required(false).hasArg(true).longOpt("file-path")
+		options.addOption(Option.builder("F").required(false).hasArg(true).longOpt("file-path").argName("SCARF_FILEPATH")
 				.desc("Filepath to write SCARF Results into").build());
 
 		String[] cmd_args = (String[]) args.toArray(new String[0]);
@@ -196,17 +190,22 @@ public class Cli {
 			formatter.printHelp("Command Line Parameters", options);
 			return null;
 		}else {
-			HashMap<String, Object> cred_map = new HashMap<String, Object>();
-			if(parsed_options.hasOption("project-uuid") || parsed_options.hasOption("file-path")){
-				cred_map.put("project-uuid", parsed_options.getOptionValue("project-uuid"));
-				cred_map.put("results-uuid", parsed_options.getOptionValue("results-uuid"));
-				cred_map.put("file-path", parsed_options.getOptionValue("file-path"));
-				return cred_map;
-			}else if(!parsed_options.hasOption("project-uuid")){
-				throw new CommandLineOptionException("Required -P --project-uuid <project-uuid> option");
-			}else {
-				throw new CommandLineOptionException("Required -F --file-path <scarf-file-path> option");
+			
+			if(!parsed_options.hasOption("results-uuid")){
+				throw new CommandLineOptionException(optionMissingStr(options.getOption("R")));
 			}
+			if(!parsed_options.hasOption("project-uuid")){
+				throw new CommandLineOptionException(optionMissingStr(options.getOption("P")));
+			}
+			if(!parsed_options.hasOption("file-path")){
+				throw new CommandLineOptionException(optionMissingStr(options.getOption("F")));
+			}
+			
+			HashMap<String, Object> cred_map = new HashMap<String, Object>();
+			cred_map.put("project-uuid", parsed_options.getOptionValue("project-uuid"));
+			cred_map.put("results-uuid", parsed_options.getOptionValue("results-uuid"));
+			cred_map.put("file-path", parsed_options.getOptionValue("file-path"));
+			return cred_map;
 		}
 	}
 
@@ -225,15 +224,17 @@ public class Cli {
 			HelpFormatter formatter = new HelpFormatter();
 			formatter.printHelp("Command Line Parameters", options);
 			return null;
-		}else if(parsed_options.hasOption("project-uuid")){
+		}else {
+			if(!parsed_options.hasOption("project-uuid")){
+				throw new CommandLineOptionException(optionMissingStr(options.getOption("P")));
+			}
+			if(!parsed_options.hasOption("assess-uuid")){
+				throw new CommandLineOptionException(optionMissingStr(options.getOption("A")));
+			}
 			HashMap<String, Object> cred_map = new HashMap<String, Object>();
 			cred_map.put("project-uuid", parsed_options.getOptionValue("project-uuid"));
-			if(parsed_options.hasOption("assess-uuid")){
-				cred_map.put("assess-uuid", parsed_options.getOptionValue("assess-uuid"));
-			}
+			cred_map.put("assess-uuid", parsed_options.getOptionValue("assess-uuid"));
 			return cred_map;
-		}else {
-			throw new CommandLineOptionException("Required -P --project-uuid <project-uuid> option");
 		}
 	}
 
@@ -463,7 +464,7 @@ public class Cli {
 		opt_grp.addOption(Option.builder("H").required(false).longOpt("help").desc("Shows Help").build());
 		opt_grp.addOption(Option.builder("R").required(false).longOpt("run").hasArg(false).desc("Run an assessment").build());
 		opt_grp.addOption(Option.builder("L").required(false).longOpt("list").hasArg(false).desc("List assessments").build());
-		opt_grp.addOption(Option.builder("I").required(false).longOpt("Info").hasArg(false).desc("Information on assessment").build());
+		opt_grp.addOption(Option.builder("I").required(false).longOpt("info").hasArg(false).desc("Information on assessment").build());
 		options.addOptionGroup(opt_grp);
 
 		options.addOption(Option.builder("K").required(false).hasArg(true).longOpt("pkg-uuid").argName("PACKAGE_UUID")

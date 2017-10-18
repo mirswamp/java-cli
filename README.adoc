@@ -168,22 +168,49 @@ To *delete* a set of packages that are part of a particular project, the `packag
 |=======================================================================
 
  
-=== Assessments in SWAMP
+=== Running assessments in SWAMP
 
 `assess` sub-command must be used for the following:
 
 * Perform assessments in SWAMP
 * List assessments
+* Information about an assessment
 
 To *perform* an assessment, provide the following options to the `assess` sub-command:
 
 |=======================================================================
 |Option | Value
+| `--run` | Flag for running assessment
 | `--pkg-uuid <PKG_VERSION_UUID>` | UUID of the version of a package that must be assessed
 | `--project-uuid <PROJECT_UUID>` | Project that the package is part of
-| `--platform-uuid <PROJECT_UUID1> <PROJECT_UUID2> ...` | UUIDs of the platfoms that assessments must be performed on 
+| `--platform-uuid <PROJECT_UUID1> <PROJECT_UUID2> ...` | UUIDs of the platfoms that assessments must be performed on. This is optional and is only valid for `C/C++` assessments.
 | `--tool-uuid <TOOL_UUID1> <TOOL_UUID2> ...` | UUIDs of the tools that must be used for assessments
 |=======================================================================
+
+=== Assessment Status
+
+To get the status of an assessment run, `status` command must be used with the following options:
+
+|=======================================================================
+|Option | Value
+| `--project-uuid <PROJECT_UUID>` | Project UUID that the assessment was part of
+| `--assess-uuid <ASSESS_UUID>` | Assessment UUID
+|=======================================================================
+
+The output of the above command will display (SUCCESS|FAILURE|INPROGRESS). Incase of SUCCESS, the number of weaknesses and *results-uuid* will also be displayed on the console. 
+
+=== Assessment Results
+
+To get SCARF results of an assessment run, `results` command must be used with the following options:
+
+|=======================================================================
+|Option | Value
+| `--project-uuid <PROJECT_UUID>` | Project UUID that the assessment was part of
+| `--results-uuid <RESULTS_UUID>` | Results UUID obtained from `status` command
+| `--file-path <SCARF_FILEPATH>`  | Filepath to write SCARF Results into
+|=======================================================================
+
+SCARF results from the assessment will be stored into SCARF_FILEPATH.
 
 === Build status on Travis CI
 
