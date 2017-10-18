@@ -1,0 +1,192 @@
+= OWASP Dependency Check (ODC) in SWAMP
+:toc: left
+Vamshi Basupalli <vamshi@cs.wisc.edu>; v1.2; {docdatetime}
+
+:numbered:
+
+== Introduction
+
+The Java CLI is a Java library and a command line interface that provides many common operation on a SWAMP instance.  These operations include getting a list of projects, packages, versions of packages, assessments, tools and platforms.  User can also create packages, upload new versions of a package, configure and start an assessment, check the status of an assessment, and download SCARF results.
+
+== Running the CLI
+Pre-requisites for the latest CLI is JDK-8.
+
+=== Download the latest Java CLI
+
+From https://github.com/mirswamp/java-cli/releases page, download the latest archive for java-cli-X.Y-jar-with-dependencies.zip archive, where X.Y stands for the latest release. Extract/Unarchive the zip file to get the jar file for the CLI.
+
+
+Run the following command to test if it works.
+
+```
+java -jar java-cli-1.2-jar-with-dependencies.jar
+```
+
+The output of the above command must be
+```
+------------------------------------------------------------------------
+Usage: <program> <sub-command> <options>
+------------------------------------------------------------------------
+<sub-command> must be one of the following:
+		login
+		logout
+		assess
+		project
+		package
+		platform
+		results
+		status
+		tools
+		user
+------------------------------------------------------------------------
+For information on the <options> for a <sub-command> execute:
+	<program> <sub-command> --help or <program> <sub-command> -h
+```
+
+Java CLI provides sub-commands to perform various operations on SWAMP. The sub-command is the first argument to the CLI program. Each sub-command has its own set of options and arguments
+
+=== Login to SWAMP
+
+`login` sub-command must be used to login into SWAMP. The `login` sub-command takes the following options:
+
+[cols="<40%,<60%",options="header",]
+|=======================================================================
+|Option | Value
+| `--console` | Accepts username and password from the terminal
+| `--filepath <CREDENTIALS_FILEPATH>` | Properties file containing
+                                        *username* and *password*
+| `--swamp-host <SWAMP_HOST>` | URL for SWAMP host. This is optional, default is `https://www.mir-swamp.org`
+| `-help` | get help on options
+|=======================================================================
+
+The properties file should have the following as key value pairs:
+```
+username=<swamp-username>
+password=<swamp-password>
+```
+
+If the login is successfull, the following output is displayed on the console.
+```
+Login successful
+User UUID: <SWAMP user UUID>
+```
+
+=== SWAMP Projects
+
+`project` sub-command must be used for the following:
+* Get the list of all the SWAMP project the user is part of.
+* Given a project name, get the project UUID.
+
+The `project` sub-command takes the following options:
+
+[cols="<40%,<60%",options="header",]
+|=======================================================================
+|Option | Value
+| `--list` | shows all the project names that user is associated with along with their UUIDs
+| `--project-name <PROJECT_NAME>` | Name of the project to get the UUID for
+| `--help` | get help on options
+|=======================================================================
+
+=== SWAMP Platforms
+
+`platform` sub-command must be used for the following:
+
+* Get a list of all the platforms supported by the SWAMP instance.
+* Given a platform name, get the platform UUID.
+
+The `platform` sub-command takes the following options:
+
+[cols="<40%,<60%",options="header",]
+|=======================================================================
+|Option | Value
+| `--list` | show all the platforms supported by the SWAMP instance along with their UUIDs
+| `--platform-name <PLATFORM_NAME>` | Name of the platform to get the UUID for
+| `--help` | get help on options
+|=======================================================================
+
+
+=== SWAMP Tools
+
+`tools` sub-command must be used for the following:
+
+* Get a list of all the tools supported by the SWAMP instance.
+* Given a tool,m name, get the platform UUID.
+
+The `tools` sub-command takes the following options:
+
+[cols="<40%,<60%",options="header",]
+|=======================================================================
+|Option | Value
+| `--list` | show all the tools supported by the SWAMP instance along with their UUIDs, supported package types, and supported platforms
+| `--tool-name <TOOL_NAME>` | Name of the tool to get the UUID for
+| `--project-uuid <PROJECT_UUID>` | Project UUID for extra project specific tools, this option must be used along with the `--list` option
+| `--help` | get help on options
+|=======================================================================
+
+=== SWAMP Package
+
+`package` sub-command must be used for the following:
+
+* Upload a package to SWAMP
+* List supported package types
+* List all the packages in a project
+* Delete a set of package from a project
+
+To *upload* a package, the `package` sub-command takes the following options:
+
+[cols="<40%,<60%",options="header",]
+|=======================================================================
+|Option | Value
+| `--pkg-archive <PACKAGE_ARCHIVE_FILEPATH>` | Path to the archive of the package.
+| `--pkg-conf <PACKAGE_CONF_FILEPATH>` | Path to package.conf file for the package.
+| `--new-pkg` | Flag to specify if this should be a new package, instead of a package version. If a package with the same name already exist, it is added as a package version. This flag is optional
+| `--os-deps-conf <OS_DEPENDENCIES_CONF_FILEPATH>` | Path to os dependency configuration file for the package. This is optional
+| `--project-uuid <PROJECT_UUID>` | UUID of the project tht this must be associated with
+|=======================================================================
+
+To display the *types of software packages* supported by SWAMP, the `package` sub-command takes the following options:
+[cols="<40%,<60%",options="header",]
+|=======================================================================
+|Option | Value
+| `--pkg-types` | lists the packages along with the package UUIDs
+|=======================================================================
+
+To *list* packages uploaded by a user, the `package` sub-command takes the following options:
+[cols="<40%,<60%",options="header",]
+|=======================================================================
+|Option | Value
+| `--list` | lists the packages along with the package UUIDs
+| `--project-uuid <PROJECT_UUID>` | show packages that are part of this project
+|=======================================================================
+
+To *list* packages uploaded by a user, the `package` sub-command takes the following options:
+[cols="<40%,<60%",options="header",]
+|=======================================================================
+|Option | Value
+| `--list` | lists the packages along with the package UUIDs
+| `--project-uuid <PROJECT_UUID>` | show packages that are part of this project
+|=======================================================================
+
+  
+
+=== Build status on Travis CI
+
+[![Build Status](https://travis-ci.org/mirswamp/java-cli.svg?branch=master)](https://travis-ci.org/mirswamp/java-cli)
+
+=== Automated Test Suite
+
+To run the automated test suite, do the following:
+
+* Change to `java-cli` directory
+* From `https://github.com/mirswamp/java-cli/releases`, download `test_packages.zip` file and unzip it in `scripts/resources` directory.
+* Download *Jython-2.7.0* stand-alone jar file from http://www.jython.org/downloads.html and create a JYTHON_JAR environment variable that points to the Jar file.
+* Create a `userinfo.properties` in `scripts/resources` directory. The file should have the following as key value pairs
+```
+username=<swamp-username>
+password=<swamp-password>
+project=<swamp-user-project-uuid>
+hostname=<swamp-hostname> # Optional, default is mir-swamp.org
+```
+* run `.scripts/test.sh` script.
+
+

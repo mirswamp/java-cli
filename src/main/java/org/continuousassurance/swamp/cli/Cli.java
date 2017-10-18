@@ -81,7 +81,7 @@ public class Cli {
 
 		try {
 			prop.load(new FileInputStream(filename));
-			cred_map.put("username",prop.getProperty("username"));
+			cred_map.put("username", prop.getProperty("username"));
 			cred_map.put("password", prop.getProperty("password"));
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -269,6 +269,8 @@ public class Cli {
 		}else {
 			HashMap<String, Object> cred_map = new HashMap<String, Object>();
 			if (parsed_options.hasOption("Q")){
+				cred_map.put("quiet", true);
+			}else {
 				cred_map.put("quiet", false);
 			}
 
@@ -379,8 +381,8 @@ public class Cli {
 		opt_grp.addOption(Option.builder("N").required(false).hasArg(true).argName("PLATFORM_NAME").longOpt("platform-name")
 				.desc("Specify the platform name and get the uuid from it").build());
 		options.addOptionGroup(opt_grp);
-		options.addOption(Option.builder("T").required(false).hasArg(true).argName("PACKAGE_TYPE").longOpt("pkg-type")
-				.desc("Specify the 'package type name' to get relevant platforms").build());
+		//options.addOption(Option.builder("T").required(false).hasArg(true).argName("PACKAGE_TYPE").longOpt("pkg-type")
+		//		.desc("Specify the 'package type name' to get relevant platforms").build());
 
 
 		String[] cmd_args = (String[]) args.toArray(new String[0]);
@@ -560,7 +562,7 @@ public class Cli {
 			if (my_proj == null){
 				System.out.printf("Project %s does not exist.\n", opt_map.get("project-name"));
 			}else{
-				System.out.printf(my_proj.getUUIDString());
+				System.out.println(my_proj.getUUIDString());
 			}
 		}else{
 			api_wrapper.printAllProjects();
@@ -569,7 +571,7 @@ public class Cli {
 	
 	public void platformHandler(HashMap<String, Object> opt_map) {
 		if (opt_map.containsKey("platform-name")) {
-			System.out.printf(api_wrapper.getPlatformVersionFromName((String)opt_map.get("platform-name")).getUUIDString());
+			System.out.println(api_wrapper.getPlatformVersionFromName((String)opt_map.get("platform-name")).getUUIDString());
 		}else {
 			/*
 			 api_wrapper.printAllPlatforms((String)opt_map.get("pkg-type"));
