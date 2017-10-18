@@ -257,7 +257,7 @@ public class Cli {
 		options.addOptionGroup(opt_grp);
 
 		
-		opt_grp.addOption(Option.builder("A").required(false).hasArg().argName("PACKAGE_ARCHIVE_FILEPATH").longOpt("pkg-archive")
+		options.addOption(Option.builder("A").required(false).hasArg().argName("PACKAGE_ARCHIVE_FILEPATH").longOpt("pkg-archive")
 				.desc("File path to the package archive file").build());
 		options.addOption(Option.builder("C").required(false).hasArg().argName("PACKAGE_CONF_FILEPATH").longOpt("pkg-conf")
 				.desc("File path to the package conf file").build());
@@ -662,8 +662,8 @@ public class Cli {
 					(String)opt_map.get("os-deps-conf"),
 					opt_map.containsKey("new-pkg"));
 
-			if (opt_map.containsKey("quiet")){
-				System.out.printf(package_uuid);
+			if ((boolean)opt_map.get("quiet") == true){
+				System.out.println(package_uuid);
 			}else{
 				System.out.printf("Package Version UUID: %s\n", package_uuid);
 			}
@@ -709,11 +709,11 @@ public class Cli {
 		User user = api_wrapper.getUserInfo();
 		System.out.printf("%s\n", "User:\t" + user.getFirstName() + " " + user.getLastName());
 		System.out.printf("%s\n", "Email:\t" + user.getEmail());
-		if (user.getPhone().equals("null")){
+		/*if (user.getPhone().equals("null")){
 			System.out.printf("%s\n", "Phone:\t<Not provided>");
 		}else{
 			System.out.printf("%s\n", "Phone:\t" + user.getPhone());
-		}
+		}*/
 		System.out.printf("%s\n", "UUID:\t" + user.getUUIDString());
 	}
 	
