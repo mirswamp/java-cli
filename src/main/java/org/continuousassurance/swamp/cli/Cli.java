@@ -91,6 +91,13 @@ public class Cli {
 		return cred_map;
 	}
 
+	public static String optionMissingStr(Option option) {
+		return String.format("Missing options/arguments: [-%s --%s <%s>]\n",
+				option.getOpt(),
+				option.getLongOpt(),
+				option.getArgName());
+	}
+
 	public HashMap<String, Object> loginOptionsHandler(ArrayList<String> args) throws ParseException, CommandLineOptionException {
 
 		Options options = new Options();
@@ -140,9 +147,12 @@ public class Cli {
 		opt_grp.addOption(Option.builder("H").required(false).longOpt("help").desc("Shows Help").build());
 		opt_grp.addOption(Option.builder("L").required(false).hasArg(false).longOpt("list")
 				.desc("List projects").build());
-		opt_grp.addOption(Option.builder("N").required(false).hasArg(true).longOpt("project-name")
-				.desc("Specify a project name and get the uuid from it").build());
+		opt_grp.addOption(Option.builder("U").required(false).hasArg(false).longOpt("uuid")
+				.desc("Get project UUID").build());
 		options.addOptionGroup(opt_grp);
+
+		options.addOption(Option.builder("N").required(false).hasArg(true).longOpt("project-name").argName("PROJECT_NAME")
+				.desc("Specify a project name and get the uuid from it").build());
 
 		String[] cmd_args = (String[]) args.toArray(new String[0]);
 		CommandLine parsed_options = new DefaultParser().parse(options, cmd_args);
@@ -152,10 +162,13 @@ public class Cli {
 			return null;
 		}else {
 			HashMap<String, Object> cred_map = new HashMap<String, Object>();
-			if (parsed_options.hasOption("project-name")){
-				cred_map.put("project-name",parsed_options.getOptionValue("project-name"));
+			if (parsed_options.hasOption("uuid")){
+				if(!parsed_options.hasOption("project-name")){
+					//throw new CommandLineOptionException("Required -N --project-name <PROJECT_NAME> option");
+					throw new CommandLineOptionException(optionMissingStr(options.getOption("N")));
+				}
+				cred_map.put("project-name", parsed_options.getOptionValue("project-name"));
 			}
-			//cred_map.put("list", "list"); Not required
 			return cred_map;
 		}
 	}
@@ -222,13 +235,6 @@ public class Cli {
 		}else {
 			throw new CommandLineOptionException("Required -P --project-uuid <project-uuid> option");
 		}
-	}
-
-	public static String optionMissingStr(Option option) {
-		return String.format("Missing options/arguments: [-%s --%s <%s>]\n",
-				option.getOpt(),
-				option.getLongOpt(),
-				option.getArgName());
 	}
 
 	public HashMap<String, Object> packageOptionsHandler(ArrayList<String> args) throws ParseException, CommandLineOptionException {
@@ -315,10 +321,14 @@ public class Cli {
 	public HashMap<String, Object> userOptionsHandler(ArrayList<String> args) throws ParseException{
 
 		Options options = new Options();
-		options.addOption(Option.builder("H").required(false).longOpt("help").desc("Shows Help").build());
-		options.addOption(Option.builder("I").required(false).hasArg(false).longOpt("info")
+		OptionGroup opt_grp = new OptionGroup();
+		opt_grp.setRequired(true);
+		
+		opt_grp.addOption(Option.builder("H").required(false).longOpt("help").desc("Shows Help").build());
+		opt_grp.addOption(Option.builder("I").required(false).hasArg(false).longOpt("info")
 				.desc("Displays info about the currently logged in user").build());
-
+		options.addOptionGroup(opt_grp);
+		
 		String[] cmd_args = (String[]) args.toArray(new String[0]);
 		CommandLine parsed_options = new DefaultParser().parse(options, cmd_args);
 		if (args.size() == 0 || parsed_options.hasOption("help")) {
@@ -343,11 +353,13 @@ public class Cli {
 		opt_grp.addOption(Option.builder("H").required(false).longOpt("help").desc("Shows Help").build());
 		opt_grp.addOption(Option.builder("L").required(false).hasArg(false).longOpt("list")
 				.desc("Displays all tools to the user").build());
-		opt_grp.addOption(Option.builder("N").required(false).hasArg(true).argName("TOOL_NAME").longOpt("tool-name")
-				.desc("Specify the tool name and get the uuid from it").build());
+		opt_grp.addOption(Option.builder("U").required(false).hasArg(false).longOpt("uuid")
+				.desc("Get UUID from tool name").build());
 		options.addOptionGroup(opt_grp);
 
-		options.addOption(Option.builder("P").required(false).hasArg().argName("PROJECT_UUID").longOpt("project-uuid")
+		options.addOption(Option.builder("N").required(false).hasArg(true).argName("TOOL_NAME").longOpt("tool-name")
+				.desc("Specify the tool name and get the uuid from it").build());
+		options.addOption(Option.builder("P").required(false).hasArg(true).argName("PROJECT_UUID").longOpt("project-uuid")
 				.desc("Project UUID for extra project specific tools").build());
 
 		String[] cmd_args = (String[]) args.toArray(new String[0]);
@@ -360,9 +372,11 @@ public class Cli {
 			HashMap<String, Object> cred_map = new HashMap<String, Object>();
 			if (parsed_options.hasOption("L")){
 				cred_map.put("list", "list");
-			}
-			cred_map.put("project-uuid", parsed_options.getOptionValue("P", null));
-			if (parsed_options.hasOption("N")){
+				cred_map.put("project-uuid", parsed_options.getOptionValue("P", null));
+			}else {
+				if (!parsed_options.hasOption("N")){
+					throw new CommandLineOptionException(optionMissingStr(options.getOption("N")));
+				}
 				cred_map.put("tool-name", parsed_options.getOptionValue("N", null));
 			}
 			return cred_map;
@@ -377,35 +391,32 @@ public class Cli {
 
 		opt_grp.addOption(Option.builder("H").required(false).longOpt("help").desc("Shows Help").build());
 		opt_grp.addOption(Option.builder("L").required(false).hasArg(false).longOpt("list")
-				.desc("Show the list of packages that belong to the user").build());
-		opt_grp.addOption(Option.builder("N").required(false).hasArg(true).argName("PLATFORM_NAME").longOpt("platform-name")
-				.desc("Specify the platform name and get the uuid from it").build());
+				.desc("Show all platform").build());
+		opt_grp.addOption(Option.builder("U").required(false).hasArg(false).longOpt("uuid")
+				.desc("Get UUID from platform name").build());
 		options.addOptionGroup(opt_grp);
-		//options.addOption(Option.builder("T").required(false).hasArg(true).argName("PACKAGE_TYPE").longOpt("pkg-type")
-		//		.desc("Specify the 'package type name' to get relevant platforms").build());
 
+		options.addOption(Option.builder("N").required(false).hasArg(true).argName("PLATFORM_NAME").longOpt("platform-name")
+				.desc("Specify the platform name and get the uuid from it").build());
 
 		String[] cmd_args = (String[]) args.toArray(new String[0]);
 		CommandLine parsed_options = new DefaultParser().parse(options, cmd_args);
 		if (args.size() == 0 || parsed_options.hasOption("help")) {
 			HelpFormatter formatter = new HelpFormatter();
 			formatter.printHelp("Command Line Parameters", options);
+			return null;
 		}else {
 			HashMap<String, Object> cred_map = new HashMap<String, Object>();
 			if (parsed_options.hasOption("L")){
 				cred_map.put("list", "list");
-			}
-			if (parsed_options.hasOption("N")){
+			}else {
+				if (!parsed_options.hasOption("N")){
+					throw new CommandLineOptionException(optionMissingStr(options.getOption("N")));
+				}
 				cred_map.put("platform-name", parsed_options.getOptionValue("N", null));
 			}
-
-			if (parsed_options.hasOption("T")){
-				cred_map.put("pkg-type", parsed_options.getOptionValue("T", null));
-			}
-
 			return cred_map;
 		}
-		return null;
 	}
 
 	public HashMap<String, Object> logoutOptionsHandler(ArrayList<String> args) throws ParseException{
