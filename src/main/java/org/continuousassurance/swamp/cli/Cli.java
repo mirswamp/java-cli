@@ -246,15 +246,18 @@ public class Cli {
 		opt_grp.addOption(Option.builder("H").required(false).longOpt("help").desc("Shows Help").build());
 		opt_grp.addOption(Option.builder("L").required(false).hasArg(false).longOpt("list")
 				.desc("Show the list of packages that belong to the user").build());
-		opt_grp.addOption(Option.builder("A").required(false).hasArg().argName("PACKAGE_ARCHIVE_FILEPATH").longOpt("pkg-archive")
-				.desc("File path to the package archive file").build());
-		opt_grp.addOption(Option.builder("T").required(false).hasArg(false).longOpt("pkg-types")
+		opt_grp.addOption(Option.builder("U").required(false).hasArg(false).longOpt("upload")
+				.desc("Upload a new package/package version to a project").build());
+		opt_grp.addOption(Option.builder("T").required(false).hasArg(false).longOpt("types")
 				.desc("list all package types").build());
-		opt_grp.addOption(Option.builder("D").required(false).hasArgs().argName("PACKAGE_UUID").longOpt("pkg-uuid")
-				.desc("Package UUID").build());
+		opt_grp.addOption(Option.builder("D").required(false).hasArg(false).longOpt("delete")
+				.desc("Delete Package").build());
 		
 		options.addOptionGroup(opt_grp);
 
+		
+		opt_grp.addOption(Option.builder("A").required(false).hasArg().argName("PACKAGE_ARCHIVE_FILEPATH").longOpt("pkg-archive")
+				.desc("File path to the package archive file").build());
 		options.addOption(Option.builder("C").required(false).hasArg().argName("PACKAGE_CONF_FILEPATH").longOpt("pkg-conf")
 				.desc("File path to the package conf file").build());
 		options.addOption(Option.builder("P").required(false).hasArg().argName("PROJECT_UUID").longOpt("project-uuid")
@@ -266,6 +269,9 @@ public class Cli {
 		options.addOption(Option.builder("Q").required(false).hasArg(false).longOpt("quiet")
 				.desc("Print only the Package UUID with no formatting").build());
 
+		options.addOption(Option.builder("I").required(false).hasArgs().argName("PACKAGE_UUID").longOpt("pkg-uuid")
+				.desc("Package UUID").build());
+		
 		String[] cmd_args = (String[]) args.toArray(new String[0]);
 		CommandLine parsed_options = new DefaultParser().parse(options, cmd_args);
 		if (args.size() == 0 || parsed_options.hasOption("help")) {
@@ -287,33 +293,43 @@ public class Cli {
 			}else if (parsed_options.hasOption("T")){
 				cred_map.put("pkg-types", "pkg-types");
 				return cred_map;
-			}else if (parsed_options.hasOption("A")){
-				if (parsed_options.hasOption("C") && parsed_options.hasOption("P")) {
-					cred_map.put("pkg-archive", parsed_options.getOptionValue("A"));
-					cred_map.put("pkg-conf", parsed_options.getOptionValue("C"));
-					cred_map.put("project-uuid", parsed_options.getOptionValue("P"));
-					if(parsed_options.hasOption("N")){
-						cred_map.put("new-pkg", "");						
-					}
-					if(parsed_options.hasOption("O")){
-						cred_map.put("os-deps-conf", parsed_options.getOptionValue("O"));
-					}
-					return cred_map;
-				}else if (!parsed_options.hasOption("C")){
+			}else if (parsed_options.hasOption("U")){
+				if (!parsed_options.hasOption("A")){
+					throw new CommandLineOptionException(optionMissingStr(options.getOption("A")));
+				}
+				
+				if (!parsed_options.hasOption("C")){
 					throw new CommandLineOptionException(optionMissingStr(options.getOption("C")));
-				}else {
+				}
+				
+				if (!parsed_options.hasOption("P")){
 					throw new CommandLineOptionException(optionMissingStr(options.getOption("P")));
 				}
-			}else {
-				// if (parsed_options.hasOption("D")) 
-				if (parsed_options.hasOption("P")) {
-					cred_map.put("delete", "delete");
-					cred_map.put("project-uuid", parsed_options.getOptionValue("P"));
-					cred_map.put("package-uuids", Arrays.asList(parsed_options.getOptionValues("D")));
-					return cred_map;
-				}else {
+				
+				cred_map.put("pkg-archive", parsed_options.getOptionValue("A"));
+				cred_map.put("pkg-conf", parsed_options.getOptionValue("C"));
+				cred_map.put("project-uuid", parsed_options.getOptionValue("P"));
+				if(parsed_options.hasOption("N")){
+					cred_map.put("new-pkg", "");						
+				}
+				if(parsed_options.hasOption("O")){
+					cred_map.put("os-deps-conf", parsed_options.getOptionValue("O"));
+				}
+				return cred_map;
+				
+			}else { // if (parsed_options.hasOption("D")) 
+				if (!parsed_options.hasOption("P")){
 					throw new CommandLineOptionException(optionMissingStr(options.getOption("P")));
 				}
+				
+				if (!parsed_options.hasOption("I")){
+					throw new CommandLineOptionException(optionMissingStr(options.getOption("I")));
+				}
+				
+				cred_map.put("delete", "delete");
+				cred_map.put("project-uuid", parsed_options.getOptionValue("P"));
+				cred_map.put("package-uuids", Arrays.asList(parsed_options.getOptionValues("I")));
+				return cred_map;
 			}
 		}
 	}
@@ -445,25 +461,24 @@ public class Cli {
 		opt_grp.setRequired(true);
 
 		opt_grp.addOption(Option.builder("H").required(false).longOpt("help").desc("Shows Help").build());
-		opt_grp.addOption(Option.builder("R").required(false).hasArg(false).longOpt("run-assess")
-				.desc("Run an assessment").build());
-		opt_grp.addOption(Option.builder("L").required(false).hasArg(false).longOpt("list-assess")
-				.desc("List assessments from a package").build());
-		opt_grp.addOption(Option.builder("A").required(false).hasArg(true).longOpt("assess-uuid")
-				.desc("View an assessment with Assessment uuid").build());
+		opt_grp.addOption(Option.builder("R").required(false).longOpt("run").hasArg(false).desc("Run an assessment").build());
+		opt_grp.addOption(Option.builder("L").required(false).longOpt("list").hasArg(false).desc("List assessments").build());
+		opt_grp.addOption(Option.builder("I").required(false).longOpt("Info").hasArg(false).desc("Information on assessment").build());
 		options.addOptionGroup(opt_grp);
 
-		options.addOption(Option.builder("K").required(false).hasArg(true).longOpt("pkg-uuid")
+		options.addOption(Option.builder("K").required(false).hasArg(true).longOpt("pkg-uuid").argName("PACKAGE_UUID")
 				.desc("Package uuid provided").build());
-		options.addOption(Option.builder("P").required(false).hasArg(true).longOpt("project-uuid")
+		options.addOption(Option.builder("P").required(false).hasArg(true).longOpt("project-uuid").argName("PROJECT_UUID")
 				.desc("Project uuid provided").build());
-		options.addOption(Option.builder("T").required(false).hasArgs().longOpt("tool-uuid")
+		options.addOption(Option.builder("T").required(false).hasArgs().longOpt("tool-uuid").argName("TOOL_UUIDs")
 				.desc("Tool uuid provided").build());
-		options.addOption(Option.builder("F").required(false).hasArg(true).longOpt("platform-uuid")
+		options.addOption(Option.builder("F").required(false).hasArg(true).longOpt("platform-uuid").argName("PLATFORM_UUIDs")
 				.desc("Platform uuid provided").build());
 		options.addOption(Option.builder("Q").required(false).hasArg(false).longOpt("quiet")
 				.desc("Print only the Assessment UUID with no formatting").build());
-
+		options.addOption(Option.builder("A").required(false).longOpt("assess-uuid").hasArg(true).argName("ASSESSMENT_UUID")
+				.desc("View an assessment information").build());
+		
 		String[] cmd_args = (String[]) args.toArray(new String[0]);
 		CommandLine parsed_options = new DefaultParser().parse(options, cmd_args);
 		HelpFormatter formatter = new HelpFormatter();
@@ -475,41 +490,47 @@ public class Cli {
 		if (parsed_options.hasOption("Q")){
 			cred_map.put("quiet", "quiet");
 		}
-		if (parsed_options.hasOption("P")){
+		
+		if (parsed_options.hasOption("R")){
+			if (!parsed_options.hasOption("P")){
+				throw new CommandLineOptionException(optionMissingStr(options.getOption("P")));
+			}
+			
+			if (!parsed_options.hasOption("K")){
+				throw new CommandLineOptionException(optionMissingStr(options.getOption("K")));
+			}
+			
+			if (!parsed_options.hasOption("T")){
+				throw new CommandLineOptionException(optionMissingStr(options.getOption("T")));
+			}
+			
 			cred_map.put("project-uuid", parsed_options.getOptionValue("P"));
-			if (parsed_options.hasOption("K")){
-				cred_map.put("pkg-uuid", parsed_options.getOptionValue("K"));
-				if (parsed_options.hasOption("T")){
-					if (parsed_options.hasOption("F")){
-						cred_map.put("platform-uuid", Arrays.asList(parsed_options.getOptionValues('F')));
-					}
-					//cred_map.put("tool-uuid", parsed_options.getOptionValue("T"));
-					cred_map.put("tool-uuid", Arrays.asList(parsed_options.getOptionValues('T')));
-					if (parsed_options.hasOption("R")){
-						cred_map.put("run-assess", "run-assess");
-						return cred_map;
-					}
-				}
+			cred_map.put("pkg-uuid", parsed_options.getOptionValue("K"));
+			cred_map.put("tool-uuid", Arrays.asList(parsed_options.getOptionValues('T')));
+			if (parsed_options.hasOption("F")){
+				cred_map.put("platform-uuid", Arrays.asList(parsed_options.getOptionValues('F')));
 			}
-			if (parsed_options.hasOption("L")){
-				cred_map.put("list-assess", "list-assess");
-				return cred_map;
+			cred_map.put("run-assess", "run-assess");
+			return cred_map;
+		}else if (parsed_options.hasOption("L")){
+			if (!parsed_options.hasOption("P")){
+				throw new CommandLineOptionException(optionMissingStr(options.getOption("P")));
 			}
-			if (parsed_options.hasOption("A")){
-				cred_map.put("assess-uuid", parsed_options.getOptionValue("A"));
-				return cred_map;
+			cred_map.put("project-uuid", parsed_options.getOptionValue("P"));
+			cred_map.put("list-assess", "list-assess");
+			return cred_map;
+		}else {
+			if (!parsed_options.hasOption("P")){
+				throw new CommandLineOptionException(optionMissingStr(options.getOption("P")));
 			}
+			if (!parsed_options.hasOption("A")){
+				throw new CommandLineOptionException(optionMissingStr(options.getOption("A")));
+			}
+			cred_map.put("project-uuid", parsed_options.getOptionValue("P"));
+			cred_map.put("assess-uuid", parsed_options.getOptionValue("A"));
+			return cred_map;
 		}
 
-		if (parsed_options.hasOption("R")){
-			throw new CommandLineOptionException( optionMissingStr(options.getOption("P")) + "\t" +
-					optionMissingStr(options.getOption("K")) + "\t" +
-					optionMissingStr(options.getOption("T")));
-		}else if (parsed_options.hasOption("L")){
-			throw new CommandLineOptionException(optionMissingStr(options.getOption("P")));
-		}else {
-			throw new CommandLineOptionException(optionMissingStr(options.getOption("P")));
-		}
 	}
 
 	public HashMap<String, Object> processCliArgs(String command, ArrayList<String> cli_args) throws CommandLineOptionException, ParseException{
