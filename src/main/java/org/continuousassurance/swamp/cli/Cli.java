@@ -58,21 +58,21 @@ public class Cli {
     }*/
 
 	public static final ArrayList<String> COMMANDS = new ArrayList<String>(Arrays.asList(
-			"login", "logout", "assess", "project",
+			"login", "logout", "assess", "projects",
 			"package",
-			"platform", "results", "status", "tools", "user"));
+			"platforms", "results", "status", "tools", "user"));
 
 	public static void printHelp() {
 		System.out.println("------------------------------------------------------------------------");
-		System.out.println("Usage: <program> <sub-command> <options>");
+		System.out.println("Usage: <program> <command> <options>");
 		System.out.println("------------------------------------------------------------------------");
-		System.out.println("<sub-command> must be one of the following:");
+		System.out.println("<command> must be one of the following:");
 		for (String cmd :  COMMANDS) {
 			System.out.println("\t\t" + cmd);
 		}
 		System.out.println("------------------------------------------------------------------------");
-		System.out.println("For information on the <options> for a <sub-command> execute:");
-		System.out.println("\t<program> <sub-command> --help or <program> <sub-command> -h");
+		System.out.println("For information on the <options> for a <command> execute:");
+		System.out.println("\t<program> <command> --help or <program> <command> -h");
 	}
 
 	protected HashMap<String, Object> getUserCredentials(String filename) {
@@ -141,7 +141,7 @@ public class Cli {
 		opt_grp.addOption(Option.builder("L").required(false).hasArg(false).longOpt("list")
 				.desc("List projects").build());
 		opt_grp.addOption(Option.builder("N").required(false).hasArg(true).longOpt("project-name")
-				.desc("Specify a the project name and get the uuid from it").build());
+				.desc("Specify a project name and get the uuid from it").build());
 		options.addOptionGroup(opt_grp);
 
 		String[] cmd_args = (String[]) args.toArray(new String[0]);
@@ -512,7 +512,7 @@ public class Cli {
 		case "package":
 			opt_map = packageOptionsHandler(cli_args);
 			break;
-		case "project":
+		case "projects":
 			opt_map = projectOptionsHandler(cli_args);
 			break;
 		case "tools":
@@ -521,7 +521,7 @@ public class Cli {
 		case "assess":
 			opt_map = assessmentOptionsHandler(cli_args);
 			break;
-		case "platform":
+		case "platforms":
 			opt_map = platformOptionsHandler(cli_args);
 			break;
 		case "results":
@@ -695,10 +695,10 @@ public class Cli {
 		}else {
 			api_wrapper.restoreSession();
 			switch (command) {
-			case "project":
+			case "projects":
 				projectHandler(opt_map);
 				break;
-			case "platform":
+			case "platforms":
 				platformHandler(opt_map);
 				break;
 			case "tools":
@@ -749,11 +749,11 @@ public class Cli {
 		}
 	}
 
-	public void printAllPackages(String project_uuid, boolean verbose) {
-		if(verbose){
-			printAllPackagesVerbose(project_uuid);
-		}else {
+	public void printAllPackages(String project_uuid, boolean quiet) {
+		if(quiet){
 			printAllPackagesSummary(project_uuid);
+		}else {
+			printAllPackagesVerbose(project_uuid);
 		}
 	}
 
@@ -787,11 +787,13 @@ public class Cli {
 
 	public void printAssessments(String project_uuid, boolean quiet) {
 		
+		System.out.println("Assessments UUIDs");
 		for (AssessmentRun arun : api_wrapper.getAllAssessments(project_uuid)){
 			if (quiet){
-				System.out.printf(arun.getUUIDString() + "\n");
+				System.out.println(arun.getUUIDString());
 			}else{
-				System.out.printf("Assessment on " + arun.getFilename() +":\n\tUUID: " + arun.getUUIDString() + "\n");
+				//System.out.printf("Assessment on " + arun.getFilename() +":\n\tUUID: " + arun.getUUIDString() + "\n");
+				System.out.println(arun.getUUIDString());
 			}
 		}
 	}
