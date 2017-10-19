@@ -72,7 +72,7 @@ public class Cli {
 		}
 		System.out.println("------------------------------------------------------------------------");
 		System.out.println("For information on the <options> for a <command> execute:");
-		System.out.println("\t<program> <command> --help or <program> <command> -h");
+		System.out.println("\t<program> <command> --help or <program> <command> -H");
 	}
 
 	protected HashMap<String, Object> getUserCredentials(String filename) {
