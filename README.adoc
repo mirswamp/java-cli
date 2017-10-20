@@ -1,34 +1,29 @@
 = SWAMP Java CLI
 :toc: left
-Vamshi Basupalli <vamshi@cs.wisc.edu>; v1.2; {docdatetime}
+Vamshi Basupalli <vamshi@cs.wisc.edu>; v1.3; {docdatetime}
 
 :numbered:
 
 == Introduction
 
-The Java CLI is a Java library and a command line interface that provides many common operation on a SWAMP instance.  These operations include getting a list of projects, packages, versions of packages, assessments, tools and platforms.  User can also create packages, upload new versions of a package, configure and start an assessment, check the status of an assessment, and download SCARF results.
+The SWAMP Java CLI is a Java library and a command line interface that provides many common operation on a SWAMP instance.  These operations include getting a list of projects, packages, versions of packages, assessments, tools and platforms.  User can also create packages, upload new versions of a package, configure and start an assessment, check the status of an assessment, and download SCARF results.
 
-== Running the CLI
+== Installation
 
-
-=== Download the latest Java CLI
-
-From https://github.com/mirswamp/java-cli/releases page, download the latest java-cli-X.Y-jar-with-dependencies.zip archive, where X.Y stands for the latest release. Extract/Unarchive the zip file to get the jar file for the Java CLI. Pre-requisites for running the Java CLI is JDK-7 or above.
+From https://github.com/mirswamp/java-cli/releases page, download the latest java-cli-X.Y-jar.zip archive, where X.Y stands for the latest release. Extract/Unarchive the zip file to get the jar file for the Java CLI. Pre-requisites for running the Java CLI is Java-7 or above.
 
 
-Run the jar file to test if it works.
-
-Example:
+To check if the `jar` file works run the following command on the terminal:
 ```
-java -jar java-cli-1.3-jar-with-dependencies.jar
+java -jar java-cli-1.3.jar
 ```
 
 If the above command is successfull, the output will be:
 ```
 ------------------------------------------------------------------------
-Usage: <program> <command> <options>
+Usage: <program> <sub-command> <options>
 ------------------------------------------------------------------------
-<command> must be one of the following:
+<sub-command> must be one of the following:
 		login
 		logout
 		assess
@@ -40,15 +35,47 @@ Usage: <program> <command> <options>
 		tools
 		user
 ------------------------------------------------------------------------
-For information on the <options> for a <command> execute:
-	<program> <command> --help or <program> <command> -H
+For information on the <options> for a <sub-command> execute:
+	<program> <command> --help or <program> <sub-command> -H
 ```
 
-Java CLI provides *commands* to perform various operations on SWAMP. A *command* is the first argument to the CLI program. Each command has its own set of options and arguments. Java CLI supports the following commands
+=== CLI with Swamp-In-The-Box (SiB) instances
+
+SiB instances have self signed SSL/TLS certificates. Java's security model does not allow talking to an unknown server with a self-signed SSL/TLS certificates. Because of this restriction, the self-signed certificate has to be first added the trusted keystore in the local Java installation. The following are the instructions on how to do it:
+
+1. Go to SiB from the webbrowser and download the SiB self-signed certificate by following these instruction here:
+https://www.thesslstore.com/blog/how-to-view-ssl-certificate-details-in-chrome-56/
+
+2. Run the folloing commands to add the self-signed certificate to the local Java Installation's keystore:
+--
+a. Change the present working directory to your Java installtion directory + `jre/lib/security/`.
++
+.................
+   cd $JAVA_HOME/jre/lib/security
+.................
++
+b. Make a copy of the `cacerts` file
++
+.................
+   cp cacerts cacerts.original
+.................
++
+c. Add the certificate to the keystore (Assuming here that the self-signed certificate is stored on the desktop as www.sib-swamp.org.cer)
++
+.................
+   sudo keytool -importcert -alias sib-name -file ~/Desktop/www.sib-swamp.org.cer -keystore $PWD/cacerts
+.................
+--
+
+3) To check if CLI works with SiB, run `login` sub-command, see section <<login>>
+
+== Using the CLI
+
+SWAMP Java CLI provides *sub-commands* to perform various operations on SWAMP. A *sub-command* is the first argument to the CLI program. Each sub-command has its own set of options and arguments. Java CLI supports the following sub-commands
 
 [cols="<40%,<60%",options="header",]
 |=======================================================================
-|Command | Description
+|Sub-Command | Description
 | login | Login into SWAMP
 | logout | Logout of SWAMP
 | platforms | Get the list of supported platforms
@@ -61,11 +88,12 @@ Java CLI provides *commands* to perform various operations on SWAMP. A *command*
 | user | Information about the current user
 |=======================================================================
 
-To get help on each command run `java -jar java-cli-1.3-jar-with-dependencies.jar <command> --help`
+To get help on each sub-command run `java -jar java-cli-1.3.jar <sub-command> --help` or `java -jar java-cli-1.3.jar <sub-command> --H`.
 
-=== Login in to SWAMP
+[[login]]
+=== Login
 
-`login` command must be used to login into SWAMP. The `login` command takes the following options:
+`login` sub-command is used to login into SWAMP. The `login` sub-command takes the following options:
 
 [cols="<40%,<60%",options="header",]
 |=======================================================================
@@ -85,28 +113,32 @@ password=<swamp-password>
 If the login is successfull, the following output is displayed on the console.
 ```
 Login successful
-User UUID: <SWAMP User UUID>
 ```
 
-=== SWAMP Projects Information
+Once logged in, a SWAMP sesssion is valid for *48* hours. CLI stores the session cookies in the user directory `~/.SWAMP_SESSION`
 
-`projects` command must be used for the following:
+==== Application Passwords
+If you have signed up with SWAMP using *github* or any other third party identiy provider then you may not have SWAMP credentials. To get username and password to login with the CLI, go to https://www.mir-swamp.org/#my-account and then to *Application Passwords* tab. Create a new password by pressing *Add New Password* button. The *username* can be seen on *My Profile* tab.
+
+=== Projects
+
+`projects` sub-command is used for the following:
 
 1. Get the list of all the SWAMP projects the user is part of.
 2. Given a project name, get the project UUID.
 
 ==== Get Project List
 
-To get a list of all the projects that user of part of, use `--list` flag with the `projects` command.
+To get a list of all the projects that user of part of, use `--list` option with the `projects` sub-command.
 
 Example:
 ```
-java -jar java-cli-1.3-jar-with-dependencies.jar projects --list
+java -jar java-cli-1.3.jar projects --list
 ```
 
 Example for the output of the above command:
 ```
-Project Name          Project UUID                                  Project Create Date
+Name                  UUID                                   Create Date
 new-project           b47380ea-a4ef-0a88-0a17-aab43d80fdbe   'Thu Jan 22 09:02:31 CST 2015'
 UW SWAMP Java Software 03493356-ce76-22af-dccd-bbdb1ee169f4   'Mon Feb 03 16:52:49 CST 2014'
 UW Mobile             0687979d-4b25-1036-3213-05ab438fdbbc   'Tue Jun 23 11:39:05 CDT 2015'
@@ -119,19 +151,19 @@ MyProject             b7c3408f-bb9d-11e4-a4cd-001a4a814425   'Mon Feb 23 20:51:2
 
 ==== Get Project UUID
 
-To get a list of all the projects that user of part of, use `--uuid` flag with the `projects` command.
+To get a list of all the projects that user of part of, use `--uuid` option with the `projects` sub-command.
 
-`projects` command with `--uuid` flag requires the following additional options:
+`projects` sub-command with `--uuid` option requires the following additional options:
 
 [cols="<40%,<60%",options="header",]
 |=======================================================================
 |Option | Value
-| `--project-name <PROJECT_NAME>` | Name of the project to get the UUID for
+| `--name <PROJECT_NAME>` | Name of the project to get the UUID for
 |=======================================================================
 
 Example:
 ```
-java -jar java-cli-1.3-jar-with-dependencies.jar projects --uuid --project-name 4plugins
+java -jar java-cli-1.3.jar projects --uuid --name 4plugins
 ```
 
 Example for the output of the above command:
@@ -141,23 +173,23 @@ df2e7c15-4d28-4224-b25c-c2570bd91156
 
 === SWAMP Platforms Information
 
-`platform` command must be used for the following:
+`platform` sub-command is used for the following:
 
 1. Get a list of all the platforms supported by the SWAMP.
 2. Given a platform name, get the platform UUID.
 
-=== Get Platforms List
+==== Get Platforms List
 
-To get a list of all the platforms that user of part of, use `--list` flag with the `platforms` command.
+To get a list of all the platforms that user of part of, use `--list` option with the `platforms` sub-command.
 
 Example:
 ```
-java -jar java-cli-1.3-jar-with-dependencies.jar platforms --list
+java -jar java-cli-1.3.jar platforms --list
 ```
 
 Example for the output of the above command:
 ```
-Platform Name                  Platform UUID                         
+Name                           UUID                         
 android-ubuntu-12.04-64        8f4878ec-976f-11e4-829b-001a4a81450b  
 centos-5-32                    73c7f6be-7c3a-11e6-88bc-001a4a81450b  
 centos-5-64                    bf9ddb9c-7c3a-11e6-88bc-001a4a81450b  
@@ -182,22 +214,21 @@ ubuntu-14.04-64                fd924363-7c40-11e6-88bc-001a4a81450b
 ubuntu-16.04-64                03b18efe-7c41-11e6-88bc-001a4a81450b  
 ```
 
-
 ==== Get Platform UUID
 
-To get UUID of a platform, use `--uuid` flag with the `platforms` command.
+To get UUID of a platform, use `--uuid` option with the `platforms` sub-command.
 
-`platforms` command with `--uuid` flag requires the following additional options:
+`platforms` sub-command with `--uuid` option requires the following additional options:
 
 [cols="<40%,<60%",options="header",]
 |=======================================================================
 |Option | Value
-| `--platform-name <PLATFORM_NAME>` | Name of the platform to get the UUID for
+| `--name <PLATFORM_NAME>` | Name of the platform to get the UUID for
 |=======================================================================
 
 Example:
 ```
-java -jar java-cli-1.3-jar-with-dependencies.jar platforms -U -N ubuntu-16.04-64
+java -jar java-cli-1.3.jar platforms --uuid --name ubuntu-16.04-64
 ```
 
 Example for the output of the above command:
@@ -205,37 +236,71 @@ Example for the output of the above command:
 03b18efe-7c41-11e6-88bc-001a4a81450b
 ```
 
-=== SWAMP Tools Information
+=== Tools
 
-`tools` command must be used for the following:
+`tools` sub-command is used for the following:
 
 1. Get a list of all the tools supported by the SWAMP
 2. Given a tool name, get the platform UUID
 
-The `tools` command takes the following options:
+==== Get Tools List
+To get a list of all the `tools` that SWAMP supports, use `--list` option with the `tools` sub-command. This command displays list of tools along with the tool uuid, supported package types and support platforms.
+
+`tools` sub-command with `--list` option accepts an additional option:
+[cols="<40%,<60%",options="header",]
+|=======================================================================
+|Option | Value
+
+| `--project-uuid <PROJECT_UUID>` | Project UUID for extra project specific tools, this option is used along with the `--list` option. This is optional
+|=======================================================================
+
+Example:
+```
+java -jar java-cli-1.3.jar tools --list
+```
+
+Example for the output of the above command:
+```
+Name                  UUID                                   Supported Package Types                  Supported Platforms
+JSHint                39001e1f-b741-11e6-bf70-001a4a81450b   ["Web Scripting"]                        [scientific-6-32, ubuntu-14.04-64, scientific-5.11-32, centos-5-32, ubuntu-16.04-64]
+HTML Tidy             44ec433d-b741-11e6-bf70-001a4a81450b   ["Web Scripting"]                        [scientific-6-32, ubuntu-14.04-64, scientific-5.11-32, centos-5-32, ubuntu-16.04-64]
+Parasoft C/C++test    4bb2644d-6440-11e4-a282-001a4a81450b   ["C/C++"]                                [scientific-6-32, ubuntu-14.04-64, scientific-5.11-32, centos-5-32, ubuntu-16.04-64]
+
+```
+
+==== Get Tool UUID
+
+To get a tool's UUID, use `--uuid` option with the `tools` sub-command.
+`tools` sub-command with `--uuid` option requires the following additional option:
 
 [cols="<40%,<60%",options="header",]
 |=======================================================================
 |Option | Value
-| `--list` | show all the tools supported by the SWAMP along with their UUIDs, supported package types, and supported platforms
-| `--uuid` | Flag to get UUID from tool name
-| `--tool-name <TOOL_NAME>` | Name of the tool to get the UUID for
-| `--project-uuid <PROJECT_UUID>` | Project UUID for extra project specific tools, this option must be used along with the `--list` option
-| `--help` | get help on options
+| `--name <TOOL_NAME>` | Name of the tool to get the UUID for
 |=======================================================================
+
+Example:
+```
+java -jar java-cli-1.3.jar tools --uuid --name PMD
+```
+
+Example for the output of the above command:
+```
+163f2b01-156e-11e3-a239-001a4a81450b
+```
 
 === Packages in SWAMP
 
-`package` command must be used for the following:
+`package` sub-command is used for the following:
 
 1. Upload a package to SWAMP
 2. List supported package types
 3. List all the packages in a project
-4. Delete a set of package from a project
+4. Delete packages from a project
 
 ==== Upload a package to SWAMP
 
-To *upload* a package, use `--upload` flag with the `package` command.
+To *upload* a package, use `--upload` option with the `package` sub-command.
 The following additional options are required to upload a package:
 
 [cols="<40%,<60%",options="header",]
@@ -243,29 +308,30 @@ The following additional options are required to upload a package:
 |Option | Value
 | `--pkg-archive <PACKAGE_ARCHIVE_FILEPATH>` | Path to the archive of the package.
 | `--pkg-conf <PACKAGE_CONF_FILEPATH>` | Path to package.conf file for the package.
-| `--new-pkg` | Flag to specify if this should be a new package, instead of a package version. If a package with the same name already exist, it is added as a package version. This is optional.
-| `--os-deps-conf <OS_DEPENDENCIES_CONF_FILEPATH>` | Path to os dependency configuration file for the package. This is optional.
-| `--project-uuid <PROJECT_UUID>` | UUID of the project tht this must be associated with
+| `--new` | Flag/Option to specify if this should be a new package instead of a package version. If a package with the same name already exist, CLI adds this package as a package version. `--new` flag overrides it and stores it as a new package. This is optional.
+| `--os-deps '<platform=dependency1 dependency2 ...>'` | OS package dependencies specified as `key=value` format. Use this option multiple times to specify dependency for multiple SWAMP platforms. This is optional.
+| `--project-uuid <PROJECT_UUID>` | UUID of the project that this package is associated with
 |=======================================================================
 
 Example:
 ```
-java -jar java-cli-1.3-jar-with-dependencies.jar package -U -A ./scripts/resources/test_packages/java-cli-1.3.0/java-cli-1.1.zip -C ./scripts/resources/test_packages/java-cli-1.3.0/package.conf -P df2e7c15-4d28-4224-b25c-c2570bd91156
+java -jar java-cli-1.3.jar package --upload --pkg-archive /Users/vamshi/swamp/api-dev/java-cli/scripts/resources/test_packages/railsgoat-9052b4fcf0/railsgoat-9052b4fcf0.zip -pkg-conf /Users/vamshi/swamp/api-dev/java-cli/scripts/resources/test_packages/railsgoat-9052b4fcf0/package.conf --os-deps 'ubuntu-16.04-64=libsqlite3-dev libmysqlclient-dev' --os-deps 'debian-7-64=libsqlite3-dev libmysqlclient-dev' --project-uuid df2e7c15-4d28-4224-b25c-c2570bd91156 --new
 ```
-Example Output:
+
+If the above command is successfull, the output will be:
 ```
 Package Version UUID: d5821bf0-5719-4e33-a49c-f31a912eaa15
 ```
-=== Show Supported Package Types
+==== Show Supported Package Types
 
-To display the *types of software packages* supported by SWAMP, `--pkg-types` flag must be used with the `package` command.
+To display the *types of software packages* supported by SWAMP, `--pkg-types` option is used with the `package` sub-command.
 
 Example:
 ```
-java -jar java-cli-1.3-jar-with-dependencies.jar package -T
+java -jar java-cli-1.3.jar package -T
 ```
 
-Example Output:
+Output from the above command:
 ```
 Android .apk
 Android Java Source Code
@@ -285,9 +351,9 @@ Web Scripting
 
 ==== Show User Packages
 
-To *list* packages uploaded by a user, `--list` flag must be used with the `package` command.
+To *list* packages uploaded by a user, `--list` option is used with the `package` sub-command.
 
-The package command with the `--list` flag accepts the following additional options:
+The package sub-command with the `--list` option accepts the following additional options:
 [cols="<40%,<60%",options="header",]
 |=======================================================================
 |Option | Value
@@ -296,9 +362,9 @@ The package command with the `--list` flag accepts the following additional opti
 
 ==== Delete User Packages
 
-To *delete* a set of packages that are part of a particular project, `--delete` flag must be used with the `package` command.
+To *delete* a set of packages that are part of a particular project, `--delete` option is used with the `package` sub-command.
 
-`package` command with `--delete` sub-command requires the following additional options:
+`package` sub-command with `--delete` sub-command requires the following additional options:
 [cols="<40%,<60%",options="header",]
 |=======================================================================
 |Option | Value
@@ -309,30 +375,30 @@ To *delete* a set of packages that are part of a particular project, `--delete` 
  
 === Assessments in SWAMP
 
-`assess` command must be used for the following:
+`assess` sub-command is used for the following:
 
 * Perform assessments in SWAMP
 * List assessments
-* Information about an assessment
+
 
 ==== Perform assessments in SWAMP
 
-To *perform* an assessment, `--run` flag must be used with `assess` command. 
+To *perform* an assessment, `--run` option is used with `assess` sub-command. 
 
-`assess` command with the `--run` flag accepts the following additional options
+`assess` sub-command with the `--run` option requires the following additional options:
 
 [cols="<40%,<60%",options="header",]
 |=======================================================================
 |Option | Value
 | `--pkg-uuid <PKG_VERSION_UUID>` | UUID of the version of a package that must be assessed
 | `--project-uuid <PROJECT_UUID>` | Project that the package is part of
-| `--platform-uuid <PROJECT_UUID1> <PROJECT_UUID2> ...` | UUIDs of the platfoms that assessments must be performed on. This is optional and is only valid for `C/C++` assessments.
+| `--platform-uuid <PLATFORM_UUID1 PLATFORM_UUID2> ...` | UUIDs of the platfoms that assessments must be performed on. This is optional and is only valid for `C/C++` assessments.
 | `--tool-uuid <TOOL_UUID1> <TOOL_UUID2> ...` | UUIDs of the tools that must be used for assessments
 |=======================================================================
 
 Example:
 ```
-java -jar java-cli-1.3-jar-with-dependencies.jar assess --run --pkg-uuid 74029aa1-f6e4-41cc-b1a0-df2116be2cbe --project-uuid df2e7c15-4d28-4224-b25c-c2570bd91156 --tool-uuid 56872C2E-1D78-4DB0-B976-83ACF5424C52 163f2b01-156e-11e3-a239-001a4a81450b
+java -jar java-cli-1.3.jar assess --run --pkg-uuid 74029aa1-f6e4-41cc-b1a0-df2116be2cbe --project-uuid df2e7c15-4d28-4224-b25c-c2570bd91156 --tool-uuid 56872C2E-1D78-4DB0-B976-83ACF5424C52 163f2b01-156e-11e3-a239-001a4a81450b
 ```
 
 Example output of the above command:
@@ -342,7 +408,7 @@ Assessment UUIDs: [1f353b01-6b81-4a7c-84f8-02e2131a7373, 96e6e4e0-efce-4216-bff9
 
 === Assessment Status
 
-To get the status of an assessment run, `status` command must be used with the following options:
+To get the status of an assessment run, `status` sub-command is used with the following options:
 
 [cols="<40%,<60%",options="header",]
 |=======================================================================
@@ -351,13 +417,13 @@ To get the status of an assessment run, `status` command must be used with the f
 | `--assess-uuid <ASSESS_UUID>` | Assessment UUID
 |=======================================================================
 
-The output of the above command will display (SUCCESS|FAILURE|INPROGRESS). Incase of SUCCESS, the number of weaknesses and *results-uuid* will also be displayed on the console. 
+The output of the above sub-command will display (SUCCESS|FAILURE|INPROGRESS). Incase of SUCCESS, the number of weaknesses and *results-uuid* will also be displayed on the console. 
 
 
 Example:
 
 ```
-java -jar java-cli-1.3-jar-with-dependencies.jar status --assess-uuid 96e6e4e0-efce-4216-bff9-b20b30ca2e83 --project-uuid df2e7c15-4d28-4224-b25c-c2570bd91156
+java -jar java-cli-1.3.jar status --assess-uuid 96e6e4e0-efce-4216-bff9-b20b30ca2e83 --project-uuid df2e7c15-4d28-4224-b25c-c2570bd91156
 ```
 
 Example output of the above command:
@@ -367,13 +433,13 @@ SUCCESS, 33, f4856ee8-b402-11e7-92c3-001a4a814413
 
 === Assessment Results
 
-To get SCARF results of an assessment run, `results` command must be used with the following options:
+To get SCARF results of an assessment run, `results` sub-command is used with the following options:
 
 [cols="<40%,<60%",options="header",]
 |=======================================================================
 |Option | Value
 | `--project-uuid <PROJECT_UUID>` | Project UUID that the assessment was part of
-| `--results-uuid <RESULTS_UUID>` | Results UUID obtained from `status` command
+| `--results-uuid <RESULTS_UUID>` | Results UUID obtained from `status` sub-command
 | `--file-path <SCARF_FILEPATH>`  | Filepath to write SCARF Results into
 |=======================================================================
 
@@ -382,7 +448,7 @@ SCARF results from the assessment will be stored into SCARF_FILEPATH.
 
 Example:
 ```
-java -jar java-cli-1.3-jar-with-dependencies.jar results --results-uuid f4856ee8-b402-11e7-92c3-001a4a814413 --project-uuid df2e7c15-4d28-4224-b25c-c2570bd91156 --file-path $PWD/scarf-results.xml
+java -jar java-cli-1.3.jar results --results-uuid f4856ee8-b402-11e7-92c3-001a4a814413 --project-uuid df2e7c15-4d28-4224-b25c-c2570bd91156 --file-path $PWD/scarf-results.xml
 ```
 === Exit Codes
 In case of errrors or exceptions the Java CLI program returns the following exit codes:

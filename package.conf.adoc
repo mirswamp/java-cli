@@ -1,0 +1,73 @@
+In the SWAMP backend, a software package to be assessed has three components:
+
+1. The package archive file
+2. `package.conf` file
+3. `pkg-os-dependencies.conf` file
+
+`package.conf` file for a package contains meta data about the package primarly on how to configure and build the package. A package.conf file may has following entries in the `key=value` format:
+
+[cols="<25%,<25%",options="header",]
+|=======================================================================
+|Key | Value Description
+|`android-lint-target` | Target value for android lint tool
+|`android-redo-build` | boolean flag that tells if the package needs to be rebuilt for android lint
+|`android-sdk-target` | Target value for android SDK
+|`ant-version` | Version of ant required to build this package
+|`build-cmd` | Build command to run
+|`build-dir` | Directory path to change to before running the build command. This path must b e relative to `package-dir`
+|`build-file` | Path to the build file. This is relative to `package-dir`
+|`build-opt` | Options to be passed to the build command
+|`build-sys` | Build system type. Refer to <<build_sys>> for accepted values
+|`build-target` | Target for the build system
+|`config-cmd` | Configuration command to run, before build command
+|`config-opt` | Configuration options to be added to the `config-cmd`
+|`config-dir` | Directory path to change to run `config-cmd`
+|`gradle-wrapper` | Boolean flag that tells if the package uses gradle wrapper
+|`maven-version` | Version of the maven that this package requires
+|`package-archive` | File name for the package archive
+|`package-archive-md5` | MD5 checksum for the package archive
+|`package-archive-sha512` | SHA-512 checksum for the package archive
+|`package-classpath` | Paths to jar and class files that must be analyzed by tools, only applicatble for Java bytecode packages
+|`package-auxclasspath` | Paths to jar and class files that must be analyzed by tools, only applicatble for Java bytecode packages
+|`package-srcpath` | Paths to jar and class files that must be analyzed by tools, only applicatble for Java bytecode packages
+
+|`package-dir` | Main directory path of the package
+|`package-exclude-paths` | Paths to directories and files that must be excluded from analysis
+|`package-language` | Package language, valid values are: C, C++, Java, Ruby, Python-2, Python-3, PHP, Perl, XML, HTML, CSS, Javascript
+|`package-language-version` | Version of language the package requires, Example: java-8, java-7, ruby-2.0.0 
+|`package-pip-install-file` | File name for the Python PIP program to install deepedencies from
+|`package-short-name` | Name of the Package
+|`package-type` | Package application type, only applicable for Ruby, the values must be (sinatra\|rails\|padrino)
+|`package-version` | Version number for the package
+|`php-extensions` | PHP extentions required by this package
+|=======================================================================
+
+[[build_sys]]
+=== Build Systems
+The following build systems are supported to by the SWAMP:
+
+[cols="<25%,<25%",options="header",]
+|=======================================================================
+|build system | Package Language
+|android+ant | Java
+|android-apk | Java
+|android+gradle | Java
+|android+maven | Java
+|ant | Java
+|ant+ivy | Java
+|bundler | Ruby
+|bundler+rake | Ruby 
+|cmake+make | C/C++
+|composer | PHP
+|configure+make | C/C++
+|gradle | Java
+|java-bytecode | Java
+|make | C/C++
+|maven | Java
+|no-build | All
+|npm | Javascript
+|other | All
+|pear | PHP
+|python-setuptools | Python-2 Python-3
+|ruby-gem | Ruby
+|wheels | Python-2 Python-3

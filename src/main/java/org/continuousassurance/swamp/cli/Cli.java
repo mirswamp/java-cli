@@ -42,6 +42,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 public class Cli {
@@ -263,8 +264,8 @@ public class Cli {
 				.desc("File path to the package conf file").build());
 		options.addOption(Option.builder("P").required(false).hasArg().argName("PROJECT_UUID").longOpt("project-uuid")
 				.desc("Project UUID to add the package to").build());
-		options.addOption(Option.builder("O").required(false).hasArg().argName("OS_DEPENDENCIES_CONF_FILEPATH").longOpt("os-deps-conf")
-				.desc("Path to OS depedencies conf file").build());
+		//options.addOption(Option.builder("O").required(false).hasArg().argName("OS_DEPENDENCIES_CONF_FILEPATH").longOpt("os-deps-conf").valueSeparator('=')
+		//		.desc("Path to OS depedencies conf file").build());
 		options.addOption(Option.builder("N").required(false).hasArg(false).longOpt("new-pkg")
 				.desc("Flag that indicates if the package must be added as a fresh package, and not a package version").build());
 		options.addOption(Option.builder("Q").required(false).hasArg(false).longOpt("quiet")
@@ -272,6 +273,10 @@ public class Cli {
 
 		options.addOption(Option.builder("I").required(false).hasArgs().argName("PACKAGE_UUID").longOpt("pkg-uuid")
 				.desc("Package UUID").build());
+		
+		options.addOption(Option.builder("O").argName("property=value").numberOfArgs(2).valueSeparator('=').longOpt("os-deps")
+                .desc("use value for given property" ).build());
+		
 		
 		String[] cmd_args = (String[]) args.toArray(new String[0]);
 		CommandLine parsed_options = new DefaultParser().parse(options, cmd_args);
@@ -314,7 +319,8 @@ public class Cli {
 					cred_map.put("new-pkg", "");						
 				}
 				if(parsed_options.hasOption("O")){
-					cred_map.put("os-deps-conf", parsed_options.getOptionValue("O"));
+					Properties prop = parsed_options.getOptionProperties("O");
+					cred_map.put("os-deps-map", prop);
 				}
 				return cred_map;
 				
@@ -589,6 +595,14 @@ public class Cli {
 		}
 	}
 	
+	public void printAllProjects() {
+		System.out.printf("\n\n%-21s %-38s %26s\n", "Project Name", "Project UUID", "Project Create Date");
+		for(Project proj : api_wrapper.getProjectsList()) {
+			System.out.printf("%-21s %-38s '%26s'\n", proj.getFullName(),
+					proj.getUUIDString(), proj.getCreateDate());
+		}
+	}
+
 	public void projectHandler(HashMap<String, Object> opt_map) {
 		if (opt_map.containsKey("project-name")) {
 			Project my_proj = api_wrapper.getProjectFromName((String)opt_map.get("project-name"));
@@ -598,7 +612,7 @@ public class Cli {
 				System.out.println(my_proj.getUUIDString());
 			}
 		}else{
-			api_wrapper.printAllProjects();
+			printAllProjects();
 		}
 	}
 	
@@ -606,13 +620,6 @@ public class Cli {
 		if (opt_map.containsKey("platform-name")) {
 			System.out.println(api_wrapper.getPlatformVersionFromName((String)opt_map.get("platform-name")).getUUIDString());
 		}else {
-			/*
-			 api_wrapper.printAllPlatforms((String)opt_map.get("pkg-type"));
-			
-        	 for (SwampPlatform swamp_platform : api_wrapper.getSwampPlatformsList()){
-
-        		System.out.println(swamp_platform);
-        	}*/
 			System.out.printf("%-30s %-38s\n", "Platform Name", "Platform UUID");
 			for (PlatformVersion platform_version : api_wrapper.getAllPlatformVersionsList()){
 				System.out.printf("%-30s %-38s\n", platform_version.getDisplayString(), platform_version.getIdentifierString());
@@ -655,11 +662,27 @@ public class Cli {
 				api_wrapper.deletePackage((String) pkg_uuid, (String)opt_map.get("project-uuid"));
 			}
 		}else {
-		
+			if (opt_map.containsKey("os-deps-map")) {
+				Properties prop = (Properties)opt_map.get("os-deps-map");
+				for (Object plat: prop.keySet()) {
+					boolean plat_found = false;
+					for (PlatformVersion platform_version : api_wrapper.getAllPlatformVersionsList()) {
+						if (platform_version.getDisplayString().equalsIgnoreCase((String)plat)) {
+							plat_found = true;
+							break;
+						}
+					}
+
+					if (!plat_found) {
+						throw new CommandLineOptionException("Platform " + (String)plat + " does not exist");
+					}
+				}
+			}
+			
 			String package_uuid = api_wrapper.uploadPackage((String)opt_map.get("pkg-conf"),
 					(String)opt_map.get("pkg-archive"),
 					(String)opt_map.get("project-uuid"),
-					(String)opt_map.get("os-deps-conf"),
+					(Map<String, String>)opt_map.get("os-deps-map"),
 					opt_map.containsKey("new-pkg"));
 
 			if ((boolean)opt_map.get("quiet") == true){
