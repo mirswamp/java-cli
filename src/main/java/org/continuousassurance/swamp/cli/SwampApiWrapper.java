@@ -569,6 +569,27 @@ public class SwampApiWrapper {
 		}
 	}
 
+	public boolean deletePackageVersion(String pkg_ver_uuid, String project_uuid) throws InvalidIdentifierException {
+
+		getProject(project_uuid);
+
+		for(PackageVersion pkg_ver : getAllPackageVersions(project_uuid).values()){
+			if (pkg_ver.getUUIDString().equals(pkg_ver_uuid)){
+				return deletePackageVersion(pkg_ver);
+			}
+		}
+
+		throw new InvalidIdentifierException("Invalid package version UUID: " + pkg_ver_uuid);
+	}
+
+	public boolean deletePackageVersion(PackageVersion pkg_ver) throws InvalidIdentifierException {
+		boolean ret_val = handlerFactory.getPackageVersionHandler().deletePackageVersion(pkg_ver);
+		if(ret_val) {
+			packageVersionMap = null;
+		}
+		return ret_val;
+	}
+
 	public boolean deletePackage(String pkg_uuid, String project_uuid) throws InvalidIdentifierException {
 
 		getProject(project_uuid);
@@ -583,9 +604,14 @@ public class SwampApiWrapper {
 	}
 
 	public boolean deletePackage(PackageThing pkg) throws InvalidIdentifierException {
-		return handlerFactory.getPackageHandler().deletePackage(pkg);
+		boolean ret_val = handlerFactory.getPackageHandler().deletePackage(pkg);
+		if(ret_val) {
+			packageVersionMap = null;
+		}
+		return ret_val;
 	}
 
+	
 	protected Map<String, PackageThing> getAllPackages(String project_uuid) {
 		if ((packageMap == null) || (!stringsAreEqual(cachedPkgProjectID, project_uuid))) {
 			cachedPkgProjectID = project_uuid;

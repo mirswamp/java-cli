@@ -148,14 +148,14 @@ java -jar java-cli-1.3.jar projects --list
 
 Example for the output of the above command:
 ```
-Name                  UUID                                   Create Date
-new-project           b47380ea-a4ef-0a88-0a17-aab43d80fdbe   'Thu Jan 22 09:02:31 CST 2015'
-UW SWAMP Java Software 03493356-ce76-22af-dccd-bbdb1ee169f4   'Mon Feb 03 16:52:49 CST 2014'
-UW Mobile             0687979d-4b25-1036-3213-05ab438fdbbc   'Tue Jun 23 11:39:05 CDT 2015'
-NICS                  afc1dea9-c375-3d30-e0c7-a885fedfa8f5   'Tue Nov 17 10:57:46 CST 2015'
-MySQL Testing         0b5ae539-d0fc-7ce3-8906-900580a47ea1   'Fri Sep 19 14:04:48 CDT 2014'
-MyProject             b7c3408f-bb9d-11e4-a4cd-001a4a814425   'Mon Feb 23 20:51:20 CST 2015'
-4plugins              df2e7c15-4d28-4224-b25c-c2570bd91156   'Thu Jun 22 14:38:23 CDT 2017'
+UUID                                  Create Date                    Name                 
+b47380ea-a4ef-0a88-0a17-aab43d80fdbe  'Thu Jan 22 09:02:31 CST 2015' new-project          
+03493356-ce76-22af-dccd-bbdb1ee169f4  'Mon Feb 03 16:52:49 CST 2014' UW SWAMP Java Software
+0687979d-4b25-1036-3213-05ab438fdbbc  'Tue Jun 23 11:39:05 CDT 2015' UW Mobile            
+afc1dea9-c375-3d30-e0c7-a885fedfa8f5  'Tue Nov 17 10:57:46 CST 2015' NICS                 
+0b5ae539-d0fc-7ce3-8906-900580a47ea1  'Fri Sep 19 14:04:48 CDT 2014' MySQL Testing        
+b7c3408f-bb9d-11e4-a4cd-001a4a814425  'Mon Feb 23 20:51:20 CST 2015' MyProject            
+df2e7c15-4d28-4224-b25c-c2570bd91156  'Thu Jun 22 14:38:23 CDT 2017' 4plugins             
 
 ```
 
@@ -199,29 +199,25 @@ java -jar java-cli-1.3.jar platforms --list
 
 Example for the output of the above command:
 ```
-Name                           UUID                         
-android-ubuntu-12.04-64        8f4878ec-976f-11e4-829b-001a4a81450b  
-centos-5-32                    73c7f6be-7c3a-11e6-88bc-001a4a81450b  
-centos-5-64                    bf9ddb9c-7c3a-11e6-88bc-001a4a81450b  
-centos-6-32                    fa5ee864-7c3a-11e6-88bc-001a4a81450b  
-centos-6-64                    1c5cbe39-7c3b-11e6-88bc-001a4a81450b  
-debian-7-64                    eaa6cf77-7c3b-11e6-88bc-001a4a81450b  
-debian-8-64                    0cda9b68-7c3c-11e6-88bc-001a4a81450b  
-fedora-18-64                   a9cfe21f-209d-11e3-9a3e-001a4a81450b  
-fedora-19-64                   aebc38c3-209d-11e3-9a3e-001a4a81450b  
-fedora-20-64                   89b4f7fd-7c3d-11e6-88bc-001a4a81450b  
-fedora-21-64                   8efe5502-7c3d-11e6-88bc-001a4a81450b  
-fedora-22-64                   9e559543-7c3d-11e6-88bc-001a4a81450b  
-fedora-23-64                   a41798c7-7c3d-11e6-88bc-001a4a81450b  
-fedora-24-64                   b0425ce1-7c3d-11e6-88bc-001a4a81450b  
-scientific-5-64                54053a13-7c3f-11e6-88bc-001a4a81450b  
-scientific-5.11-32             e7959cde-7c3e-11e6-88bc-001a4a81450b  
-scientific-6-32                a72c3ab6-7c3f-11e6-88bc-001a4a81450b  
-scientific-6-64                eacab258-7c3f-11e6-88bc-001a4a81450b  
-ubuntu-10.04-64                f496f2ae-7c40-11e6-88bc-001a4a81450b  
-ubuntu-12.04-64                18f66e9a-20aa-11e3-9a3e-001a4a81450b  
-ubuntu-14.04-64                fd924363-7c40-11e6-88bc-001a4a81450b  
-ubuntu-16.04-64                03b18efe-7c41-11e6-88bc-001a4a81450b  
+UUID                                  Name                          
+8f4878ec-976f-11e4-829b-001a4a81450b  android-ubuntu-12.04-64       
+fa5ee864-7c3a-11e6-88bc-001a4a81450b  centos-6-32                   
+1c5cbe39-7c3b-11e6-88bc-001a4a81450b  centos-6-64                   
+eaa6cf77-7c3b-11e6-88bc-001a4a81450b  debian-7-64                   
+0cda9b68-7c3c-11e6-88bc-001a4a81450b  debian-8-64                   
+a9cfe21f-209d-11e3-9a3e-001a4a81450b  fedora-18-64                  
+aebc38c3-209d-11e3-9a3e-001a4a81450b  fedora-19-64                  
+89b4f7fd-7c3d-11e6-88bc-001a4a81450b  fedora-20-64                  
+8efe5502-7c3d-11e6-88bc-001a4a81450b  fedora-21-64                  
+9e559543-7c3d-11e6-88bc-001a4a81450b  fedora-22-64                  
+a41798c7-7c3d-11e6-88bc-001a4a81450b  fedora-23-64                  
+b0425ce1-7c3d-11e6-88bc-001a4a81450b  fedora-24-64                  
+a72c3ab6-7c3f-11e6-88bc-001a4a81450b  scientific-6-32               
+eacab258-7c3f-11e6-88bc-001a4a81450b  scientific-6-64               
+f496f2ae-7c40-11e6-88bc-001a4a81450b  ubuntu-10.04-64               
+18f66e9a-20aa-11e3-9a3e-001a4a81450b  ubuntu-12.04-64               
+fd924363-7c40-11e6-88bc-001a4a81450b  ubuntu-14.04-64               
+03b18efe-7c41-11e6-88bc-001a4a81450b  ubuntu-16.04-64               
 ```
 
 ==== Get Platform UUID
@@ -271,11 +267,11 @@ java -jar java-cli-1.3.jar tools --list
 
 Example for the output of the above command:
 ```
-Name                  UUID                                   Supported Package Types                  Supported Platforms
-JSHint                39001e1f-b741-11e6-bf70-001a4a81450b   ["Web Scripting"]                        [scientific-6-32, ubuntu-14.04-64, scientific-5.11-32, centos-5-32, ubuntu-16.04-64]
-HTML Tidy             44ec433d-b741-11e6-bf70-001a4a81450b   ["Web Scripting"]                        [scientific-6-32, ubuntu-14.04-64, scientific-5.11-32, centos-5-32, ubuntu-16.04-64]
-Parasoft C/C++test    4bb2644d-6440-11e4-a282-001a4a81450b   ["C/C++"]                                [scientific-6-32, ubuntu-14.04-64, scientific-5.11-32, centos-5-32, ubuntu-16.04-64]
-
+UUID                                  Name                  Supported Package Types                  Supported Platforms
+39001e1f-b741-11e6-bf70-001a4a81450b  JSHint                ["Web Scripting"]                        [scientific-6-32, ubuntu-14.04-64, ubuntu-16.04-64, android-ubuntu-12.04-64, debian-7-64, fedora-24-64, ubuntu-12.04-64, ubuntu-10.04-64, fedora-21-64, fedora-22-64, centos-6-32, fedora-18-64, fedora-19-64, centos-6-64, fedora-20-64, debian-8-64, fedora-23-64, scientific-6-64]
+e7a00759-82a4-11e7-9baa-001a4a81450b  Synopsys Static Analysis (Coverity) ["C/C++"]                                [scientific-6-32, ubuntu-14.04-64, ubuntu-16.04-64, android-ubuntu-12.04-64, debian-7-64, fedora-24-64, ubuntu-12.04-64, ubuntu-10.04-64, fedora-21-64, fedora-22-64, centos-6-32, fedora-18-64, fedora-19-64, centos-6-64, fedora-20-64, debian-8-64, fedora-23-64, scientific-6-64]
+44ec433d-b741-11e6-bf70-001a4a81450b  HTML Tidy             ["Web Scripting"]                        [scientific-6-32, ubuntu-14.04-64, ubuntu-16.04-64, android-ubuntu-12.04-64, debian-7-64, fedora-24-64, ubuntu-12.04-64, ubuntu-10.04-64, fedora-21-64, fedora-22-64, centos-6-32, fedora-18-64, fedora-19-64, centos-6-64, fedora-20-64, debian-8-64, fedora-23-64, scientific-6-64]
+4bb2644d-6440-11e4-a282-001a4a81450b  Parasoft C/C++test    ["C/C++"]                                [scientific-6-32, ubuntu-14.04-64, ubuntu-16.04-64, debian-7-64, fedora-24-64, ubuntu-12.04-64, ubuntu-10.04-64, fedora-21-64, fedora-22-64, centos-6-32, fedora-18-64, fedora-19-64, centos-6-64, fedora-20-64, debian-8-64, fedora-23-64, scientific-6-64]
 ```
 
 ==== Get Tool UUID

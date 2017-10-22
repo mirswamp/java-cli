@@ -276,7 +276,7 @@ public class Cli {
 		opt_grp.addOption(Option.builder("T").required(false).hasArg(false).longOpt("types")
 				.desc("list all package types").build());
 		opt_grp.addOption(Option.builder("D").required(false).hasArg(false).longOpt("delete")
-				.desc("Delete Package").build());
+				.desc("Delete a package version").build());
 		
 		options.addOptionGroup(opt_grp);
 
@@ -295,7 +295,7 @@ public class Cli {
 				.desc("Print only the Package UUID with no formatting").build());
 
 		options.addOption(Option.builder("I").required(false).hasArgs().argName("PACKAGE_UUID").longOpt("pkg-uuid")
-				.desc("Package UUID").build());
+				.desc("Package Version UUID").build());
 		
 		options.addOption(Option.builder("O").argName("property=value").numberOfArgs(2).valueSeparator('=').longOpt("os-deps")
                 .desc("use value for given property" ).build());
@@ -643,13 +643,19 @@ public class Cli {
 					"UUID",
 					"Create Date",
 					"Name");
-		}
-		
-		for(Project proj : api_wrapper.getProjectsList()) {
-			System.out.printf("%-37s '%-28s' %-21s\n", 
-					proj.getUUIDString(), 
-					proj.getCreateDate(), 
-					proj.getFullName());
+
+			for(Project proj : api_wrapper.getProjectsList()) {
+				System.out.printf("%-37s '%-28s' %-21s\n", 
+						proj.getUUIDString(), 
+						proj.getCreateDate(), 
+						proj.getFullName());
+			}
+		}else {
+			for(Project proj : api_wrapper.getProjectsList()) {
+				System.out.printf("%-37s %-21s\n", 
+						proj.getUUIDString(),  
+						proj.getFullName());
+			}
 		}
 	}
 
@@ -713,7 +719,7 @@ public class Cli {
 			}
 		}else if (opt_map.containsKey("delete")) {
 			for (Object pkg_uuid : (List<String>)opt_map.get("package-uuids")) {
-				api_wrapper.deletePackage((String) pkg_uuid, (String)opt_map.get("project-uuid"));
+				api_wrapper.deletePackageVersion((String) pkg_uuid, (String)opt_map.get("project-uuid"));
 			}
 		}else {
 			if (opt_map.containsKey("os-deps-map")) {
@@ -763,9 +769,7 @@ public class Cli {
 		if (opt_map.containsKey("list-assess")){
 			printAssessments((String)opt_map.get("project-uuid"), opt_map.containsKey("quiet"));
 		}
-		if (opt_map.containsKey("assess-uuid")){
-			printAssessment((String)opt_map.get("assess-uuid"), (String)opt_map.get("project-uuid"));
-		}
+		
 	}
 	
 	public void resultsHandler(HashMap<String, Object> opt_map) throws IOException{
@@ -842,60 +846,69 @@ public class Cli {
 		return 0;
 	}
 
-	public void printAllPackagesSummary(String project_uuid) {
-		System.out.printf("\n\n%-21s %-37s %-30s\n", "Package Name", "Package UUID", "Package Description");
-		for(PackageThing pkg : api_wrapper.getPackagesList(project_uuid)){
-			System.out.printf("%-21s %-37s %-30s\n", pkg.getName(), 
-					pkg.getIdentifierString(),
-					pkg.getDescription());
-		}
-	}
-
-	public void printAllPackagesVerbose(String project_uuid) {
-		for(PackageThing pkg : api_wrapper.getAllPackages(project_uuid).values()){
-			System.out.printf("\n\n%-21s %-37s %-30s\n", pkg.getName(), pkg.getIdentifierString(), pkg.getDescription());
-			for(PackageVersion pkg_ver : api_wrapper.getPackageVersionsList(project_uuid)){
-				if (pkg_ver.getPackageThing().getUUIDString().equals(pkg.getUUIDString())) {
-					System.out.printf("\t%-13s %-37s\n", pkg_ver.getVersionString(), pkg_ver.getUUIDString());
-				}
-			}
-		}
-	}
 
 	public void printAllPackages(String project_uuid, boolean quiet) {
-		if(quiet){
-			printAllPackagesSummary(project_uuid);
-		}else {
-			printAllPackagesVerbose(project_uuid);
+		if(!quiet){
+			System.out.printf("\n%-37s %-25s %-25s\n", "UUID", "Name", "Version");
+		}
+		
+		for(PackageThing pkg : api_wrapper.getAllPackages(project_uuid).values()){
+			for(PackageVersion pkg_ver : api_wrapper.getPackageVersionsList(project_uuid)){
+				if (pkg_ver.getPackageThing().getUUIDString().equals(pkg.getUUIDString())) {
+					System.out.printf("%-37s %-25s %-25s\n", 
+							pkg_ver.getUUIDString(),
+							pkg_ver.getPackageThing().getName(),
+							pkg_ver.getVersionString());
+				}
+			}
 		}
 	}
 
 	public void printAllTools(String project_uuid, boolean quiet) throws InvalidIdentifierException {
 		if(!quiet){
 			System.out.printf("\n%-37s %-21s %-40s %s\n",
-				"UUID",
-				"Name",
-				"Supported Package Types", 
-				"Supported Platforms");
-		}
-		
-		for(Tool tool : api_wrapper.getAllTools(project_uuid).values()){			
-			System.out.printf("%-37s %-21s %-40s %s\n", 
-					tool.getIdentifierString(),
-					tool.getName(),
-					tool.getSupportedPkgTypes(), 
-					api_wrapper.getSupportedPlatformVersions(tool.getIdentifierString(), project_uuid));
+					"UUID",
+					"Name",
+					"Supported Package Types", 
+					"Supported Platforms");
+
+			for(Tool tool : api_wrapper.getAllTools(project_uuid).values()){			
+				System.out.printf("%-37s %-21s %-40s %s\n", 
+						tool.getIdentifierString(),
+						tool.getName(),
+						tool.getSupportedPkgTypes(), 
+						api_wrapper.getSupportedPlatformVersions(tool.getIdentifierString(), project_uuid));
+			}
+		}else {
+			for(Tool tool : api_wrapper.getAllTools(project_uuid).values()){			
+				System.out.printf("%-37s %-21s\n", 
+						tool.getIdentifierString(),
+						tool.getName());
+			}
 		}
 	}
 	
 	public void printAssessments(String project_uuid, boolean quiet) {
 		
-		System.out.println("Assessments UUIDs");
-		for (AssessmentRun arun : api_wrapper.getAllAssessments(project_uuid)){
-			if (quiet){
-				System.out.println(arun.getUUIDString());
-			}else{
-				//System.out.printf("Assessment on " + arun.getFilename() +":\n\tUUID: " + arun.getUUIDString() + "\n");
+		if (!quiet){
+			System.out.printf("%-37s %-15s %-15s %-15s %-15s %-15s %-15s\n", 
+							 "UUID",
+							 "Package Name", "Package Version",
+							 "Tool Name", "Tool Version",
+							 "Platform Name", "Platform Version");
+			for (AssessmentRun arun : api_wrapper.getAllAssessments(project_uuid)){
+				
+					System.out.printf("%-37s %-15s %-15s %-15s %-15s %-15s %-15s\n", 
+							arun.getUUIDString(), 
+							arun.getPackageName(), 
+							arun.getPackageVersion(),
+							arun.getToolName(),
+							arun.getToolVersion(),
+							arun.getPlatformName(),
+							arun.getPlatformVersion());
+			}
+		}else{
+			for (AssessmentRun arun : api_wrapper.getAllAssessments(project_uuid)){
 				System.out.println(arun.getUUIDString());
 			}
 		}
