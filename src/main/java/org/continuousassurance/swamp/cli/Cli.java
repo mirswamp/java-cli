@@ -110,7 +110,9 @@ public class Cli {
 				.desc("Accepts username and password from the terminal").build());
 		options.addOption(Option.builder("S").required(false).hasArg().longOpt("swamp-host").argName("SWAMP_HOST")
 				.desc("URL for SWAMP host: default is " + SwampApiWrapper.SWAMP_HOST_NAME).build());
-
+		options.addOption(Option.builder("Q").required(false).hasArg(false).longOpt("quiet")
+				.desc("Less verbose output").build());
+		
 		String[] cmd_args = (String[]) args.toArray(new String[0]);
 		CommandLine parsed_options = new DefaultParser().parse(options, cmd_args);
 		if (args.size() == 0 || parsed_options.hasOption("H")) {
@@ -118,7 +120,14 @@ public class Cli {
 			formatter.printHelp("Command Line Parameters", options);
 			return null;
 		}else if (parsed_options.hasOption("F")) {
-			HashMap<String, Object> cred_map = getUserCredentials(parsed_options.getOptionValue("F"));
+			HashMap<String, Object> cred_map = new HashMap<String, Object>();
+			if (parsed_options.hasOption("Q")){
+				cred_map.put("quiet", true);
+			}else {
+				cred_map.put("quiet", false);
+			}
+
+			cred_map.putAll(getUserCredentials(parsed_options.getOptionValue("F")));
 			if ((cred_map.get("username") != null ) && (cred_map.get("password") != null)){
 				cred_map.put("swamp-host", parsed_options.getOptionValue("S", SwampApiWrapper.SWAMP_HOST_NAME));
 				return cred_map;
@@ -132,6 +141,12 @@ public class Cli {
 			System.out.print("PASSWORD:");
 			String password = new String(System.console().readPassword());
 			HashMap<String, Object> cred_map = new HashMap<String, Object>();
+			if (parsed_options.hasOption("Q")){
+				cred_map.put("quiet", true);
+			}else {
+				cred_map.put("quiet", false);
+			}
+
 			cred_map.put("username", username);
 			cred_map.put("password", password);
 			cred_map.put("swamp-host", parsed_options.getOptionValue("S", SwampApiWrapper.SWAMP_HOST_NAME));
@@ -152,8 +167,10 @@ public class Cli {
 				.desc("Get project UUID").build());
 		options.addOptionGroup(opt_grp);
 
-		options.addOption(Option.builder("N").required(false).hasArg(true).longOpt("project-name").argName("PROJECT_NAME")
+		options.addOption(Option.builder("N").required(false).hasArg(true).longOpt("name").argName("PROJECT_NAME")
 				.desc("Specify a project name and get the uuid from it").build());
+		options.addOption(Option.builder("Q").required(false).hasArg(false).longOpt("quiet")
+				.desc("Less verbose output").build());
 
 		String[] cmd_args = (String[]) args.toArray(new String[0]);
 		CommandLine parsed_options = new DefaultParser().parse(options, cmd_args);
@@ -163,11 +180,17 @@ public class Cli {
 			return null;
 		}else {
 			HashMap<String, Object> cred_map = new HashMap<String, Object>();
-			if (parsed_options.hasOption("uuid")){
-				if(!parsed_options.hasOption("project-name")){
+			if (parsed_options.hasOption("Q")){
+				cred_map.put("quiet", true);
+			}else {
+				cred_map.put("quiet", false);
+			}
+
+			if (parsed_options.hasOption("U")){
+				if(!parsed_options.hasOption("N")){
 					throw new CommandLineOptionException(optionMissingStr(options.getOption("N")));
 				}
-				cred_map.put("project-name", parsed_options.getOptionValue("project-name"));
+				cred_map.put("project-name", parsed_options.getOptionValue("N"));
 			}
 			return cred_map;
 		}
@@ -380,11 +403,13 @@ public class Cli {
 				.desc("Get UUID from tool name").build());
 		options.addOptionGroup(opt_grp);
 
-		options.addOption(Option.builder("N").required(false).hasArg(true).argName("TOOL_NAME").longOpt("tool-name")
+		options.addOption(Option.builder("N").required(false).hasArg(true).argName("TOOL_NAME").longOpt("name")
 				.desc("Specify the tool name and get the uuid from it").build());
 		options.addOption(Option.builder("P").required(false).hasArg(true).argName("PROJECT_UUID").longOpt("project-uuid")
 				.desc("Project UUID for extra project specific tools").build());
-
+		options.addOption(Option.builder("Q").required(false).hasArg(false).longOpt("quiet")
+				.desc("Less verbose output").build());
+		
 		String[] cmd_args = (String[]) args.toArray(new String[0]);
 		CommandLine parsed_options = new DefaultParser().parse(options, cmd_args);
 		if (args.size() == 0 || parsed_options.hasOption("help")) {
@@ -393,6 +418,12 @@ public class Cli {
 			return null;
 		}else {
 			HashMap<String, Object> cred_map = new HashMap<String, Object>();
+			if (parsed_options.hasOption("Q")){
+				cred_map.put("quiet", true);
+			}else {
+				cred_map.put("quiet", false);
+			}
+			
 			if (parsed_options.hasOption("L")){
 				cred_map.put("list", "list");
 				cred_map.put("project-uuid", parsed_options.getOptionValue("P", null));
@@ -419,8 +450,10 @@ public class Cli {
 				.desc("Get UUID from platform name").build());
 		options.addOptionGroup(opt_grp);
 
-		options.addOption(Option.builder("N").required(false).hasArg(true).argName("PLATFORM_NAME").longOpt("platform-name")
+		options.addOption(Option.builder("N").required(false).hasArg(true).argName("PLATFORM_NAME").longOpt("name")
 				.desc("Specify the platform name and get the uuid from it").build());
+		options.addOption(Option.builder("Q").required(false).hasArg(false).longOpt("quiet")
+				.desc("Less verbose output").build());
 
 		String[] cmd_args = (String[]) args.toArray(new String[0]);
 		CommandLine parsed_options = new DefaultParser().parse(options, cmd_args);
@@ -430,6 +463,12 @@ public class Cli {
 			return null;
 		}else {
 			HashMap<String, Object> cred_map = new HashMap<String, Object>();
+			if (parsed_options.hasOption("Q")){
+				cred_map.put("quiet", true);
+			}else {
+				cred_map.put("quiet", false);
+			}
+			
 			if (parsed_options.hasOption("L")){
 				cred_map.put("list", "list");
 			}else {
@@ -589,17 +628,28 @@ public class Cli {
 				host_name);
 
 		if (user_uuid != null){
-			System.out.println("Login successful");
-			System.out.printf("User UUID: %s", user_uuid + "\n");
+			
+			if ((boolean)opt_map.get("quiet") == false) {
+				System.out.println("Login successful");
+			}
+			//System.out.printf("User UUID: %s", user_uuid + "\n");
 			api_wrapper.saveSession();
 		}
 	}
 	
-	public void printAllProjects() {
-		System.out.printf("\n\n%-21s %-38s %26s\n", "Project Name", "Project UUID", "Project Create Date");
+	public void printAllProjects(boolean quiet) {
+		if (!quiet) {
+			System.out.printf("\n%-37s %-30s %-21s\n", 
+					"UUID",
+					"Create Date",
+					"Name");
+		}
+		
 		for(Project proj : api_wrapper.getProjectsList()) {
-			System.out.printf("%-21s %-38s '%26s'\n", proj.getFullName(),
-					proj.getUUIDString(), proj.getCreateDate());
+			System.out.printf("%-37s '%-28s' %-21s\n", 
+					proj.getUUIDString(), 
+					proj.getCreateDate(), 
+					proj.getFullName());
 		}
 	}
 
@@ -612,7 +662,7 @@ public class Cli {
 				System.out.println(my_proj.getUUIDString());
 			}
 		}else{
-			printAllProjects();
+			printAllProjects((boolean)opt_map.get("quiet"));
 		}
 	}
 	
@@ -620,9 +670,13 @@ public class Cli {
 		if (opt_map.containsKey("platform-name")) {
 			System.out.println(api_wrapper.getPlatformVersionFromName((String)opt_map.get("platform-name")).getUUIDString());
 		}else {
-			System.out.printf("%-30s %-38s\n", "Platform Name", "Platform UUID");
+			if (!(boolean)opt_map.get("quiet")) {
+				System.out.printf("%-37s %-30s\n", "UUID", "Name");
+			}
 			for (PlatformVersion platform_version : api_wrapper.getAllPlatformVersionsList()){
-				System.out.printf("%-30s %-38s\n", platform_version.getDisplayString(), platform_version.getIdentifierString());
+				System.out.printf("%-37s %-30s\n",
+						platform_version.getIdentifierString(),
+						platform_version.getDisplayString());
 			}
 		}
 	}
@@ -637,7 +691,7 @@ public class Cli {
 				System.out.println(my_tool.getUUIDString());
 			}
 		}else{
-			printAllTools((String)opt_map.get("project-uuid"));
+			printAllTools((String)opt_map.get("project-uuid"), (boolean)opt_map.get("quiet"));
 		}
 	}
 	
@@ -742,6 +796,9 @@ public class Cli {
 	
 	public void logoutHandler(HashMap<String, Object> opt_map) {
 		api_wrapper.logout();
+		if ((boolean)opt_map.get("quiet") == false) {
+			System.out.println("Logout successful");
+		}
 	}
 	
 	public int executeCommands(String command, HashMap<String, Object> opt_map) throws IOException, SessionExpiredException, InvalidIdentifierException, IncompatibleAssessmentTupleException {
@@ -786,9 +843,9 @@ public class Cli {
 	}
 
 	public void printAllPackagesSummary(String project_uuid) {
-		System.out.printf("\n\n%-21s %-38s %-30s\n", "Package Name", "Package UUID", "Package Description");
+		System.out.printf("\n\n%-21s %-37s %-30s\n", "Package Name", "Package UUID", "Package Description");
 		for(PackageThing pkg : api_wrapper.getPackagesList(project_uuid)){
-			System.out.printf("%-21s %-38s %-30s\n", pkg.getName(), 
+			System.out.printf("%-21s %-37s %-30s\n", pkg.getName(), 
 					pkg.getIdentifierString(),
 					pkg.getDescription());
 		}
@@ -796,10 +853,10 @@ public class Cli {
 
 	public void printAllPackagesVerbose(String project_uuid) {
 		for(PackageThing pkg : api_wrapper.getAllPackages(project_uuid).values()){
-			System.out.printf("\n\n%-21s %-38s %-30s\n", pkg.getName(), pkg.getIdentifierString(), pkg.getDescription());
+			System.out.printf("\n\n%-21s %-37s %-30s\n", pkg.getName(), pkg.getIdentifierString(), pkg.getDescription());
 			for(PackageVersion pkg_ver : api_wrapper.getPackageVersionsList(project_uuid)){
 				if (pkg_ver.getPackageThing().getUUIDString().equals(pkg.getUUIDString())) {
-					System.out.printf("\t%-13s %-38s\n", pkg_ver.getVersionString(), pkg_ver.getUUIDString());
+					System.out.printf("\t%-13s %-37s\n", pkg_ver.getVersionString(), pkg_ver.getUUIDString());
 				}
 			}
 		}
@@ -813,34 +870,24 @@ public class Cli {
 		}
 	}
 
-	public void printAllTools(String project_uuid) throws InvalidIdentifierException {
-		System.out.printf("\n\n%-21s %-38s %-40s %s\n", "Tool Name", "Tool UUID", 
-				"Supported Package Types", "Supported Platforms");
-		for(Tool tool : api_wrapper.getAllTools(project_uuid).values()){
-			
-			System.out.printf("%-21s %-38s %-40s %s\n", tool.getName(), 
+	public void printAllTools(String project_uuid, boolean quiet) throws InvalidIdentifierException {
+		if(!quiet){
+			System.out.printf("\n%-37s %-21s %-40s %s\n",
+				"UUID",
+				"Name",
+				"Supported Package Types", 
+				"Supported Platforms");
+		}
+		
+		for(Tool tool : api_wrapper.getAllTools(project_uuid).values()){			
+			System.out.printf("%-37s %-21s %-40s %s\n", 
 					tool.getIdentifierString(),
+					tool.getName(),
 					tool.getSupportedPkgTypes(), 
 					api_wrapper.getSupportedPlatformVersions(tool.getIdentifierString(), project_uuid));
 		}
 	}
-
-	public void printAllPlatformVersions(String pkg_type) {
-
-		System.out.printf("\n%-40s %-38s\n", "Platform Name", "Platform UUID");
-		if (pkg_type != null) {
-			PlatformVersion platform_version = api_wrapper.getDefaultPlatformVersion(pkg_type);
-			System.out.printf("%-40s %-38s\n", platform_version.getDisplayString(), 
-					platform_version.getIdentifierString());
-		}else {
-			for(PlatformVersion platform_version : api_wrapper.getAllPlatformVersions().values()){
-				System.out.printf("%-40s %-38s\n", platform_version.getName(), 
-						platform_version.getIdentifierString());
-			}
-		}
-	}
-
-
+	
 	public void printAssessments(String project_uuid, boolean quiet) {
 		
 		System.out.println("Assessments UUIDs");
@@ -877,7 +924,7 @@ public class Cli {
 		if (assessment_record.getAssessmentResultUUID() == null){
 			System.out.printf("\n");
 		}else{
-			System.out.printf(", %-38s\n", assessment_record.getAssessmentResultUUID());
+			System.out.printf(", %-37s\n", assessment_record.getAssessmentResultUUID());
 		}
 	}
 
@@ -887,11 +934,11 @@ public class Cli {
 	
 	public void printAllAssessmentStatus(String project_uuid) {
 
-		System.out.printf("\n\n%-38s %-38s %-22s %s\n", 
+		System.out.printf("\n\n%-37s %-37s %-22s %s\n", 
 				"ASSESSMENT RUN UUID", "ASSESSMENT RESULT UUID", 
 				"STATUS", "WEAKNESS COUNT");
 		for(AssessmentRecord assessment_record : api_wrapper.getAllAssessmentRecords(project_uuid)) {
-			System.out.printf("%-38s %-38s %-22s %d\n", assessment_record.getAssessmentRunUUID(),
+			System.out.printf("%-37s %-37s %-22s %d\n", assessment_record.getAssessmentRunUUID(),
 					assessment_record.getAssessmentResultUUID(),
 					assessment_record.getStatus(),
 					assessment_record.getWeaknessCount());

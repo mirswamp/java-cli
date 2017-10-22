@@ -43,7 +43,7 @@ For information on the <options> for a <sub-command> execute:
 
 SiB instances have self signed SSL/TLS certificates. Java's security model does not allow talking to an unknown server with a self-signed SSL/TLS certificates. Because of this restriction, the self-signed certificate has to be first added the trusted keystore in the local Java installation. The following are the instructions on how to do it:
 
-1. Go to SiB from the webbrowser and download the SiB self-signed certificate by following these instruction here:
+1. Go to SiB from the web-browser and download the SiB self-signed certificate by following these instruction here:
 https://www.thesslstore.com/blog/how-to-view-ssl-certificate-details-in-chrome-56/
 
 2. Run the folloing commands to add the self-signed certificate to the local Java Installation's keystore:
@@ -119,6 +119,16 @@ Once logged in, a SWAMP sesssion is valid for *48* hours. CLI stores the session
 
 ==== Application Passwords
 If you have signed up with SWAMP using *github* or any other third party identiy provider then you may not have SWAMP credentials. To get username and password to login with the CLI, go to https://www.mir-swamp.org/#my-account and then to *Application Passwords* tab. Create a new password by pressing *Add New Password* button. The *username* can be seen on *My Profile* tab.
+
+=== Logout
+
+`logout` sub-command is used to logout of SWAMP. The `logout` sub-command does not require any options.
+
+If the logout is successfull, the following output is displayed on the console.
+```
+Logout successful
+```
+
 
 === Projects
 
@@ -243,7 +253,7 @@ Example for the output of the above command:
 1. Get a list of all the tools supported by the SWAMP
 2. Given a tool name, get the platform UUID
 
-==== Get Tools List
+==== Get Tool List
 To get a list of all the `tools` that SWAMP supports, use `--list` option with the `tools` sub-command. This command displays list of tools along with the tool uuid, supported package types and support platforms.
 
 `tools` sub-command with `--list` option accepts an additional option:
@@ -328,7 +338,7 @@ To display the *types of software packages* supported by SWAMP, `--pkg-types` op
 
 Example:
 ```
-java -jar java-cli-1.3.jar package -T
+java -jar java-cli-1.3.jar package -pkg-types
 ```
 
 Output from the above command:
@@ -405,6 +415,12 @@ Example output of the above command:
 ```
 Assessment UUIDs: [1f353b01-6b81-4a7c-84f8-02e2131a7373, 96e6e4e0-efce-4216-bff9-b20b30ca2e83]
 ```
+
+==== List Assessments
+
+To *list* packages uploaded by a user, `--list` option along with `--name <project_name>` must be used with the `assess` sub-command.
+
+
 
 === Assessment Status
 
