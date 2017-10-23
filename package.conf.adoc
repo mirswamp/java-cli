@@ -1,10 +1,12 @@
+= Package.conf
+
 In the SWAMP backend, a software package to be assessed has three components:
 
 1. The package archive file
 2. `package.conf` file
 3. `pkg-os-dependencies.conf` file
 
-`package.conf` file for a package contains meta data about the package primarly on how to configure and build the package. A package.conf file may has following entries in the `key=value` format:
+The `package.conf` file for a package contains meta data about the package primarly on how to configure and build the package. A package.conf file may have the following entries in the `key=value` format:
 
 [cols="<25%,<25%",options="header",]
 |=======================================================================
@@ -71,3 +73,79 @@ The following build systems are supported to by the SWAMP:
 |python-setuptools | Python-2 Python-3
 |ruby-gem | Ruby
 |wheels | Python-2 Python-3
+|=======================================================================
+
+Examples:
+
+`package.conf` file for wireshark-2.2.0:
+
+```
+package-short-name=wireshark
+package-version=2.2.0
+package-archive=wireshark-2.2.0.tar.bz2
+package-archive-md5=c7de0997f74934f25b456846cf75cb81
+package-archive-sha512=03dd1ce686b0e012d3498d6966382db1ff39844e2b03286eded5d77062a958d2dc939b00558708ae37b8e354d95ee6c4aa32023477d862b35bff4e2a0f8f3326
+package-dir=wireshark-2.2.0
+package-language=C
+build-sys=configure+make
+config-opt=--without-qt
+build-opt=
+```
+
+`package.conf` file for webgoat-lessons-7-20161121:
+
+```
+package-short-name=webgoat-lessons
+package-version=7-20161121
+package-archive=WebGoat-Lessons-7-20161121.zip
+package-archive-md5=83bb040534b825121e92eebc29898758
+package-archive-sha512=841de17cbe0caa0154043c1b32b79443bf9d3286e07cec668ff15ab5115baa1d376c2a28a595aa30f7705d3326379bc6c022a70d7b537cac24f6508cae141c99
+package-dir=WebGoat-Lessons-7-20161121
+package-language=Java
+build-sys=maven
+build-file=pom.xml
+build-target=clean package
+```
+
+`package.conf` file for k9-mail-5.205:
+
+```
+package-short-name=k9-mail
+package-version=5.205
+package-archive=5.205.tar.gz
+package-archive-md5=c0f69e182a49bb8a3b52939db95de333
+package-archive-sha512=108304c6cee2bf6030a6665d95faa2ae3880b2fb47f967ad49b4b554394078d581d7ab941611be4dfb4b15c2247ce7f93a01d3bef67f7ee6883e62e61df40a9f
+package-dir=k-9-5.205
+package-language=Java
+build-sys=android+gradle
+build-target=compileDebugSources
+android-lint-target=lintDebug
+gradle-wrapper=true
+```
+
+`package.conf` file luigi-1.0.20:
+```
+package-short-name=luigi
+package-version=1.0.20
+package-archive=luigi-1.0.20.zip
+package-archive-md5=4daa896d2f57ed88effeafe4b0c3a756
+package-archive-sha512=ea514377c6a386c9059bd33131b7d65d1e6c2a7fc662946a085b60b31d6de30e0ea3b58b643ae88dc7d1aaca57f9fc70b9e52a9066dd0e40c5220b775d3c71a8
+package-dir=luigi-1.0.20
+package-language=Python-2 Python-3
+build-sys=python-setuptools
+build-file=
+build-cmd=
+```
+
+`package.conf` file video.js-5.11.0:
+
+```
+package-short-name=video.js
+package-version=5.11.0
+package-archive=video.js-5.11.0.zip
+package-archive-md5=2166ba411632e17e4fcc558f2ca11d7b
+package-archive-sha512=64f17ae824fe887f8a356f40dc57fb7c91adbfb4efb94e9ef706c963acf9cdbf4910f082ef70dc029b2b58e5e0b0c6d29183919f0859d7fd95de46af5bb35bc0
+package-dir=video.js-5.11.0
+package-language=JavaScript CSS
+build-sys=composer
+```

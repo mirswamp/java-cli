@@ -313,7 +313,7 @@ The following additional options are required to upload a package:
 |=======================================================================
 |Option | Value
 | `--pkg-archive <PACKAGE_ARCHIVE_FILEPATH>` | Path to the archive of the package.
-| `--pkg-conf <PACKAGE_CONF_FILEPATH>` | Path to package.conf file for the package.
+| `--pkg-conf <PACKAGE_CONF_FILEPATH>` | Path to https://github.com/mirswamp/java-cli/blob/master/package.conf.adoc[package.conf] file for the package.
 | `--new` | Flag/Option to specify if this should be a new package instead of a package version. If a package with the same name already exist, CLI adds this package as a package version. `--new` flag overrides it and stores it as a new package. This is optional.
 | `--os-deps '<platform=dependency1 dependency2 ...>'` | OS package dependencies specified as `key=value` format. Use this option multiple times to specify dependency for multiple SWAMP platforms. This is optional.
 | `--project-uuid <PROJECT_UUID>` | UUID of the project that this package is associated with
