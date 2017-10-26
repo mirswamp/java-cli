@@ -1264,7 +1264,7 @@ public class SwampApiWrapper {
 	 *  @param project_uuid: project UUID
 	 *  
 	 *  @return assessments objects
-	 *  @throws InvalidIdentifierException
+	 *  @throws InvalidIdentifierException Invalid assessment UUI
 	 */
 	public AssessmentRun getAssessment(String assess_uuid, String project_uuid) {
 		for (AssessmentRun arun : getAllAssessments(project_uuid)){
@@ -1294,7 +1294,7 @@ public class SwampApiWrapper {
 	 *  @param project_uuid: project UUID
 	 *  
 	 *  @return status: deleted or not
-	 *  
+	 *  @throws InvalidIdentifierException Invalid Assessment UUID
 	 */
 	public boolean deleteAssessment(String assess_uuid, String project_uuid) {
 
@@ -1318,13 +1318,13 @@ public class SwampApiWrapper {
 	 *  @param platform_uuid_list: list of platform UUIDs
 	 *  
 	 *  @return list of assessment UUIDs
-	 *  @throws IncompatibleAssessmentTupleException, InvalidIdentifierException
+	 *  @throws IncompatibleAssessmentTupleException if a tool does not support a package type
 	 *  
 	 */
 	public List<String> runAssessment(String pkg_ver_uuid,
 			List<String> tool_uuid_list,
 			String project_uuid,
-			List<String> platform_uuid_list) throws IncompatibleAssessmentTupleException, InvalidIdentifierException {
+			List<String> platform_uuid_list) throws IncompatibleAssessmentTupleException {
 		
 		PackageVersion pkg_ver = getPackageVersion(pkg_ver_uuid, project_uuid);
 		Project project = getProject(project_uuid);
@@ -1346,7 +1346,7 @@ public class SwampApiWrapper {
 
 			for (String tool_uuid: tool_uuid_list) {
 				Tool tool = getTool(tool_uuid, project_uuid);
-
+				
 				if (!tool.getSupportedPkgTypes().contains(pkg_ver.getPackageThing().getType())) {
 					throw new IncompatibleAssessmentTupleException(String.format("%s (%s) does not support this package type \"%s\"",
 							tool.getName(),
@@ -1408,9 +1408,9 @@ public class SwampApiWrapper {
 	 *  
 	 *  
 	 *  @param pkg: package version object
-	 *  @param tool: list of tool object
+	 *  @param tools: list of tool object
 	 *  @param project: project object
-	 *  @param platform: list of platform object
+	 *  @param platform_versions: list of platform object
 	 *  
 	 *  @return list of assessment run objects
 	 *  
@@ -1453,8 +1453,10 @@ public class SwampApiWrapper {
 	 *  @param asssess_result_uuid: asssess_result_uuid UUID
 	 *  @param filepath: filepath to write to  
 	 *  
+	 *  @throws IOException Exceptions when writing SCARF to a file
 	 */
-	public void getAssessmentResults(String project_uuid, String asssess_result_uuid, String filepath) throws FileNotFoundException, IOException {
+	public void getAssessmentResults(String project_uuid, String asssess_result_uuid, String filepath) 
+			throws IOException {
 
 		for(AssessmentResults results : getAllAssessmentResults(project_uuid)){
 			if (results.getUUIDString().equals(asssess_result_uuid)) {

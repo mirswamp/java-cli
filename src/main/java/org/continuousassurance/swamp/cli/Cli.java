@@ -41,9 +41,11 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
 public class Cli {
 
@@ -746,24 +748,64 @@ public class Cli {
 					opt_map.containsKey("new-pkg"));
 
 			if ((boolean)opt_map.get("quiet") == true){
-				System.out.println(package_uuid);
-			}else{
-				System.out.printf("Package Version UUID: %s\n", package_uuid);
+				System.out.println("Package Version UUID");
 			}
+			
+			System.out.println(package_uuid);
 		}
 	}
 	
 	public void assessmentHandler(HashMap<String, Object> opt_map) {
 		if (opt_map.containsKey("run-assess")){
+			
+			//For all tools
+			for (String tool_uuid: (List<String>)opt_map.get("tool-uuid")) {
+				if (tool_uuid.equalsIgnoreCase("all")) {
+					PackageVersion pkg_ver= api_wrapper.getPackageVersion((String)opt_map.get("pkg-uuid"), 
+							(String)opt_map.get("project-uuid"));
+					
+					List<String> all_tools = new ArrayList<String>();
+					for(Tool tool : api_wrapper.getTools(pkg_ver.getPackageThing().getType(), 
+							(String)opt_map.get("project-uuid"))){	
+							all_tools.add(tool.getIdentifierString());
+					}
+					opt_map.put("tool-uuid", all_tools);
+				}
+			}
+			
+			//For all platforms
+			for (String platform: (List<String>)opt_map.get("platform-uuid")) {
+				if (platform.equalsIgnoreCase("all")) {
+
+					Set<PlatformVersion> plat_set = new HashSet<PlatformVersion>();
+				
+					for (String tool_uuid: (List<String>)opt_map.get("tool-uuid")) {
+						plat_set.addAll(api_wrapper.getSupportedPlatformVersions(tool_uuid, 
+								(String)opt_map.get("project-uuid")));
+					}
+					
+					//plat uuids
+					List<String> all_plats = new ArrayList<String>();
+					for (PlatformVersion platform_version : plat_set) {
+						all_plats.add(platform_version.getIdentifierString());
+					}
+					opt_map.put("platform-uuid", all_plats);
+				}			
+			}
+				
 			@SuppressWarnings({"unchecked"})
-			List<String> assess_uuid = api_wrapper.runAssessment((String)opt_map.get("pkg-uuid"), 
+			List<String> assess_uuids = api_wrapper.runAssessment((String)opt_map.get("pkg-uuid"), 
 					(List<String>)opt_map.get("tool-uuid"),
 					(String)opt_map.get("project-uuid"), 
 					(List<String>)opt_map.get("platform-uuid"));
-			if (opt_map.containsKey("quiet")){
-				System.out.println(assess_uuid);
-			}else{
-				System.out.printf("Assessment UUIDs: %s\n", assess_uuid);
+			
+			boolean quiet = opt_map.containsKey("quiet");
+			
+			if (!quiet){
+				System.out.println("Assessment UUIDs");
+			}
+			for (String uuid: assess_uuids) {
+				System.out.println(uuid);
 			}
 		}
 		if (opt_map.containsKey("list-assess")){
