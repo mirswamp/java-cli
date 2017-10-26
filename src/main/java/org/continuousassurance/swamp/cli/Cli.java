@@ -60,17 +60,40 @@ public class Cli {
         api_wrapper = new SwampApiWrapper(host_name);
     }*/
 
+	public static final ArrayList<String> DISPLAY_COMMANDS = new ArrayList<String>(Arrays.asList(
+			"login", 
+			"logout", 
+			"assess", 
+			"project OR projects",
+			"package OR packages",
+			"platforms OR platforms",
+			"results", 
+			"status", 
+			"tool OR tools", 
+			"user"));
+
 	public static final ArrayList<String> COMMANDS = new ArrayList<String>(Arrays.asList(
-			"login", "logout", "assess", "projects",
+			"login", 
+			"logout", 
+			"assess", 
+			"project",
+			"projects",
 			"package",
-			"platforms", "results", "status", "tools", "user"));
+			"packages",
+			"platform",
+			"platforms",
+			"results", 
+			"status", 
+			"tool",
+			"tools", 
+			"user"));
 
 	public static void printHelp() {
 		System.out.println("------------------------------------------------------------------------");
 		System.out.println("Usage: <program> <command> <options>");
 		System.out.println("------------------------------------------------------------------------");
 		System.out.println("<command> must be one of the following:");
-		for (String cmd :  COMMANDS) {
+		for (String cmd :  DISPLAY_COMMANDS) {
 			System.out.println("\t\t" + cmd);
 		}
 		System.out.println("------------------------------------------------------------------------");
@@ -590,17 +613,21 @@ public class Cli {
 			opt_map = loginOptionsHandler(cli_args);
 			break;
 		case "package":
+		case "packages":
 			opt_map = packageOptionsHandler(cli_args);
 			break;
+		case "project":
 		case "projects":
 			opt_map = projectOptionsHandler(cli_args);
 			break;
+		case "tool":	
 		case "tools":
 			opt_map = toolsOptionsHandler(cli_args);
 			break;
 		case "assess":
 			opt_map = assessmentOptionsHandler(cli_args);
 			break;
+		case "platform":
 		case "platforms":
 			opt_map = platformOptionsHandler(cli_args);
 			break;
@@ -755,6 +782,14 @@ public class Cli {
 		}
 	}
 	
+	protected List<String> removeDuplicates(List<String> list) {
+		if (list != null) {
+			return new ArrayList<String>(new HashSet<String>(list));
+		}else {
+			return null;
+		}
+	}
+	
 	public void assessmentHandler(HashMap<String, Object> opt_map) {
 		if (opt_map.containsKey("run-assess")){
 			
@@ -774,30 +809,32 @@ public class Cli {
 			}
 			
 			//For all platforms
-			for (String platform: (List<String>)opt_map.get("platform-uuid")) {
-				if (platform.equalsIgnoreCase("all")) {
+			if(opt_map.containsKey("platform-uuid")) { 
+				for (String platform: (List<String>)opt_map.get("platform-uuid")) {
+					if (platform.equalsIgnoreCase("all")) {
 
-					Set<PlatformVersion> plat_set = new HashSet<PlatformVersion>();
-				
-					for (String tool_uuid: (List<String>)opt_map.get("tool-uuid")) {
-						plat_set.addAll(api_wrapper.getSupportedPlatformVersions(tool_uuid, 
-								(String)opt_map.get("project-uuid")));
+						Set<PlatformVersion> plat_set = new HashSet<PlatformVersion>();
+
+						for (String tool_uuid: (List<String>)opt_map.get("tool-uuid")) {
+							plat_set.addAll(api_wrapper.getSupportedPlatformVersions(tool_uuid, 
+									(String)opt_map.get("project-uuid")));
+						}
+
+						//plat uuids
+						List<String> all_plats = new ArrayList<String>();
+						for (PlatformVersion platform_version : plat_set) {
+							all_plats.add(platform_version.getIdentifierString());
+						}
+						opt_map.put("platform-uuid", all_plats);
 					}
-					
-					//plat uuids
-					List<String> all_plats = new ArrayList<String>();
-					for (PlatformVersion platform_version : plat_set) {
-						all_plats.add(platform_version.getIdentifierString());
-					}
-					opt_map.put("platform-uuid", all_plats);
-				}			
+				}
 			}
-				
+			
 			@SuppressWarnings({"unchecked"})
 			List<String> assess_uuids = api_wrapper.runAssessment((String)opt_map.get("pkg-uuid"), 
-					(List<String>)opt_map.get("tool-uuid"),
+					removeDuplicates((List<String>)opt_map.get("tool-uuid")),
 					(String)opt_map.get("project-uuid"), 
-					(List<String>)opt_map.get("platform-uuid"));
+					removeDuplicates((List<String>)opt_map.get("platform-uuid")));
 			
 			boolean quiet = opt_map.containsKey("quiet");
 			
@@ -854,16 +891,20 @@ public class Cli {
 		}else {
 			api_wrapper.restoreSession();
 			switch (command) {
+			case "project":
 			case "projects":
 				projectHandler(opt_map);
 				break;
+			case "platform":
 			case "platforms":
 				platformHandler(opt_map);
 				break;
+			case "tool":
 			case "tools":
 				toolHandler(opt_map);
 				break;
 			case "package":
+			case "packages":
 				packageHandler(opt_map);
 				break;
 			case "assess":
