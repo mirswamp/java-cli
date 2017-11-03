@@ -774,7 +774,7 @@ public class Cli {
 					(Map<String, String>)opt_map.get("os-deps-map"),
 					opt_map.containsKey("new-pkg"));
 
-			if ((boolean)opt_map.get("quiet") == true){
+			if ((boolean)opt_map.get("quiet") == false){
 				System.out.println("Package Version UUID");
 			}
 			
