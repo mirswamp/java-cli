@@ -510,6 +510,8 @@ public class Cli {
 
 		Options options = new Options();
 		options.addOption(Option.builder("H").required(false).longOpt("help").desc("Shows Help").build());
+		options.addOption(Option.builder("Q").required(false).hasArg(false).longOpt("quiet")
+				.desc("Less verbose output").build());
 
 		String[] cmd_args = (String[]) args.toArray(new String[0]);
 		CommandLine parsed_options = new DefaultParser().parse(options, cmd_args);
@@ -520,6 +522,11 @@ public class Cli {
 		}else {
 			HashMap<String, Object> cred_map = new HashMap<String, Object>();
 			cred_map.put("logout", "logout");
+			if (parsed_options.hasOption("Q")){
+				cred_map.put("quiet", true);
+			}else {
+				cred_map.put("quiet", false);
+			}
 			return cred_map;
 		}
 

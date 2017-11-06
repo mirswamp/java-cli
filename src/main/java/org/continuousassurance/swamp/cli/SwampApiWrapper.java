@@ -785,7 +785,8 @@ public class SwampApiWrapper {
 	public boolean deletePackageVersion(PackageVersion pkg_ver) throws InvalidIdentifierException {
 		boolean ret_val = handlerFactory.getPackageVersionHandler().deletePackageVersion(pkg_ver);
 		if(ret_val) {
-			packageVersionMap = null;
+			//packageVersionMap = null;
+			packageVersionMap.remove(pkg_ver.getIdentifierString());
 		}
 		return ret_val;
 	}
