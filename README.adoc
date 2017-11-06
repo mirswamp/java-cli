@@ -482,17 +482,21 @@ In case of errrors or exceptions the Java CLI program returns the following exit
 
 == Building from Sources
 
-Clone https://github.com/mirswamp/java-api.git, and run the following command to build `java-api`:
+`java-cli` depends on  https://github.com/mirswamp/java-api.git. To build `java-cli`, first build  `java-api`
+
+Clone https://github.com/mirswamp/java-api.git, and run the following commands to build `java-api`:
 ```
+cd java-api
 mvn install -DskipTests
 ```
 
-Clone https://github.com/mirswamp/java-cli.git, and run the following command to build `java-cli`:
+Clone https://github.com/mirswamp/java-cli.git, and run the following commands to build `java-cli`:
 ```
+cd java-cli
 mvn package -DskipTests
 ```
 
-Run `java-cli-1.X.X-jar-with-dependencies.jar` inside `target` directory.
+Run `java-cli-1.X.X-jar-with-dependencies.jar` inside `java-cli/target` directory.
 
 Example:
 ```
