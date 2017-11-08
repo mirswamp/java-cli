@@ -65,9 +65,9 @@ class TestLogin(TestSwampApiWrapper):
     def test_login_incorrect2(self):
         #self.api_wrapper.setHost()
         self.assertRaises(HTTPException, self.api_wrapper.login,
-                          TestSwampApiWrapper.USERNAME,
-                          TestSwampApiWrapper.PASSWORD,
-                          'https://it.cosalab.org/')
+                          "bogus-swamp-user",
+                          "bogus-swamp-password",
+                          'https://error-invalid-expect-fail.cosalab.org/')
 
 
 class TestProjects(TestSwampApiWrapper):
