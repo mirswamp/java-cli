@@ -127,12 +127,24 @@ public class Cli {
 	public HashMap<String, Object> loginOptionsHandler(ArrayList<String> args) throws ParseException, CommandLineOptionException {
 
 		Options options = new Options();
-		options.addOption(Option.builder("H").required(false).longOpt("help").desc("Shows Help").build());
 
-		options.addOption(Option.builder("F").required(false).hasArg().longOpt("filepath").argName("CREDENTIALS_FILEPATH")
+		OptionGroup opt_grp = new OptionGroup();
+
+		/* it wasn't set before, but it is needed :-( */
+		/* Unfortuntately, with all these "required" options,
+		 * everything fails instead of giving a helpful
+		 * error message.   Either behavior is bad, because
+		 * it makes the CLI more and more confusing to use.
+		 */
+		opt_grp.setRequired(true);
+
+		opt_grp.addOption(Option.builder("H").required(false).longOpt("help").desc("Shows Help").build());
+		opt_grp.addOption(Option.builder("F").required(false).hasArg().longOpt("filepath").argName("CREDENTIALS_FILEPATH")
 				.desc("Properties file containing username and password").build());
-		options.addOption(Option.builder("C").required(false).hasArg(false).longOpt("console")
+		opt_grp.addOption(Option.builder("C").required(false).hasArg(false).longOpt("console")
 				.desc("Accepts username and password from the terminal").build());
+		options.addOptionGroup(opt_grp);
+
 		options.addOption(Option.builder("S").required(false).hasArg().longOpt("swamp-host").argName("SWAMP_HOST")
 				.desc("URL for SWAMP host: default is " + SwampApiWrapper.SWAMP_HOST_NAME).build());
 		options.addOption(Option.builder("Q").required(false).hasArg(false).longOpt("quiet")
@@ -160,10 +172,17 @@ public class Cli {
 				throw new CommandLineOptionException(String.format("No username or password in the file: %s\n",
 						parsed_options.getOptionValue("F")));
 			}
-		}else {
-			System.out.print("USERNAME:");
+		}
+		else if (parsed_options.hasOption("C")) {
+			/* XXX switch these to the lowercase & swamp- ASAP
+			 * so that people know they aren't being spoofed.
+			 * The ': ' is the standard output convention.
+			 */
+			/* System.out.print("swamp-username: "); */
+			System.out.print("USERNAME: ");
 			String username = System.console().readLine();
-			System.out.print("PASSWORD:");
+			/* System.out.print("swamp-password: "); */
+			System.out.print("PASSWORD: ");
 			String password = new String(System.console().readPassword());
 			HashMap<String, Object> cred_map = new HashMap<String, Object>();
 			if (parsed_options.hasOption("Q")){
@@ -177,6 +196,10 @@ public class Cli {
 			cred_map.put("swamp-host", parsed_options.getOptionValue("S", SwampApiWrapper.SWAMP_HOST_NAME));
 			return cred_map;
 		}
+		else {
+			throw new CommandLineOptionException("Unknown / Incompatible options");
+		}
+			
 	}
 
 	public HashMap<String, Object> projectOptionsHandler(ArrayList<String> args) throws ParseException {
@@ -188,12 +211,12 @@ public class Cli {
 		opt_grp.addOption(Option.builder("H").required(false).longOpt("help").desc("Shows Help").build());
 		opt_grp.addOption(Option.builder("L").required(false).hasArg(false).longOpt("list")
 				.desc("List projects").build());
-		opt_grp.addOption(Option.builder("U").required(false).hasArg(false).longOpt("uuid")
-				.desc("Get project UUID").build());
+		opt_grp.addOption(Option.builder("N").required(false).hasArg(true).longOpt("name").argName("PROJECT_NAME")
+				.desc("Specify a project name and get the uuid from it").build());
 		options.addOptionGroup(opt_grp);
 
-		options.addOption(Option.builder("N").required(false).hasArg(true).longOpt("name").argName("PROJECT_NAME")
-				.desc("Specify a project name and get the uuid from it").build());
+		options.addOption(Option.builder("U").required(false).hasArg(false).longOpt("uuid")
+				.desc("Get project UUID").build());
 		options.addOption(Option.builder("Q").required(false).hasArg(false).longOpt("quiet")
 				.desc("Less verbose output").build());
 
@@ -211,10 +234,14 @@ public class Cli {
 				cred_map.put("quiet", false);
 			}
 
-			if (parsed_options.hasOption("U")){
-				if(!parsed_options.hasOption("N")){
+			/* sanity check, -U bogus, optional extra only with -N */
+			if (parsed_options.hasOption("U")) {
+				if (!parsed_options.hasOption("N")) {
 					throw new CommandLineOptionException(optionMissingStr(options.getOption("N")));
 				}
+			}
+
+			if (parsed_options.hasOption("N")) {
 				cred_map.put("project-name", parsed_options.getOptionValue("N"));
 			}
 			return cred_map;
@@ -291,17 +318,16 @@ public class Cli {
 
 		Options options = new Options();
 		OptionGroup opt_grp = new OptionGroup();
-		opt_grp.setRequired(true);
 
 		opt_grp.addOption(Option.builder("H").required(false).longOpt("help").desc("Shows Help").build());
 		opt_grp.addOption(Option.builder("L").required(false).hasArg(false).longOpt("list")
 				.desc("Show the list of packages that belong to the user").build());
-		opt_grp.addOption(Option.builder("U").required(false).hasArg(false).longOpt("upload")
-				.desc("Upload a new package/package version to a project").build());
 		opt_grp.addOption(Option.builder("T").required(false).hasArg(false).longOpt("types")
 				.desc("list all package types").build());
 		opt_grp.addOption(Option.builder("D").required(false).hasArg(false).longOpt("delete")
 				.desc("Delete a package version").build());
+		opt_grp.addOption(Option.builder("U").required(false).hasArg(false).longOpt("upload")
+				.desc("Upload a new package/package version to a project; requires -A,-C,-P").build());
 		
 		options.addOptionGroup(opt_grp);
 
@@ -334,10 +360,33 @@ public class Cli {
 			return null;
 		}else {
 			HashMap<String, Object> cred_map = new HashMap<String, Object>();
+
 			if (parsed_options.hasOption("Q")){
 				cred_map.put("quiet", true);
 			}else {
 				cred_map.put("quiet", false);
+			}
+
+			boolean has_non_u_options = (
+				    parsed_options.hasOption("H")
+				 || parsed_options.hasOption("L")
+				 || parsed_options.hasOption("T")
+				 || parsed_options.hasOption("D")
+				 );
+
+			/* XXX the option group takes care of selecting more than one, even
+			   though they aren't required. */
+
+			/* backward compatability */
+			boolean	back_compat_update = false;
+			/* if everything is present, and no commands, default to add */
+			if (!(parsed_options.hasOption("U") || has_non_u_options)) {
+				boolean	all_add_options = (
+					   parsed_options.hasOption("A")
+					&& parsed_options.hasOption("C")
+					&& parsed_options.hasOption("P")
+					);
+				back_compat_update = all_add_options;
 			}
 
 			if (parsed_options.hasOption("L")){
@@ -347,7 +396,8 @@ public class Cli {
 			}else if (parsed_options.hasOption("T")){
 				cred_map.put("pkg-types", "pkg-types");
 				return cred_map;
-			}else if (parsed_options.hasOption("U")){
+			}
+			else if (back_compat_update || parsed_options.hasOption("U")) {
 				if (!parsed_options.hasOption("A")){
 					throw new CommandLineOptionException(optionMissingStr(options.getOption("A")));
 				}
@@ -372,7 +422,8 @@ public class Cli {
 				}
 				return cred_map;
 				
-			}else { // if (parsed_options.hasOption("D")) 
+			}
+			else if (parsed_options.hasOption("D")) {
 				if (!parsed_options.hasOption("P")){
 					throw new CommandLineOptionException(optionMissingStr(options.getOption("P")));
 				}
@@ -385,6 +436,9 @@ public class Cli {
 				cred_map.put("project-uuid", parsed_options.getOptionValue("P"));
 				cred_map.put("package-uuids", Arrays.asList(parsed_options.getOptionValues("I")));
 				return cred_map;
+			}
+			else {
+				throw new CommandLineOptionException("Unknown / Incompatible options");
 			}
 		}
 	}
@@ -424,12 +478,12 @@ public class Cli {
 		opt_grp.addOption(Option.builder("H").required(false).longOpt("help").desc("Shows Help").build());
 		opt_grp.addOption(Option.builder("L").required(false).hasArg(false).longOpt("list")
 				.desc("Displays all tools to the user").build());
-		opt_grp.addOption(Option.builder("U").required(false).hasArg(false).longOpt("uuid")
-				.desc("Get UUID from tool name").build());
+		opt_grp.addOption(Option.builder("N").required(false).hasArg(true).argName("TOOL_NAME").longOpt("name")
+				.desc("Specify the tool name and get the uuid from it").build());
 		options.addOptionGroup(opt_grp);
 
-		options.addOption(Option.builder("N").required(false).hasArg(true).argName("TOOL_NAME").longOpt("name")
-				.desc("Specify the tool name and get the uuid from it").build());
+		options.addOption(Option.builder("U").required(false).hasArg(false).longOpt("uuid")
+				.desc("Get UUID from tool name").build());
 		options.addOption(Option.builder("P").required(false).hasArg(true).argName("PROJECT_UUID").longOpt("project-uuid")
 				.desc("Project UUID for extra project specific tools").build());
 		options.addOption(Option.builder("Q").required(false).hasArg(false).longOpt("quiet")
@@ -448,22 +502,27 @@ public class Cli {
 			}else {
 				cred_map.put("quiet", false);
 			}
+
+			/* sanity check, -U bogus, optional extra only with -N */
+			if (parsed_options.hasOption("U")) {
+				if (!parsed_options.hasOption("N")) {
+					throw new CommandLineOptionException(optionMissingStr(options.getOption("N")));
+				}
+			}
 			
 			if (parsed_options.hasOption("L")){
 				cred_map.put("list", "list");
 				cred_map.put("project-uuid", parsed_options.getOptionValue("P", null));
-			}else {
-				if (!parsed_options.hasOption("N")){
-					throw new CommandLineOptionException(optionMissingStr(options.getOption("N")));
-				}
+			}
+			else if (parsed_options.hasOption("N")) {
 				cred_map.put("tool-name", parsed_options.getOptionValue("N", null));
 			}
+
 			return cred_map;
 		}
 	}
 
 	public HashMap<String, Object> platformOptionsHandler(ArrayList<String> args) throws ParseException{
-
 		Options options = new Options();
 		OptionGroup opt_grp = new OptionGroup();
 		opt_grp.setRequired(true);
@@ -471,12 +530,13 @@ public class Cli {
 		opt_grp.addOption(Option.builder("H").required(false).longOpt("help").desc("Shows Help").build());
 		opt_grp.addOption(Option.builder("L").required(false).hasArg(false).longOpt("list")
 				.desc("Show all platform").build());
-		opt_grp.addOption(Option.builder("U").required(false).hasArg(false).longOpt("uuid")
-				.desc("Get UUID from platform name").build());
+		opt_grp.addOption(Option.builder("N").required(false).hasArg(true).argName("PLATFORM_NAME").longOpt("name")
+				.desc("Specify the platform name and get the uuid from it").build());
 		options.addOptionGroup(opt_grp);
 
-		options.addOption(Option.builder("N").required(false).hasArg(true).argName("PLATFORM_NAME").longOpt("name")
-				.desc("Specify the platform name and get the uuid from it").build());
+		options.addOption(Option.builder("U").required(false).hasArg(false).longOpt("uuid")
+				.desc("Get UUID from platform name").build());
+
 		options.addOption(Option.builder("Q").required(false).hasArg(false).longOpt("quiet")
 				.desc("Less verbose output").build());
 
@@ -493,13 +553,18 @@ public class Cli {
 			}else {
 				cred_map.put("quiet", false);
 			}
+
+			/* sanity check, -U bogus, optional extra only with -N */
+			if (parsed_options.hasOption("U")) {
+				if (!parsed_options.hasOption("N")) {
+					throw new CommandLineOptionException(optionMissingStr(options.getOption("N")));
+				}
+			}
 			
 			if (parsed_options.hasOption("L")){
 				cred_map.put("list", "list");
-			}else {
-				if (!parsed_options.hasOption("N")){
-					throw new CommandLineOptionException(optionMissingStr(options.getOption("N")));
-				}
+			}
+			else if (parsed_options.hasOption("N")){
 				cred_map.put("platform-name", parsed_options.getOptionValue("N", null));
 			}
 			return cred_map;
@@ -511,7 +576,7 @@ public class Cli {
 		Options options = new Options();
 		options.addOption(Option.builder("H").required(false).longOpt("help").desc("Shows Help").build());
 		options.addOption(Option.builder("Q").required(false).hasArg(false).longOpt("quiet")
-				.desc("Less verbose output").build());
+							.desc("Less verbose output").build());
 
 		String[] cmd_args = (String[]) args.toArray(new String[0]);
 		CommandLine parsed_options = new DefaultParser().parse(options, cmd_args);
@@ -542,6 +607,7 @@ public class Cli {
 		opt_grp.addOption(Option.builder("R").required(false).longOpt("run").hasArg(false).desc("Run an assessment").build());
 		opt_grp.addOption(Option.builder("L").required(false).longOpt("list").hasArg(false).desc("List assessments").build());
 		opt_grp.addOption(Option.builder("I").required(false).longOpt("info").hasArg(false).desc("Information on assessment").build());
+		opt_grp.addOption(Option.builder("Z").required(false).longOpt("run-assess").hasArg(false).desc("Run an assessment").build());
 		options.addOptionGroup(opt_grp);
 
 		options.addOption(Option.builder("K").required(false).hasArg(true).longOpt("pkg-uuid").argName("PACKAGE_UUID")
@@ -564,12 +630,12 @@ public class Cli {
 			formatter.printHelp("Command Line Parameters", options);
 			return null;
 		}
-		HashMap<String, Object> cred_map = new HashMap<String, Object>();
-		if (parsed_options.hasOption("Q")){
-			cred_map.put("quiet", "quiet");
-		}
 		
-		if (parsed_options.hasOption("R")){
+		HashMap<String, Object> cred_map = new HashMap<String, Object>();
+
+		cred_map.put("quiet", parsed_options.hasOption("Q"));
+		
+		if (parsed_options.hasOption("R") || parsed_options.hasOption("Z")) {
 			if (!parsed_options.hasOption("P")){
 				throw new CommandLineOptionException(optionMissingStr(options.getOption("P")));
 			}
@@ -639,6 +705,7 @@ public class Cli {
 			opt_map = platformOptionsHandler(cli_args);
 			break;
 		case "results":
+		case "result":
 			opt_map = resultsOptionsHandler(cli_args);
 			break;
 		case "status":
@@ -712,7 +779,7 @@ public class Cli {
 		if (opt_map.containsKey("platform-name")) {
 			System.out.println(api_wrapper.getPlatformVersionFromName((String)opt_map.get("platform-name")).getUUIDString());
 		}else {
-			if (!(boolean)opt_map.get("quiet")) {
+			if ((boolean)opt_map.get("quiet") == false) {
 				System.out.printf("%-37s %-30s\n", "UUID", "Name");
 			}
 			for (PlatformVersion platform_version : api_wrapper.getAllPlatformVersionsList()){
@@ -843,9 +910,7 @@ public class Cli {
 					(String)opt_map.get("project-uuid"), 
 					removeDuplicates((List<String>)opt_map.get("platform-uuid")));
 			
-			boolean quiet = opt_map.containsKey("quiet");
-			
-			if (!quiet){
+			if ((boolean)opt_map.get("quiet") == false) {
 				System.out.println("Assessment UUIDs");
 			}
 			for (String uuid: assess_uuids) {
@@ -853,7 +918,7 @@ public class Cli {
 			}
 		}
 		if (opt_map.containsKey("list-assess")){
-			printAssessments((String)opt_map.get("project-uuid"), opt_map.containsKey("quiet"));
+			printAssessments((String)opt_map.get("project-uuid"), (boolean)opt_map.get("quiet"));
 		}
 		
 	}
@@ -918,6 +983,7 @@ public class Cli {
 				assessmentHandler(opt_map);
 				break;
 			case "results":
+			case "result":
 				resultsHandler(opt_map);
 				break;
 			case "status":
