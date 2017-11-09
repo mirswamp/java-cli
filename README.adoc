@@ -511,6 +511,9 @@ To run the automated test suite, do the following:
 * Change to `java-cli` directory
 * From `https://github.com/mirswamp/java-cli/releases`, download `test_packages.zip` file and unzip it in `scripts/resources` directory.
 * Download *Jython-2.7.0* stand-alone jar file from http://www.jython.org/downloads.html and create a JYTHON_JAR environment variable that points to the Jar file.
+`http://search.maven.org/remotecontent?filepath=org/python/jython-standalone/2.7.0/jython-standalone-2.7.0.jar`
+* Download *test--packages.zip* from github and unpack as noted above
+`https://github.com/mirswamp/java-cli/releases/download/releases%2F1.3.3/test_packages.zip`
 * Create a `userinfo.properties` in `scripts/resources` directory. The file should have the following as key value pairs
 ```
 username=<swamp-username>
