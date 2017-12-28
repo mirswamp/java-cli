@@ -1395,7 +1395,7 @@ public class SwampApiWrapper {
 	 *  @return assessment run object
 	 *  
 	 */
-	protected AssessmentRun runAssessment(PackageVersion pkg, Tool tool, Project project, PlatformVersion platform) {
+	public AssessmentRun runAssessment(PackageVersion pkg, Tool tool, Project project, PlatformVersion platform) {
 		AssessmentRun arun = handlerFactory.getAssessmentHandler().create(project, pkg, platform, tool);
 		if (handlerFactory.getRunRequestHandler().submitOneTimeRequest(arun, true)) {
 			return arun;
