@@ -119,6 +119,7 @@ if [ ! -x $harness ] ; then
 	setup_errs=true
 fi
 
+pver=$(mvn -Dexec.executable='echo' -Dexec.args='${project.version}' --non-recursive exec:exec -q)
 ## make sure the cli is available, check multiple names
 cli=
 check="

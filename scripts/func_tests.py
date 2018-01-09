@@ -63,8 +63,8 @@ class TestLogin(TestSwampApiWrapper):
 
     @unittest.expectedFailure
     def test_login_incorrect2(self):
-        #self.api_wrapper.setHost()
-        self.assertRaises(HTTPException, self.api_wrapper.login,
+        self.assertRaises(java.net.UnknownHostException,
+                          self.api_wrapper.login,
                           "bogus-swamp-user",
                           "bogus-swamp-password",
                           'https://error-invalid-expect-fail.cosalab.org/')
@@ -802,7 +802,6 @@ class TestReporting(TestSwampApiWrapper):
     def tearDownClass(cls):
         cls.API_WRAPPER.logout()
 
-    @unittest.expectedFailure
     def test_get_results1(self):
 
         pkg_conf = osp.join(osp.dirname(__file__),
@@ -818,11 +817,14 @@ class TestReporting(TestSwampApiWrapper):
         self.assertIsNotNone(pkg_uuid)
 
         tool = TestReporting.API_WRAPPER.getToolFromName('Findbugs',
-                                                      TestSwampApiWrapper.PROJECT)
-        assessment_run = TestReporting.API_WRAPPER.runAssessment(pkg_uuid,
-                                                                 [tool.getIdentifierString()],
-                                                                 TestSwampApiWrapper.PROJECT,
-                                                                 None)
+                                                         TestSwampApiWrapper.PROJECT)
+        pkg_ver = TestReporting.API_WRAPPER.getPackageVersion(pkg_uuid,
+                                                              TestSwampApiWrapper.PROJECT)
+        platform = TestReporting.API_WRAPPER.getDefaultPlatformVersion(pkg_ver.getPackageThing().getType())
+        assessment_run = TestReporting.API_WRAPPER.runAssessment(pkg_ver,
+                                                                 tool,
+                                                                 TestReporting.API_WRAPPER.getProject(TestSwampApiWrapper.PROJECT),
+                                                                 platform)
         self.assertIsNotNone(assessment_run)
 
         arun_results_uuid = None
