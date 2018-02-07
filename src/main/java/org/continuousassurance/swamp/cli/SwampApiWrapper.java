@@ -644,17 +644,10 @@ public class SwampApiWrapper {
 	public String uploadPackageVersion(String pkg_conf_file, 
 			String pkg_archive_file, 
 			String project_uuid,
-			Map<String, String> os_dep_map) {
+			Map<String, String> os_dep_map,
+			PackageThing pkg_thing) {
 		Properties pkg_conf = getProp(pkg_conf_file);
-		PackageThing pkg_thing = null;
-
-		for(PackageThing pkg : getAllPackages(project_uuid).values()){
-			if (pkg.getName().equals(pkg_conf.getProperty("package-short-name"))){
-				pkg_thing = pkg;
-				break;
-			}
-		}
-
+		
 		if (pkg_thing == null){
 			return uploadNewPackage(pkg_conf_file, pkg_archive_file, project_uuid, os_dep_map);
 		}else{
@@ -669,6 +662,47 @@ public class SwampApiWrapper {
 			//getAllPackageVersions(project_uuid);
 
 			return pkg_version.getUUIDString();
+		}
+	}
+	
+	/**
+	 * Upload a package version
+	 * 
+	 * <p>
+	 * If a package with the same name as the this package does not exist then
+	 * a new package is created
+	 * <p>
+	 *
+	 * @param pkg_conf_file: Path for the package.conf file for the package
+	 * @param pkg_archive_file: Path to the package archive 
+	 * @param project_uuid: UUID for the project that this package must be associated with
+	 * @param os_dep_map: hash-map of the OS dependencies 
+	 * Example: (key, value) = (ubuntu-16.04-64=libsqlite3-dev libmysqlclient-dev)
+	 * 
+	 * @return the new package's version UUID
+	 */
+	public String uploadPackageVersion(String pkg_conf_file, 
+			String pkg_archive_file, 
+			String project_uuid,
+			Map<String, String> os_dep_map) {
+		Properties pkg_conf = getProp(pkg_conf_file);
+		PackageThing pkg_thing = null;
+
+		for(PackageThing pkg : getAllPackages(project_uuid).values()){
+			if (pkg.getName().equals(pkg_conf.getProperty("package-short-name"))){
+				pkg_thing = pkg;
+				break;
+			}
+		}
+
+		if (pkg_thing == null){
+			return uploadNewPackage(pkg_conf_file, pkg_archive_file, project_uuid, os_dep_map);
+		}else{
+			return uploadPackageVersion(pkg_conf_file, 
+					pkg_archive_file, 
+					project_uuid,
+					os_dep_map,
+					pkg_thing);
 		}
 	}
 
@@ -946,6 +980,24 @@ public class SwampApiWrapper {
 		return packageVersionMap;
 	}
 	
+	/**
+	 * Get a hash-map of all the package versions uploaded by a user or accessible to a user
+	 *
+	 *  @return hash-map of package-version-uuid, package version object
+	 */
+	protected List<PackageVersion> getPackageVersions(PackageThing pkg) {
+		if (packageVersionMap == null) {
+			packageVersionMap = new HashMap<String, PackageVersion>();
+		}	
+		
+		List <PackageVersion> package_versions = (List <PackageVersion>)handlerFactory.getPackageVersionHandler().getAll(pkg);
+		for (PackageVersion pkg_ver : package_versions) {
+			packageVersionMap.put(pkg_ver.getUUIDString(), pkg_ver);
+		}
+		
+		return package_versions;
+	}
+
 	/**
 	 * Get a list of all the package versions in a project
 	 *  
