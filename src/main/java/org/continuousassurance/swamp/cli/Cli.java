@@ -55,7 +55,7 @@ import java.util.regex.Pattern;
 public class Cli {
 
 	SwampApiWrapper api_wrapper;
-	
+
 	public Cli() throws Exception {
 		api_wrapper = new SwampApiWrapper();
 	}
@@ -91,11 +91,11 @@ public class Cli {
 	}
 
 	public static boolean isUuid(String str) {
-		
+
 		return (str.length() == 36 && 
-				Pattern.matches("\p{XDigit}{8}-\p{XDigit}{4}-\p{XDigit}{4}-\p{XDigit}{4}-\p{XDigit}{12}", str);
+				Pattern.matches("[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}", str));
 	}
-	
+
 	protected HashMap<String, Object> getUserCredentials(String filename) {
 		HashMap<String, Object> cred_map = new HashMap<String, Object>();
 		Properties prop = new Properties();
@@ -113,10 +113,18 @@ public class Cli {
 	}
 
 	public static String optionMissingStr(Option option) {
-		return String.format("Missing options/arguments: [-%s --%s <%s>]\n",
-				option.getOpt(),
-				option.getLongOpt(),
-				option.getArgName());
+
+		if (option.hasArg()) {
+
+			return String.format("Missing options/arguments: [(-%s|--%s) <%s>]\n",
+					option.getOpt(),
+					option.getLongOpt(),
+					option.getArgName());
+		}else {
+			return String.format("Missing options/arguments: [(-%s|--%s) ]\n",
+					option.getOpt(),
+					option.getLongOpt());
+		}
 	}
 
 	public String getSwampDate(Date date) {
@@ -319,8 +327,6 @@ public class Cli {
 
 		Options upload_options = new Options();
 		{
-			OptionGroup proj_grp = new OptionGroup();
-			OptionGroup pkg_grp = new OptionGroup();
 
 			upload_options.addOption(Option.builder("Q").required(false).hasArg(false).longOpt("quiet")
 					.desc("Print only the Package UUID with no formatting").build());
@@ -328,67 +334,58 @@ public class Cli {
 					.desc("File path to the package archive file").build());
 			upload_options.addOption(Option.builder("C").required().hasArg().argName("PACKAGE_CONF_FILEPATH").longOpt("pkg-conf")
 					.desc("File path to the package.conf file").build());
-			proj_grp.addOption(Option.builder("PU").required(false).hasArg().argName("PROJECT_UUID").longOpt("project-uuid")
-					.desc("UUID of the project that this package must be added to. Default: MyProject").build());
-			proj_grp.addOption(Option.builder("P").required(false).hasArg().argName("PROJECT_NAME").longOpt("project-name")
-					.desc("Name of the project that this package must be added to.  Default: MyProject").build());
-
-			pkg_grp.addOption(Option.builder("N").required(false).hasArg(false).longOpt("new")
+			upload_options.addOption(Option.builder("P").required(false).hasArg().argName("PROJECT").longOpt("project")
+					.desc("Name or UUID of the project that this package must be added to.  Default: MyProject").build());
+			upload_options.addOption(Option.builder("N").required(false).hasArg(false).longOpt("new")
 					.desc("Flag if this package must be added as a new package, and not as a new version of an existing package").build());
-			pkg_grp.addOption(Option.builder("KU").required(false).hasArg().argName("PACKAGE_UUID").longOpt("pkg-uuid")
-					.desc("UUID of the package that this package version must be added to").build());
-			pkg_grp.addOption(Option.builder("K").required(false).hasArg().argName("PACKAGE_NAME").longOpt("pkg-name")
-					.desc("Name of the package that this package version must be added to").build());
-
 			upload_options.addOption(Option.builder("O").argName("property=value").numberOfArgs(2).valueSeparator('=').longOpt("os-deps")
 					.desc("use value for given property" ).build());
-			upload_options.addOptionGroup(proj_grp);
-			upload_options.addOptionGroup(pkg_grp);
 		}
 
 		Options delete_options = new Options();
 		{
-			OptionGroup del_opt_grps = new OptionGroup();
 			delete_options.addOption(Option.builder("Q").required(false).hasArg(false).longOpt("quiet")
-					.desc("Print only the Package UUID with no formatting").build());
-
-			del_opt_grps.addOption(Option.builder("PU").required(false).hasArg().argName("PROJECT_UUID").longOpt("project-uuid")
-					.desc("Delete all packages in the project with this UUID").build());
-			del_opt_grps.addOption(Option.builder("P").required(false).hasArg().argName("PROJECT_NAME").longOpt("project-name")
-					.desc("Delete all packages in this project").build());
-			del_opt_grps.addOption(Option.builder("KU").required(false).hasArgs().argName("PACKAGE_UUID").longOpt("pkg-uuid")
-					.desc("Delete packages with these UUIDs. Accepts multiple UUIDs").build());
-			del_opt_grps.setRequired(true);
-			delete_options.addOptionGroup(del_opt_grps);
+					.desc("Do not print anything").build());
+			delete_options.addOption(Option.builder("P").required(false).hasArg().argName("PROJECT").longOpt("project")
+					.desc("Delete packages in this project. if --packages option is not specified, delete all").build());
+			delete_options.addOption(Option.builder("K").required(false).hasArgs().argName("PACKAGES").longOpt("packages")
+					.desc("Delete packages with these names or UUIDs. Accepts multiple names or UUIDs").build());
 		}
 
 		Options list_options = new Options();
-		list_options.addOption(Option.builder("Q").required(false).hasArg(false).longOpt("quiet")
-				.desc("Print only the Package UUID with no formatting").build());
-		list_options.addOption(Option.builder("PU").required(false).hasArg().argName("PROJECT_UUID").longOpt("project-uuid")
-				.desc("Project UUID to add the package to").build());
-		list_options.addOption(Option.builder("P").required(false).hasArg().argName("PROJECT_NAME").longOpt("project-name")
-				.desc("Project name to add the package to").build());
-		list_options.addOption(Option.builder("PT").required(false).hasArgs().argName("PACKAGE_TYPE").longOpt("pkg-type")
-				.desc("Only list package of this type").build());
+		{
+			OptionGroup list_opt_grps = new OptionGroup();
+			list_opt_grps.addOption(Option.builder("Q").required(false).hasArg(false).longOpt("quiet")
+					.desc("Do not print Headers, Description, Type ").build());
+			list_opt_grps.addOption(Option.builder("V").required(false).hasArg(false).longOpt("verbose")
+					.desc("Print UUIDs also").build());
+			list_options.addOption(Option.builder("P").required(false).hasArg().argName("PROJECT").longOpt("project")
+					.desc("Only show packages in this Project (Name or UUID)").build());
+			list_options.addOption(Option.builder("KT").required(false).hasArgs().argName("PACKAGE_TYPE").longOpt("pkg-type")
+					.desc("Only show packages of this Type").build());
+			list_options.addOptionGroup(list_opt_grps);
+		}
 
 		if (args.size() == 0 ) {
 			args.add("-H");
 		}
 
 		CommandLine main_options = new DefaultParser().parse(options, args.toArray(new String[0]), true);
-		if (main_options.hasOption("help")) {
+		if (main_options.hasOption("help") || args.contains("-H") || args.contains("--help")) {
 			HelpFormatter formatter = new HelpFormatter();
 			formatter.printHelp("sub-commands", options, true);
-			formatter.printHelp(new PrintWriter(System.out, true), 120,
-					cmd_name + " --" + options.getOption("-U").getLongOpt(), 
-					"", upload_options, 4, 4, "", true);
+			formatter.printHelp(new PrintWriter(System.out, true), 120, 
+					cmd_name + " --" + options.getOption("-D").getLongOpt(), 
+					"", delete_options, 4, 4, "", true);
 			formatter.printHelp(new PrintWriter(System.out, true), 120, 
 					cmd_name + " --" + options.getOption("-L").getLongOpt(), 
 					"", list_options, 4, 4, "", true);
 			formatter.printHelp(new PrintWriter(System.out, true), 120, 
-					cmd_name + " --" + options.getOption("-D").getLongOpt(), 
-					"", delete_options, 4, 4, "", true);
+					cmd_name + " --" + options.getOption("-T").getLongOpt(), 
+					"", new Options(), 4, 4, "", true);
+			formatter.printHelp(new PrintWriter(System.out, true), 120,
+					cmd_name + " --" + options.getOption("-U").getLongOpt(), 
+					"", upload_options, 4, 4, "", true);
 			return null;
 		}
 
@@ -402,141 +399,40 @@ public class Cli {
 			CommandLine parsed_options = new DefaultParser().parse(list_options, args.toArray(new String[0]), true);
 			cred_map.put("sub-command", "list");
 			cred_map.put("quiet", parsed_options.hasOption("Q"));
-			cred_map.put("project-uuid", parsed_options.getOptionValue("PU", null));
-			cred_map.put("project-name", parsed_options.getOptionValue("P", null));
-			cred_map.put("pkg-type", parsed_options.getOptionValue("PT", null));
+			cred_map.put("verbose", parsed_options.hasOption("V"));
+			cred_map.put("project", parsed_options.getOptionValue("P", null));
+			cred_map.put("pkg-type", parsed_options.getOptionValue("KT", null));
 		}else if (main_options.hasOption("U")) {
 			CommandLine parsed_options = new DefaultParser().parse(upload_options, args.toArray(new String[0]), true);
+			cred_map.put("sub-command", "upload");
+			cred_map.put("quiet", parsed_options.hasOption("Q"));
 			cred_map.put("pkg-archive", parsed_options.getOptionValue("A"));
 			cred_map.put("pkg-conf", parsed_options.getOptionValue("C"));
-			cred_map.put("project-uuid", parsed_options.getOptionValue("PU", null));
-			cred_map.put("project-name", parsed_options.getOptionValue("P", null));
+			cred_map.put("project", parsed_options.getOptionValue("P", null));
 			cred_map.put("new-pkg", parsed_options.hasOption("N"));	
-			cred_map.put("pkg-uuid", parsed_options.getOptionValue("KU", null));
-			cred_map.put("pkg-name", parsed_options.getOptionValue("K", null));
 
-			if(main_options.hasOption("O")){
-				Properties prop = main_options.getOptionProperties("O");
+			if(parsed_options.hasOption("O")){
+				Properties prop = parsed_options.getOptionProperties("O");
 				cred_map.put("os-deps-map", prop);
 			}
 		}else if (main_options.hasOption("D")) {
 			CommandLine parsed_options = new DefaultParser().parse(delete_options, args.toArray(new String[0]), true);			
 			cred_map.put("sub-command", "delete");
-			cred_map.put("project-uuid", parsed_options.getOptionValue("PU", null));
-			cred_map.put("project-name", parsed_options.getOptionValue("P", null));
-			cred_map.put("package-uuids", Arrays.asList(parsed_options.getOptionValues("KU")));
+			cred_map.put("quiet", parsed_options.hasOption("Q"));
+			cred_map.put("project", parsed_options.getOptionValue("P", null));
+
+			if (parsed_options.getOptionValues("K") != null) {
+				cred_map.put("packages", Arrays.asList(parsed_options.getOptionValues("K")));
+			}else {
+				cred_map.put("packages", null);
+			}
+
+			if (cred_map.get("project") == null && cred_map.get("packages") == null) {
+				throw new CommandLineOptionException(optionMissingStr(delete_options.getOption("P")) + 
+						" or|and " + optionMissingStr(delete_options.getOption("K")));
+			}
 		}
 		return cred_map;
-	}
-
-	public HashMap<String, Object> packageOptionsHandlerOld(ArrayList<String> args) throws ParseException, CommandLineOptionException {
-
-		Options options = new Options();
-		OptionGroup opt_grp = new OptionGroup();
-		opt_grp.setRequired(true);
-
-		opt_grp.addOption(Option.builder("H").required(false).longOpt("help").desc("Shows Help").build());
-		opt_grp.addOption(Option.builder("L").required(false).hasArg(false).longOpt("list")
-				.desc("list all packages (optional: -P, -PN, -PT  )").build());
-		opt_grp.addOption(Option.builder("T").required(false).hasArg(false).longOpt("types")
-				.desc("list all supported package types").build());
-		opt_grp.addOption(Option.builder("D").required(false).hasArg(false).longOpt("delete")
-				.desc("Delete a package version").build());
-		opt_grp.addOption(Option.builder("U").required(false).hasArg(false).longOpt("upload")
-				.desc("Upload a new package/package version to a project; requires: -A,-C; optional: -P, -PN, -N").build());
-
-		options.addOptionGroup(opt_grp);
-
-		options.addOption(Option.builder("A").required(false).hasArg().argName("PACKAGE_ARCHIVE_FILEPATH").longOpt("pkg-archive")
-				.desc("File path to the package archive file").build());
-		options.addOption(Option.builder("C").required(false).hasArg().argName("PACKAGE_CONF_FILEPATH").longOpt("pkg-conf")
-				.desc("File path to the package conf file").build());
-		options.addOption(Option.builder("P").required(false).hasArg().argName("PROJECT_UUID").longOpt("project-uuid")
-				.desc("Project UUID to add the package to").build());
-		options.addOption(Option.builder("PN").required(false).hasArg().argName("PROJECT_NAME").longOpt("project-name")
-				.desc("Project name").build());
-		options.addOption(Option.builder("PT").required(false).hasArg().argName("PACKAGE_TYPE").longOpt("pkg-type")
-				.desc("Project name").build());
-		options.addOption(Option.builder("N").required(false).hasArg(false).longOpt("new-pkg")
-				.desc("Flag that indicates if the package must be added as a fresh package, and not a package version").build());
-		options.addOption(Option.builder("Q").required(false).hasArg(false).longOpt("quiet")
-				.desc("Print only the Package UUID with no formatting").build());
-
-		options.addOption(Option.builder("I").required(false).hasArgs().argName("PACKAGE_UUID").longOpt("pkg-uuid")
-				.desc("Package Version UUID").build());
-
-		options.addOption(Option.builder("O").argName("property=value").numberOfArgs(2).valueSeparator('=').longOpt("os-deps")
-				.desc("use value for given property" ).build());
-
-
-		String[] cmd_args = (String[]) args.toArray(new String[0]);
-		CommandLine parsed_options = new DefaultParser().parse(options, cmd_args);
-		if (args.size() == 0 || parsed_options.hasOption("help")) {
-			HelpFormatter formatter = new HelpFormatter();
-			formatter.printHelp("Command Line Parameters", options);
-			return null;
-		}else {
-			HashMap<String, Object> cred_map = new HashMap<String, Object>();
-
-			if (parsed_options.hasOption("Q")){
-				cred_map.put("quiet", true);
-			}else {
-				cred_map.put("quiet", false);
-			}
-
-			if (parsed_options.hasOption("L")){
-				cred_map.put("list", "list");
-				cred_map.put("project-uuid", parsed_options.getOptionValue("P", null));
-				cred_map.put("project-name", parsed_options.getOptionValue("PN", null));
-				cred_map.put("pkg-type", parsed_options.getOptionValue("PT", null));
-				return cred_map;
-			}else if (parsed_options.hasOption("T")){
-				cred_map.put("pkg-types", "pkg-types");
-				return cred_map;
-			}else if (parsed_options.hasOption("U")) {
-				if (!parsed_options.hasOption("A")){
-					throw new CommandLineOptionException(optionMissingStr(options.getOption("A")));
-				}
-
-				if (!parsed_options.hasOption("C")){
-					throw new CommandLineOptionException(optionMissingStr(options.getOption("C")));
-				}
-
-				if (!parsed_options.hasOption("P")){
-					throw new CommandLineOptionException(optionMissingStr(options.getOption("P")));
-				}
-
-				cred_map.put("pkg-archive", parsed_options.getOptionValue("A"));
-				cred_map.put("pkg-conf", parsed_options.getOptionValue("C"));
-				cred_map.put("project-uuid", parsed_options.getOptionValue("P"));
-				if(parsed_options.hasOption("N")){
-					cred_map.put("new-pkg", "");						
-				}
-				if(parsed_options.hasOption("O")){
-					Properties prop = parsed_options.getOptionProperties("O");
-					cred_map.put("os-deps-map", prop);
-				}
-				return cred_map;
-
-			}
-			else if (parsed_options.hasOption("D")) {
-				if (!parsed_options.hasOption("P")){
-					throw new CommandLineOptionException(optionMissingStr(options.getOption("P")));
-				}
-
-				if (!parsed_options.hasOption("I")){
-					throw new CommandLineOptionException(optionMissingStr(options.getOption("I")));
-				}
-
-				cred_map.put("delete", "delete");
-				cred_map.put("project-uuid", parsed_options.getOptionValue("P"));
-				cred_map.put("package-uuids", Arrays.asList(parsed_options.getOptionValues("I")));
-				return cred_map;
-			}
-			else {
-				throw new CommandLineOptionException("Unknown / Incompatible options");
-			}
-		}
 	}
 
 	public HashMap<String, Object> userOptionsHandler(ArrayList<String> args) throws ParseException{
@@ -693,32 +589,74 @@ public class Cli {
 
 	}
 
-	public HashMap<String, Object> assessmentOptionsHandler(ArrayList<String> args) throws ParseException, CommandLineOptionException{
+	public HashMap<String, Object> assessmentOptionsHandler(String cmd_name, ArrayList<String> args) throws ParseException, CommandLineOptionException{
 
 		Options options = new Options();
 		OptionGroup opt_grp = new OptionGroup();
 		opt_grp.setRequired(true);
 
 		opt_grp.addOption(Option.builder("H").required(false).longOpt("help").desc("Shows Help").build());
-		opt_grp.addOption(Option.builder("R").required(false).longOpt("run").hasArg(false).desc("Run an assessment").build());
+		opt_grp.addOption(Option.builder("R").required(false).longOpt("run").hasArg(false).desc("Run new assessment").build());
 		opt_grp.addOption(Option.builder("L").required(false).longOpt("list").hasArg(false).desc("List assessments").build());
-		opt_grp.addOption(Option.builder("I").required(false).longOpt("info").hasArg(false).desc("Information on assessment").build());
-		opt_grp.addOption(Option.builder("Z").required(false).longOpt("run-assess").hasArg(false).desc("Run an assessment").build());
 		options.addOptionGroup(opt_grp);
 
-		options.addOption(Option.builder("K").required(false).hasArg(true).longOpt("pkg-uuid").argName("PACKAGE_UUID")
-				.desc("Package uuid provided").build());
-		options.addOption(Option.builder("P").required(false).hasArg(true).longOpt("project-uuid").argName("PROJECT_UUID")
-				.desc("Project uuid provided").build());
-		options.addOption(Option.builder("T").required(false).hasArgs().longOpt("tool-uuid").argName("TOOL_UUIDs")
-				.desc("Tool uuid provided").build());
-		options.addOption(Option.builder("F").required(false).hasArg(true).longOpt("platform-uuid").argName("PLATFORM_UUIDs")
-				.desc("Platform uuid provided").build());
-		options.addOption(Option.builder("Q").required(false).hasArg(false).longOpt("quiet")
-				.desc("Print only the Assessment UUID with no formatting").build());
-		options.addOption(Option.builder("A").required(false).longOpt("assess-uuid").hasArg(true).argName("ASSESSMENT_UUID")
-				.desc("View an assessment information").build());
+		Options run_options = new Options();
+		{
 
+			run_options.addOption(Option.builder("Q").required(false).hasArg(false).longOpt("quiet")
+					.desc("Print only the Package UUID with no formatting").build());
+			run_options.addOption(Option.builder("K").required(true).hasArg().argName("PACKAGE").longOpt("package")
+					.desc("Package name or UUID").build());
+			run_options.addOption(Option.builder("KV").required().hasArg().argName("PACKAGE_VERSION").longOpt("pkg-version")
+					.desc("Package version").build());
+			run_options.addOption(Option.builder("T").required(true).hasArg().argName("TOOL").longOpt("tool")
+					.desc("Package version").build());
+			run_options.addOption(Option.builder("TV").required().hasArg().argName("TOOL_VERSION").longOpt("tool-version")
+					.desc("Package version").build());
+			run_options.addOption(Option.builder("F").required().hasArg().argName("PLATFORM").longOpt("platform")
+					.desc("Platform name").build());
+		}
+
+		Options list_options = new Options();
+		{
+			OptionGroup list_opt_grps = new OptionGroup();
+			list_opt_grps.addOption(Option.builder("Q").required(false).hasArg(false).longOpt("quiet")
+					.desc("Do not print Headers, Description, Type ").build());
+			list_opt_grps.addOption(Option.builder("V").required(false).hasArg(false).longOpt("verbose")
+					.desc("Print UUIDs also").build());
+			list_options.addOption(Option.builder("K").required().hasArg().argName("PACKAGE").longOpt("package")
+					.desc("Package name or UUID").build());
+			list_options.addOption(Option.builder("T").required().hasArg().argName("TOOL").longOpt("tool")
+					.desc("Package version").build());
+			list_options.addOption(Option.builder("P").required(false).hasArg().argName("PROJECT").longOpt("project")
+					.desc("Only show packages in this Project (Name or UUID)").build());
+			list_options.addOption(Option.builder("F").required().hasArg().argName("PLATFORM").longOpt("platform")
+					.desc("Platform name").build());
+			list_options.addOptionGroup(list_opt_grps);
+		}
+
+		if (args.size() == 0 ) {
+			args.add("-H");
+		}
+
+		CommandLine main_options = new DefaultParser().parse(options, args.toArray(new String[0]), true);
+		if (main_options.hasOption("help") || args.contains("-H") || args.contains("--help")) {
+			HelpFormatter formatter = new HelpFormatter();
+			formatter.printHelp("sub-commands", options, true);
+			formatter.printHelp(new PrintWriter(System.out, true), 120, 
+					cmd_name + " --" + options.getOption("-L").getLongOpt(), 
+					"", list_options, 4, 4, "", true);
+			formatter.printHelp(new PrintWriter(System.out, true), 120, 
+					cmd_name + " --" + options.getOption("-R").getLongOpt(), 
+					"", new Options(), 4, 4, "", true);
+			return null;
+		}
+
+		args.remove(0);
+
+		HashMap<String, Object> cred_map = new HashMap<String, Object>();
+
+		
 		String[] cmd_args = (String[]) args.toArray(new String[0]);
 		CommandLine parsed_options = new DefaultParser().parse(options, cmd_args);
 		HelpFormatter formatter = new HelpFormatter();
@@ -727,30 +665,18 @@ public class Cli {
 			return null;
 		}
 
-		HashMap<String, Object> cred_map = new HashMap<String, Object>();
 
-		cred_map.put("quiet", parsed_options.hasOption("Q"));
+		if (parsed_options.hasOption("R")) {
 
-		if (parsed_options.hasOption("R") || parsed_options.hasOption("Z")) {
-			if (!parsed_options.hasOption("P")){
-				throw new CommandLineOptionException(optionMissingStr(options.getOption("P")));
-			}
-
-			if (!parsed_options.hasOption("K")){
-				throw new CommandLineOptionException(optionMissingStr(options.getOption("K")));
-			}
-
-			if (!parsed_options.hasOption("T")){
-				throw new CommandLineOptionException(optionMissingStr(options.getOption("T")));
-			}
-
-			cred_map.put("project-uuid", parsed_options.getOptionValue("P"));
+			cred_map.put("project-uuid", parsed_options.getOptionValue("K"));
+			cred_map.put("project-uuid", parsed_options.getOptionValue("K"));
+			
 			cred_map.put("pkg-uuid", parsed_options.getOptionValue("K"));
 			cred_map.put("tool-uuid", Arrays.asList(parsed_options.getOptionValues('T')));
 			if (parsed_options.hasOption("F")){
 				cred_map.put("platform-uuid", Arrays.asList(parsed_options.getOptionValues('F')));
 			}
-			cred_map.put("run-assess", "run-assess");
+			cred_map.put("sub-command", "run");
 			return cred_map;
 		}else if (parsed_options.hasOption("L")){
 			if (!parsed_options.hasOption("P")){
@@ -782,7 +708,7 @@ public class Cli {
 			opt_map = loginOptionsHandler(cli_args);
 			break;
 		case "packages":
-			opt_map = packageOptionsHandler("packages", cli_args);
+			opt_map = packageOptionsHandler(command, cli_args);
 			break;
 		case "projects":
 			opt_map = projectOptionsHandler(cli_args);
@@ -791,7 +717,7 @@ public class Cli {
 			opt_map = toolsOptionsHandler(cli_args);
 			break;
 		case "assessments":
-			opt_map = assessmentOptionsHandler(cli_args);
+			opt_map = assessmentOptionsHandler(command, cli_args);
 			break;
 		case "platforms":
 			opt_map = platformOptionsHandler(cli_args);
@@ -902,123 +828,197 @@ public class Cli {
 		}
 	}
 
-	protected void deletePackages(String project_uuid, List<String> package_uuids) {
-		if (package_uuids != null) {
-			for (String pkg_ver_uuid : package_uuids) {
-				api_wrapper.deletePackageVersion((String) pkg_ver_uuid);
+	protected void deletePackages(String project, List<String> packages, boolean quiet) {
+
+		if (project != null && !Cli.isUuid(project)) {
+			project = api_wrapper.getProjectFromName(project).getUUIDString();
+		}
+
+		if (packages == null) {
+			//delete all packages
+			for (PackageVersion pkg_ver : api_wrapper.getPackageVersionsList(project)) {
+				if (api_wrapper.deletePackageVersion(pkg_ver) && !quiet) {
+					System.out.println(String.format("Deleted 'Name: %s, Version: %s'", 
+							pkg_ver.getPackageThing().getName(), 
+							pkg_ver.getVersionString()));
+				}
 			}
 		}else {
-			for (PackageVersion pkg_ver : api_wrapper.getPackageVersionsList(project_uuid)) {
-				api_wrapper.deletePackageVersion(pkg_ver);
+			List<PackageVersion>all_packages = api_wrapper.getPackageVersionsList(project);
+
+			Set<String> pkg_uuids = new HashSet<String>();
+
+			for (String pkg : packages) {
+
+				if (Cli.isUuid(pkg)) {
+					for (PackageVersion pkg_ver : all_packages) {
+						if (pkg_ver.getPackageThing().getIdentifierString().equals(pkg)) {
+							pkg_uuids.add(pkg_ver.getIdentifierString());
+						}
+					}
+					pkg_uuids.add(pkg);
+				}else {
+
+					for (PackageVersion pkg_ver : all_packages) {
+						if (pkg_ver.getPackageThing().getName().equals(pkg)) {
+							pkg_uuids.add(pkg_ver.getIdentifierString());
+						}
+					}
+				}			
+			}
+
+			for (PackageVersion pkg_ver : all_packages) {
+				if (pkg_uuids.contains(pkg_ver.getIdentifierString())) {
+					if (api_wrapper.deletePackageVersion(pkg_ver) && !quiet) {
+						System.out.println(String.format("Deleted 'Name: %s, Version: %s'", 
+								pkg_ver.getPackageThing().getName(), 
+								pkg_ver.getVersionString()));
+					}
+				}
 			}
 		}
 	}
 
+	protected void uploadPackage(String pkg_conf, String pkg_archive,
+			String project, Map<String, String> os_deps, boolean new_pkg, boolean quiet) {
+		String package_uuid = null;
+
+		if (os_deps != null) {
+			for (Object plat: os_deps.keySet()) {
+				boolean plat_found = false;
+				for (PlatformVersion platform_version : api_wrapper.getAllPlatformVersionsList()) {
+					if (platform_version.getDisplayString().equalsIgnoreCase((String)plat)) {
+						plat_found = true;
+						break;
+					}
+				}
+
+				if (!plat_found) {
+					throw new CommandLineOptionException("Platform " + (String)plat + " does not exist");
+				}
+			}
+		}
+
+		String project_uuid = null;
+		if (project != null) {
+			if (!Cli.isUuid(project)) {
+				project = api_wrapper.getProjectFromName(project).getUUIDString();
+			}
+		}else {
+			project = (String)api_wrapper.getProjectFromName("MyProject").getUUIDString();
+		}
+
+		package_uuid = api_wrapper.uploadPackage(pkg_conf, pkg_archive, project, os_deps, new_pkg);
+
+		if (!quiet){
+			System.out.println("Package Version UUID");
+		}
+
+		System.out.println(package_uuid);
+	}
+	
 	public void packageHandler(HashMap<String, Object> opt_map) {
 
 		String sub_command = (String)opt_map.get("sub-command");
 
 		if (sub_command.equalsIgnoreCase("list")) {
 
-			if (opt_map.get("project-name") != null) {
-				opt_map.put("project-uuid", api_wrapper.getProjectFromName((String)opt_map.get("project-name")).getUUIDString());
-			}
-
-			printAllPackages((String)opt_map.get("project-uuid"),
+			printAllPackages((String)opt_map.get("project"),
 					(String)opt_map.get("pkg-type"),
-					(boolean)opt_map.get("quiet"));
+					(boolean)opt_map.get("quiet"),
+					(boolean)opt_map.get("verbose"));
+
 		}else if (sub_command.equalsIgnoreCase("types")) {
-			List<String> pkg_types = api_wrapper.getPackageTypesList();
-
-			Collections.sort(pkg_types, new Comparator<String>() {
-				public int compare(String i1, String i2) {
-					return (i1.compareTo(i2));
-				}
-			});
-
-			for (String pkg_type : pkg_types) {
+			for (String pkg_type : getPackageTypes()) {
 				System.out.println(pkg_type);
 			}
 		}else if (sub_command.equalsIgnoreCase("delete")) {
-			if (opt_map.get("project-name") != null) {
-				opt_map.put("project-uuid", api_wrapper.getProjectFromName((String)opt_map.get("project-name")).getUUIDString());
-			}
-			deletePackages((String)opt_map.get("project-uuid"),
-					(List<String>)opt_map.get("package-uuids"));
+			deletePackages((String)opt_map.get("project"),
+					(List<String>)opt_map.get("packages"),
+					(boolean)opt_map.get("quiet"));
 		}else {
-			String package_uuid = null;
+			uploadPackage((String)opt_map.get("pkg-conf"),
+					(String)opt_map.get("pkg-archive"),
+					(String)opt_map.get("project"),
+					(Map<String, String>)opt_map.get("os-deps-map"),
+					(boolean)opt_map.get("new-pkg"),
+					(boolean)opt_map.get("quiet"));
+		}
+	}
 
-			if (opt_map.containsKey("os-deps-map")) {
-				Properties prop = (Properties)opt_map.get("os-deps-map");
-				for (Object plat: prop.keySet()) {
-					boolean plat_found = false;
-					for (PlatformVersion platform_version : api_wrapper.getAllPlatformVersionsList()) {
-						if (platform_version.getDisplayString().equalsIgnoreCase((String)plat)) {
-							plat_found = true;
-							break;
-						}
-					}
+	public List<String> getPackageTypes() {
+		List<String> pkg_types = api_wrapper.getPackageTypesList();
 
-					if (!plat_found) {
-						throw new CommandLineOptionException("Platform " + (String)plat + " does not exist");
+		Collections.sort(pkg_types, new Comparator<String>() {
+			public int compare(String i1, String i2) {
+				return (i1.compareTo(i2));
+			}
+		});
+
+		return pkg_types;
+	}
+
+	public void printAllPackages(String project, String pkg_type, boolean quiet, boolean verbose) {
+
+		if (pkg_type != null) {
+			if (!getPackageTypes().contains(pkg_type)) {
+				throw new InvalidNameException("Package type '" + pkg_type + "' not valid");
+			}
+		}
+
+		if (project != null) {
+			if (!Cli.isUuid(project)) {
+				project = api_wrapper.getProjectFromName(project).getUUIDString();	
+			}
+		}
+
+		if(quiet){
+			for(PackageThing pkg : api_wrapper.getPackagesList(project)) {
+				if (pkg_type == null ||
+						pkg.getType().equalsIgnoreCase(pkg_type)) {
+
+					for(PackageVersion pkg_ver : api_wrapper.getPackageVersions(pkg)) {
+						System.out.printf("%-25s %-25s\n",
+								pkg_ver.getPackageThing().getName(),
+								pkg_ver.getVersionString());
 					}
 				}
 			}
+		}else if(verbose) {
+			System.out.printf("%-37s %-25s %-40s %-25s %-25s\n",
+					"UUID", "Package", "Description","Type", "Version");
 
-			if (opt_map.get("project-name") != null) {
-				if (opt_map.get("project-uuid") != null) {
-					opt_map.put("project-uuid", api_wrapper.getProjectFromName((String)opt_map.get("project-name")).getUUIDString());
-				}else {
-					opt_map.put("project-uuid", api_wrapper.getProjectFromName("MyProject").getUUIDString());
-				}
-			}
+			for(PackageThing pkg : api_wrapper.getPackagesList(project)) {
+				if (pkg_type == null ||
+						pkg.getType().equalsIgnoreCase(pkg_type)) {
 
-			if (opt_map.containsKey("new-pkg")) {
-				package_uuid = api_wrapper.uploadPackage((String)opt_map.get("pkg-conf"),
-						(String)opt_map.get("pkg-archive"),
-						(String)opt_map.get("project-uuid"),
-						(Map<String, String>)opt_map.get("os-deps-map"),
-						opt_map.containsKey("new-pkg"));
-			}else {
-				PackageThing pkg_thing = null;
-				if (opt_map.get("pkg-name") != null) {
-
-					for(PackageThing pkg : api_wrapper.getPackagesList((String)opt_map.get("project-uuid"))){
-						if (pkg.getName().equals(opt_map.get("pkg-name"))) {
-							pkg_thing = pkg;
-							break;
-						}
-					}
-				}else {
-					for(PackageThing pkg : api_wrapper.getPackagesList((String)opt_map.get("project-uuid"))){
-						if (pkg.getIdentifierString().equals(opt_map.get("pkg-uuid"))){
-							pkg_thing = pkg;
-							break;
-						}
+					for(PackageVersion pkg_ver : api_wrapper.getPackageVersions(pkg)) {
+						System.out.printf("%-37s %-25s %-40s %-25s %-25s\n", 
+								pkg_ver.getUUIDString(),
+								pkg_ver.getPackageThing().getName(),
+								pkg_ver.getPackageThing().getDescription(),
+								pkg_ver.getPackageThing().getType(),
+								pkg_ver.getVersionString());
 					}
 				}
+			}
+		}else {
+			System.out.printf("%-25s %-40s %-25s %-25s\n",
+					"Package", "Description","Type", "Version");
 
-				if (pkg_thing != null) {
+			for(PackageThing pkg : api_wrapper.getPackagesList(project)) {
+				if (pkg_type == null ||
+						pkg.getType().equalsIgnoreCase(pkg_type)) {
 
-					package_uuid = api_wrapper.uploadPackageVersion((String)opt_map.get("pkg-conf"),
-							(String)opt_map.get("pkg-archive"),
-							(String)opt_map.get("project-uuid"),
-							(Map<String, String>)opt_map.get("os-deps-map"),
-							pkg_thing);
-				}else {
-					package_uuid = api_wrapper.uploadPackage((String)opt_map.get("pkg-conf"),
-							(String)opt_map.get("pkg-archive"),
-							(String)opt_map.get("project-uuid"),
-							(Map<String, String>)opt_map.get("os-deps-map"),
-							true);
+					for(PackageVersion pkg_ver : api_wrapper.getPackageVersions(pkg)) {
+						System.out.printf("%-25s %-40s %-25s %-25s\n",
+								pkg_ver.getPackageThing().getName(),
+								pkg_ver.getPackageThing().getDescription(),
+								pkg_ver.getPackageThing().getType(),
+								pkg_ver.getVersionString());
+					}
 				}
 			}
-
-			if ((boolean)opt_map.get("quiet") == false){
-				System.out.println("Package Version UUID");
-			}
-
-			System.out.println(package_uuid);
 		}
 	}
 
@@ -1130,27 +1130,22 @@ public class Cli {
 		}else {
 			api_wrapper.restoreSession();
 			switch (command) {
-			case "project":
 			case "projects":
 				projectHandler(opt_map);
 				break;
-			case "platform":
 			case "platforms":
 				platformHandler(opt_map);
 				break;
-			case "tool":
 			case "tools":
 				toolHandler(opt_map);
 				break;
-			case "package":
 			case "packages":
 				packageHandler(opt_map);
 				break;
-			case "assess":
+			case "assessments":
 				assessmentHandler(opt_map);
 				break;
 			case "results":
-			case "result":
 				resultsHandler(opt_map);
 				break;
 			case "status":
@@ -1169,42 +1164,6 @@ public class Cli {
 		return 0;
 	}
 
-
-	public void printAllPackages(String project_uuid, String pkg_type, boolean quiet) {
-		if(quiet){
-
-			for(PackageThing pkg : api_wrapper.getPackagesList(project_uuid)) {
-				if (pkg_type == null ||
-						pkg.getType().equalsIgnoreCase(pkg_type)) {
-
-					for(PackageVersion pkg_ver : api_wrapper.getPackageVersions(pkg)) {
-						System.out.printf("%-37s %-25s %-25s\n", 
-								pkg_ver.getUUIDString(),
-								pkg_ver.getPackageThing().getName(),
-								pkg_ver.getVersionString());
-					}
-				}
-			}
-		}else {
-			System.out.printf("%-37s %-25s %-40s %-25s %-25s\n",
-					"UUID", "Package", "Description","Type", "Version");
-
-			for(PackageThing pkg : api_wrapper.getPackagesList(project_uuid)) {
-				if (pkg_type == null ||
-						pkg.getType().equalsIgnoreCase(pkg_type)) {
-
-					for(PackageVersion pkg_ver : api_wrapper.getPackageVersions(pkg)) {
-						System.out.printf("%-37s %-25s %-40s %-25s %-25s\n", 
-								pkg_ver.getUUIDString(),
-								pkg_ver.getPackageThing().getName(),
-								pkg_ver.getPackageThing().getDescription(),
-								pkg_ver.getPackageThing().getType(),
-								pkg_ver.getVersionString());
-					}
-				}
-			}
-		}
-	}
 
 	public void printAllTools(String project_uuid, boolean quiet) throws InvalidIdentifierException {
 		if(!quiet){
