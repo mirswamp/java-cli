@@ -27,6 +27,7 @@ import org.continuousassurance.swamp.api.PackageVersion;
 import org.continuousassurance.swamp.api.PlatformVersion;
 import org.continuousassurance.swamp.api.Project;
 import org.continuousassurance.swamp.api.Tool;
+import org.continuousassurance.swamp.api.ToolVersion;
 import org.continuousassurance.swamp.api.User;
 import org.continuousassurance.swamp.session.HTTPException;
 import org.apache.commons.cli.*;
@@ -465,50 +466,25 @@ public class Cli {
 
 		Options options = new Options();
 		OptionGroup opt_grp = new OptionGroup();
-		opt_grp.setRequired(true);
-
-		opt_grp.addOption(Option.builder("H").required(false).longOpt("help").desc("Shows Help").build());
-		opt_grp.addOption(Option.builder("L").required(false).hasArg(false).longOpt("list")
-				.desc("Displays all tools to the user").build());
-		opt_grp.addOption(Option.builder("N").required(false).hasArg(true).argName("TOOL_NAME").longOpt("name")
-				.desc("Specify the tool name and get the uuid from it").build());
-		options.addOptionGroup(opt_grp);
-
-		options.addOption(Option.builder("U").required(false).hasArg(false).longOpt("uuid")
-				.desc("Get UUID from tool name").build());
-		options.addOption(Option.builder("P").required(false).hasArg(true).argName("PROJECT_UUID").longOpt("project-uuid")
-				.desc("Project UUID for extra project specific tools").build());
-		options.addOption(Option.builder("Q").required(false).hasArg(false).longOpt("quiet")
+		
+		options.addOption(Option.builder("H").required(false).longOpt("help").desc("Shows Help").build());
+		opt_grp.addOption(Option.builder("Q").required(false).hasArg(false).longOpt("quiet")
 				.desc("Less verbose output").build());
-
+		opt_grp.addOption(Option.builder("V").required(false).hasArg(false).longOpt("verbose")
+				.desc("Shows tool versions").build());
+		options.addOptionGroup(opt_grp);
+		
 		String[] cmd_args = (String[]) args.toArray(new String[0]);
 		CommandLine parsed_options = new DefaultParser().parse(options, cmd_args);
-		if (args.size() == 0 || parsed_options.hasOption("help")) {
+		if (parsed_options.hasOption("help")) {
 			HelpFormatter formatter = new HelpFormatter();
 			formatter.printHelp("Command Line Parameters", options);
 			return null;
 		}else {
 			HashMap<String, Object> cred_map = new HashMap<String, Object>();
-			if (parsed_options.hasOption("Q")){
-				cred_map.put("quiet", true);
-			}else {
-				cred_map.put("quiet", false);
-			}
-
-			/* sanity check, -U bogus, optional extra only with -N */
-			if (parsed_options.hasOption("U")) {
-				if (!parsed_options.hasOption("N")) {
-					throw new CommandLineOptionException(optionMissingStr(options.getOption("N")));
-				}
-			}
-
-			if (parsed_options.hasOption("L")){
-				cred_map.put("list", "list");
-				cred_map.put("project-uuid", parsed_options.getOptionValue("P", null));
-			}
-			else if (parsed_options.hasOption("N")) {
-				cred_map.put("tool-name", parsed_options.getOptionValue("N", null));
-			}
+			
+			cred_map.put("quiet", parsed_options.hasOption("Q"));
+			cred_map.put("verbose", parsed_options.hasOption("V"));
 
 			return cred_map;
 		}
@@ -596,24 +572,23 @@ public class Cli {
 		opt_grp.setRequired(true);
 
 		opt_grp.addOption(Option.builder("H").required(false).longOpt("help").desc("Shows Help").build());
-		opt_grp.addOption(Option.builder("R").required(false).longOpt("run").hasArg(false).desc("Run new assessment").build());
+		opt_grp.addOption(Option.builder("R").required(false).longOpt("run").hasArg(false).desc("Run new assessments").build());
 		opt_grp.addOption(Option.builder("L").required(false).longOpt("list").hasArg(false).desc("List assessments").build());
 		options.addOptionGroup(opt_grp);
 
 		Options run_options = new Options();
 		{
-
 			run_options.addOption(Option.builder("Q").required(false).hasArg(false).longOpt("quiet")
 					.desc("Print only the Package UUID with no formatting").build());
 			run_options.addOption(Option.builder("K").required(true).hasArg().argName("PACKAGE").longOpt("package")
 					.desc("Package name or UUID").build());
-			run_options.addOption(Option.builder("KV").required().hasArg().argName("PACKAGE_VERSION").longOpt("pkg-version")
+			run_options.addOption(Option.builder("KV").required(false).hasArg().argName("PACKAGE_VERSION").longOpt("pkg-version")
 					.desc("Package version").build());
-			run_options.addOption(Option.builder("T").required(true).hasArg().argName("TOOL").longOpt("tool")
+			run_options.addOption(Option.builder("T").required(true).hasArgs().argName("TOOL").longOpt("tool")
 					.desc("Package version").build());
-			run_options.addOption(Option.builder("TV").required().hasArg().argName("TOOL_VERSION").longOpt("tool-version")
+			run_options.addOption(Option.builder("TV").required(false).hasArg().argName("TOOL_VERSION").longOpt("tool-version")
 					.desc("Package version").build());
-			run_options.addOption(Option.builder("F").required().hasArg().argName("PLATFORM").longOpt("platform")
+			run_options.addOption(Option.builder("F").required(false).hasArgs().argName("PLATFORM").longOpt("platform")
 					.desc("Platform name").build());
 		}
 
@@ -624,15 +599,15 @@ public class Cli {
 					.desc("Do not print Headers, Description, Type ").build());
 			list_opt_grps.addOption(Option.builder("V").required(false).hasArg(false).longOpt("verbose")
 					.desc("Print UUIDs also").build());
-			list_options.addOption(Option.builder("K").required().hasArg().argName("PACKAGE").longOpt("package")
+			list_options.addOptionGroup(list_opt_grps);
+			list_options.addOption(Option.builder("K").required(false).hasArg().argName("PACKAGE").longOpt("package")
 					.desc("Package name or UUID").build());
-			list_options.addOption(Option.builder("T").required().hasArg().argName("TOOL").longOpt("tool")
+			list_options.addOption(Option.builder("T").required(false).hasArg().argName("TOOL").longOpt("tool")
 					.desc("Package version").build());
 			list_options.addOption(Option.builder("P").required(false).hasArg().argName("PROJECT").longOpt("project")
 					.desc("Only show packages in this Project (Name or UUID)").build());
-			list_options.addOption(Option.builder("F").required().hasArg().argName("PLATFORM").longOpt("platform")
+			list_options.addOption(Option.builder("F").required(false).hasArg().argName("PLATFORM").longOpt("platform")
 					.desc("Platform name").build());
-			list_options.addOptionGroup(list_opt_grps);
 		}
 
 		if (args.size() == 0 ) {
@@ -648,7 +623,7 @@ public class Cli {
 					"", list_options, 4, 4, "", true);
 			formatter.printHelp(new PrintWriter(System.out, true), 120, 
 					cmd_name + " --" + options.getOption("-R").getLongOpt(), 
-					"", new Options(), 4, 4, "", true);
+					"", run_options, 4, 4, "", true);
 			return null;
 		}
 
@@ -656,44 +631,36 @@ public class Cli {
 
 		HashMap<String, Object> cred_map = new HashMap<String, Object>();
 
-		
-		String[] cmd_args = (String[]) args.toArray(new String[0]);
-		CommandLine parsed_options = new DefaultParser().parse(options, cmd_args);
-		HelpFormatter formatter = new HelpFormatter();
-		if (args.size() == 0 || parsed_options.hasOption('H')) {
-			formatter.printHelp("Command Line Parameters", options);
-			return null;
-		}
-
-
-		if (parsed_options.hasOption("R")) {
-
-			cred_map.put("project-uuid", parsed_options.getOptionValue("K"));
-			cred_map.put("project-uuid", parsed_options.getOptionValue("K"));
+		if (main_options.hasOption("R")) {
+			CommandLine parsed_options = new DefaultParser().parse(run_options, args.toArray(new String[0]));
+			cred_map.put("sub-command", "run");
 			
-			cred_map.put("pkg-uuid", parsed_options.getOptionValue("K"));
-			cred_map.put("tool-uuid", Arrays.asList(parsed_options.getOptionValues('T')));
-			if (parsed_options.hasOption("F")){
+			cred_map.put("quiet", parsed_options.hasOption("Q"));
+			cred_map.put("package", parsed_options.getOptionValue("K"));
+			cred_map.put("pkg-version", parsed_options.getOptionValue("KV"));
+			cred_map.put("tool", Arrays.asList(parsed_options.getOptionValues("T")));
+			cred_map.put("tool-version", parsed_options.getOptionValue("TV"));			
+			if (main_options.hasOption("F")){
 				cred_map.put("platform-uuid", Arrays.asList(parsed_options.getOptionValues('F')));
 			}
-			cred_map.put("sub-command", "run");
+			
 			return cred_map;
-		}else if (parsed_options.hasOption("L")){
-			if (!parsed_options.hasOption("P")){
+		}else if (main_options.hasOption("L")){
+			if (!main_options.hasOption("P")){
 				throw new CommandLineOptionException(optionMissingStr(options.getOption("P")));
 			}
-			cred_map.put("project-uuid", parsed_options.getOptionValue("P"));
+			cred_map.put("project-uuid", main_options.getOptionValue("P"));
 			cred_map.put("list-assess", "list-assess");
 			return cred_map;
 		}else {
-			if (!parsed_options.hasOption("P")){
+			if (!main_options.hasOption("P")){
 				throw new CommandLineOptionException(optionMissingStr(options.getOption("P")));
 			}
-			if (!parsed_options.hasOption("A")){
+			if (!main_options.hasOption("A")){
 				throw new CommandLineOptionException(optionMissingStr(options.getOption("A")));
 			}
-			cred_map.put("project-uuid", parsed_options.getOptionValue("P"));
-			cred_map.put("assess-uuid", parsed_options.getOptionValue("A"));
+			cred_map.put("project-uuid", main_options.getOptionValue("P"));
+			cred_map.put("assess-uuid", main_options.getOptionValue("A"));
 			return cred_map;
 		}
 
@@ -815,17 +782,9 @@ public class Cli {
 	}
 
 	public void toolHandler(HashMap<String, Object> opt_map) {
-		if (opt_map.containsKey("tool-name")) {
-			Tool my_tool = api_wrapper.getToolFromName((String)opt_map.get("tool-name"), 
-					(String)opt_map.get("project-uuid"));
-			if (my_tool == null){
-				System.out.printf("Tool %s does not exist.\n", opt_map.get("tool-name"));
-			}else{
-				System.out.println(my_tool.getUUIDString());
-			}
-		}else{
-			printAllTools((String)opt_map.get("project-uuid"), (boolean)opt_map.get("quiet"));
-		}
+		printTools((String)opt_map.get("project-uuid"), 
+				(boolean)opt_map.get("quiet"),
+				(boolean)opt_map.get("verbose"));
 	}
 
 	protected void deletePackages(String project, List<String> packages, boolean quiet) {
@@ -1031,8 +990,102 @@ public class Cli {
 		}
 	}
 
+	public void runAssessments(String pkg, String pkg_ver_num, List<String> tool, String tool_ver_num, List<String> platform) {
+		
+		String project_uuid = null;
+		String pkg_ver_uuid = null;
+			
+		for (Project project : api_wrapper.getProjectsList()) {
+			if (!Cli.isUuid(pkg)) {
+				for (PackageThing pkg_thing : api_wrapper.getPackagesList(project.getIdentifierString())) {
+					if (pkg_thing.getName().equals(pkg)) {
+						List<PackageVersion> pkg_vers = api_wrapper.getPackageVersions(pkg_thing);
+
+						if (pkg_ver_num == null) {
+							Collections.sort(pkg_vers, new Comparator<PackageVersion>() {
+								public int compare(PackageVersion i1, PackageVersion i2) {
+									return (i1.getVersionString().compareTo(i2.getVersionString()));
+								}
+							});
+							pkg_ver_uuid = pkg_vers.get(pkg_vers.size()-1).getIdentifierString();
+						}else {
+							for (PackageVersion pkg_ver : pkg_vers) {
+								if (pkg_ver.getVersionString().equals(pkg_ver_num)) {
+									pkg_ver_uuid = pkg_ver.getIdentifierString();
+									break;
+								}
+							}
+						}
+						project_uuid = project.getIdentifierString();
+					}
+				}
+			}else {
+				for (PackageVersion pkg_ver : api_wrapper.getPackageVersionsList(project.getIdentifierString())) {
+					if (pkg_ver.getIdentifierString().equals(pkg)) {
+						pkg_ver_uuid = pkg_ver.getIdentifierString();
+						project_uuid = project.getIdentifierString();
+						break;
+					}
+				}
+
+				if (pkg_ver_uuid  == null) {
+					for (PackageThing pkg_thing : api_wrapper.getPackagesList(project.getIdentifierString())) {
+						if (pkg_thing.getIdentifierString().equals(pkg)) {
+							List<PackageVersion> pkg_vers = api_wrapper.getPackageVersions(pkg_thing);
+							Collections.sort(pkg_vers, new Comparator<PackageVersion>() {
+								public int compare(PackageVersion i1, PackageVersion i2) {
+									return (i1.getVersionString().compareTo(i2.getVersionString()));
+								}
+							});
+							
+							if (pkg_ver_num == null) {
+								pkg_ver_uuid = pkg_vers.get(pkg_vers.size()-1).getIdentifierString();
+								project_uuid = project.getIdentifierString();
+								break;
+							}else {
+								for (PackageVersion pkg_ver : pkg_vers) {
+									if (pkg_ver.getVersionString().equals(pkg_ver_num)) {
+										pkg_ver_uuid = pkg_ver.getIdentifierString();
+										project_uuid = project.getIdentifierString();
+										break;										
+									}
+								}
+								
+								if (pkg_ver_uuid != null && project_uuid != null) {
+									break;
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		
+		
+		System.out.println(project_uuid + pkg_ver_uuid);
+//		List<String> runAssessment(pkg_ver_uuid,
+//				List<String> tool_uuid_list,
+//				String project_uuid,
+//				List<String> platform_uuid_list);
+	}
+	
 	public void assessmentHandler(HashMap<String, Object> opt_map) {
-		if (opt_map.containsKey("run-assess")){
+		
+		if (((String)opt_map.get("sub-command")).equalsIgnoreCase("run")){
+
+			runAssessments((String)opt_map.get("package"), 
+						(String)opt_map.get("pkg-version"),
+						(List<String>)opt_map.get("tool"), 
+						(String)opt_map.get("tool-version"), 
+						(List<String>)opt_map.get("platform"));
+			
+		}
+
+	}
+	
+	public void assessmentHandlerOld(HashMap<String, Object> opt_map) {
+		
+		if (((String)opt_map.get("sub-command")).equalsIgnoreCase("run")){
 
 			//For all tools
 			for (String tool_uuid: (List<String>)opt_map.get("tool-uuid")) {
@@ -1165,30 +1218,38 @@ public class Cli {
 	}
 
 
-	public void printAllTools(String project_uuid, boolean quiet) throws InvalidIdentifierException {
-		if(!quiet){
-			System.out.printf("%-37s %-21s %-40s %s\n",
-					"UUID",
-					"Tool",
-					"Supported Package Types", 
-					"Supported Platforms");
-
+	public void printTools(String project_uuid, boolean quiet, boolean verbose) throws InvalidIdentifierException {
+		if(quiet){
 			for(Tool tool : api_wrapper.getAllTools(project_uuid).values()){			
-				System.out.printf("%-37s %-21s %-40s %s\n", 
-						tool.getIdentifierString(),
-						tool.getName(),
-						tool.getSupportedPkgTypes(), 
-						api_wrapper.getSupportedPlatformVersions(tool.getIdentifierString(), project_uuid));
+				System.out.printf("%-21s\n", tool.getName());
+			}
+		}else if(verbose){
+			System.out.printf("%-21s %15s %-40s\n",
+					"Tool",
+					"Version",
+					"Supported Package Types");
+
+			for(Tool tool : api_wrapper.getAllTools(project_uuid).values()) {
+				for (ToolVersion tool_version : api_wrapper.getToolVersions(tool)) {
+					System.out.printf("%-21s %15s %-40s\n", 
+									tool.getName(),
+									tool_version.getVersion(),
+									tool.getSupportedPkgTypes());
+				}
 			}
 		}else {
-			for(Tool tool : api_wrapper.getAllTools(project_uuid).values()){			
-				System.out.printf("%-37s %-21s\n", 
-						tool.getIdentifierString(),
-						tool.getName());
+			System.out.printf("%-21s %-40s\n",
+					"Tool",
+					"Supported Package Types");
+
+			for(Tool tool : api_wrapper.getAllTools(project_uuid).values()) {
+				System.out.printf("%-21s %-40s\n",
+						tool.getName(),
+						tool.getSupportedPkgTypes());
 			}
 		}
 	}
-
+	
 	public void printAssessments(String project_uuid, boolean quiet) {
 
 		if (!quiet){

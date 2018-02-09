@@ -1129,15 +1129,27 @@ public class SwampApiWrapper {
 	 *  @return tool object
 	 */
 	public Tool getToolFromName (String tool_name, String project_uuid) throws InvalidIdentifierException {
-		Map<String,Tool> tool_list = getAllTools(project_uuid);
-		Iterator<Tool> tool_iterator = tool_list.values().iterator();
-		while (tool_iterator.hasNext()){
-			Tool next_tool = tool_iterator.next();
-			if (next_tool.getName().equals(tool_name)){
-				return next_tool;
+		
+		for (Tool tool : getAllTools(project_uuid).values()) {
+			if (tool.getName().equals(tool_name)){
+				return tool;
 			}
 		}
+		
 		return null;
+	}
+
+	/**
+	 * Get a list of tools provided package type and project uuid (for project specific tools)
+	 *  
+	 *  @param pkg_type: should be one of the Key return by the API getPackageTypes
+	 *  @param project_uuid: project UUID (for project specific tools)
+	 *  
+	 *  @return list of tool objects
+	 */
+	@SuppressWarnings("unchecked")
+	public List<ToolVersion> getToolVersions(Tool tool) throws InvalidIdentifierException {
+		return (List<ToolVersion>)handlerFactory.getToolVersionHandler().getAll(tool);
 	}
 
 	/**
