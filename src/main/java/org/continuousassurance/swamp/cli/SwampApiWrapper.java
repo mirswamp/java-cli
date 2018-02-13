@@ -19,21 +19,24 @@
 package org.continuousassurance.swamp.cli;
 
 import edu.uiuc.ncsa.security.util.ssl.SSLConfiguration;
+import net.sf.json.JSONException;
+import org.apache.http.client.CookieStore;
 import org.continuousassurance.swamp.api.*;
+import org.continuousassurance.swamp.cli.exceptions.*;
 import org.continuousassurance.swamp.session.Session;
 import org.continuousassurance.swamp.session.handlers.HandlerFactory;
 import org.continuousassurance.swamp.session.handlers.PackageHandler;
 import org.continuousassurance.swamp.session.util.ConversionMapImpl;
 import org.continuousassurance.swamp.session.util.SWAMPConfigurationLoader;
 import org.continuousassurance.swamp.util.HandlerFactoryUtil;
-import net.sf.json.JSONException;
-import org.apache.http.client.CookieStore;
-import org.continuousassurance.swamp.cli.exceptions.*;
 
 import java.io.*;
 import java.util.*;
 
-
+/**
+ * @author      Vamshi Basupalli vamshi@cs.wisc.edu
+ * @version     1.3
+ */
 public class SwampApiWrapper {
 
 	private static final String USER_PATH = System.getProperty("user.home");
@@ -52,12 +55,12 @@ public class SwampApiWrapper {
 	private Map<String, PackageThing> packageMap;
 	private Map<String, PackageVersion> packageVersionMap;
 	private Map<String, Tool> toolMap;
-	private Map<String, Platform> platformMap;
+	private Map<String, PlatformVersion> platformMap;
 	private String cachedPkgProjectID;
 	private String cachedPkgVersionProjectID;
 	private String cachedToolProjectID;
 	private SSLConfiguration sslConfig;
-	
+
 	private HandlerFactory handlerFactory;
 
 
@@ -112,24 +115,20 @@ public class SwampApiWrapper {
 		this.hostHeader = hostHeader;
 	}
 
-	/*
-    public SwampApiWrapper(String host_name) {
-    	setHost(host_name);
-        cachedPkgProjectID = "";
-        cachedPkgVersionProjectID = "";
-        cachedToolProjectID = "";
-    }*/
-
-	public SwampApiWrapper() throws Exception {
+	/**
+	 * Main constructor
+	 *
+	 */
+	public SwampApiWrapper() {
 		cachedPkgProjectID = "";
 		cachedPkgVersionProjectID = "";
 		cachedToolProjectID = "";
-		
+
 		sslConfig = new SSLConfiguration();
 		sslConfig.setTlsVersion("TLSv1.2");
 	}
 
-	public final void setHost(String host_name) {
+	protected final void setHost(String host_name) {
 
 		String web_server = SWAMPConfigurationLoader.getWebServiceURL(host_name, sslConfig);
 		if (web_server == null) {
@@ -138,7 +137,7 @@ public class SwampApiWrapper {
 		setHostName(web_server);
 	}
 
-	public void setHostName(String host_name) {
+	protected void setHostName(String host_name) {
 		if (host_name == null) {
 			throw new InvalidIdentifierException("host_name cannot be null");
 		}
@@ -149,6 +148,24 @@ public class SwampApiWrapper {
 		setHostHeader(host_name);
 	}
 
+	/**
+	 * Converts package.conf values to a package type
+	 * <p>
+	 * Takes attributes in package.conf and converts it into package types
+	 * that SWAMP UI understands
+	 * <p>
+	 *
+	 * @param pkg_lang any one of: [Java, C, C++, Ruby, 
+	 * Python-2, Python-3, Javascript, CSS, XML, HTML, PHP]
+	 * @param pkg_lang_version: The version of language 
+	 * required at build time Example: java-7, java-8, ruby-2.0.0
+	 * @param pkg_build_sys: Package build system, see package.conf documentation
+	 * @param package_type: Package application type, valid only for ruby: Any one of [sinatra, rails, padrino]  
+	 * @return One of ["C/C++", "Java 7 Source Code", "Java 7 Bytecode",
+						"Python2", "Python3", "Android Java Source Code", "Ruby",
+						"Ruby Sinatra", "Ruby on Rails", "Ruby Padrino",
+						"Android .apk","Java 8 Source Code","Java 8 Bytecode"].
+	 */
 	public String getPkgTypeString(String pkg_lang,
 			String pkg_lang_version,
 			String pkg_build_sys,
@@ -156,56 +173,85 @@ public class SwampApiWrapper {
 
 		String pkg_type = null;
 
-		switch (pkg_lang){
-		case "Java":
-			if(pkg_build_sys.toLowerCase().startsWith("android")) {
-				if (pkg_lang_version.toLowerCase().equals("android-apk")) {
-					pkg_type = "Android .apk";
-				}else {
+		if (pkg_build_sys.toLowerCase().equals("android-apk")) {
+			pkg_type = "Android .apk";
+		}else {
+			if (pkg_lang != null) {
+				pkg_lang = pkg_lang.split(" ")[0];
+			}
+			switch (pkg_lang){
+			case "Java":
+				if(pkg_build_sys.toLowerCase().startsWith("android")) {
 					pkg_type = "Android Java Source Code";
-				}
-			}else if(pkg_build_sys.toLowerCase().equals("java-bytecode")) {
-				if (pkg_lang_version.toLowerCase().startsWith("java-7")) {
-					pkg_type = "Java 7 Bytecode";
+				}else if(pkg_build_sys.toLowerCase().equals("java-bytecode")) {
+					if (pkg_lang_version.toLowerCase().startsWith("java-7")) {
+						pkg_type = "Java 7 Bytecode";
+					}else {
+						pkg_type = "Java 8 Bytecode";
+					}
 				}else {
-					pkg_type = "Java 8 Bytecode";
+					if (pkg_lang_version.toLowerCase().startsWith("java-7")) {
+						pkg_type = "Java 7 Source Code";
+					}else {
+						pkg_type = "Java 8 Source Code";
+					}
 				}
-			}else {
-				if (pkg_lang_version.toLowerCase().startsWith("java-7")) {
-					pkg_type = "Java 7 Source Code";
-				}else {
-					pkg_type = "Java 8 Source Code";
+				break;
+			case "C":
+			case "C++":
+				pkg_type = "C/C++";
+				break;
+			case "Python-2":
+				pkg_type = "Python2";
+				break;
+			case "Python-2 Python-3":
+				pkg_type = "Python3";
+				break;
+			case "Python-3":
+				pkg_type = "Python3";
+				break;
+			case "Ruby":
+				if (package_type == null) {
+					pkg_type = "Ruby";
+				}else if (package_type.toLowerCase().equals("rails")) {
+					pkg_type = "Ruby on Rails";
+				}else if (package_type.toLowerCase().equals("sinatra")) {
+					pkg_type = "Ruby Sinatra";
+				}else if (package_type.toLowerCase().equals("padrino")) {
+					pkg_type = "Ruby Padrino";
 				}
+				break;
+			case "PHP":
+			case "JavaScript":
+			case "HTML":
+			case "CSS":
+			case "XML":
+				pkg_type = "Web Scripting";
+				break;
 			}
-			break;
-		case "C":
-		case "C++":
-			pkg_type = "C/C++";
-			break;
-		case "Python-2":
-			pkg_type = "Python2";
-			break;
-		case "Python-2 Python-3":
-			pkg_type = "Python3";
-			break;
-		case "Python-3":
-			pkg_type = "Python3";
-			break;
-		case "Ruby":
-			if (package_type == null) {
-				pkg_type = "Ruby";
-			}else if (package_type.toLowerCase().equals("rails")) {
-				pkg_type = "Ruby on Rails";
-			}else if (package_type.toLowerCase().equals("sinatra")) {
-				pkg_type = "Ruby Sinatra";
-			}else if (package_type.toLowerCase().equals("padrino")) {
-				pkg_type = "Ruby Padrino";
-			}
-			break;
 		}
 		return pkg_type;
 	}
 
+	/**
+	 * Converts package.conf values to a package type id
+	 * <p>
+	 * Takes attributes in package.conf and converts it into a package type id
+	 * that SWAMP UI understands
+	 * <p>
+	 *
+	 * @param pkg_lang any one of: [Java, C, C++, Ruby, 
+	 * Python-2, Python-3, Javascript, CSS, XML, HTML, PHP]
+	 * @param pkg_lang_version: The version of language 
+	 * required at build time Example: java-7, java-8, ruby-2.0.0
+	 * @param pkg_build_sys: Package build system, see package.conf documentation
+	 * @param package_type: Package application type, valid only for ruby: Any one of [sinatra, rails, padrino]  
+	 * @return One of ["C/C++": 1 , "Java 7 Source Code": 2, "Java 7 Bytecode": 3,
+						"Python2": 4, "Python3": 5, "Android Java Source Code": 6, "Ruby": 7,
+						"Ruby Sinatra": 8, "Ruby on Rails": 9, "Ruby Padrino": 10,
+						"Android .apk": 11, "Java 8 Source Code": 12, 
+						"Java 8 Bytecode": 13, "Web Scripting": 14].
+	 */
 	public Integer getPkgTypeId(String pkg_lang,
 			String pkg_lang_version,
 			String pkg_build_sys,
@@ -214,12 +260,99 @@ public class SwampApiWrapper {
 		return getPackageTypes().get(pkg_type);
 	}
 
+	/**
+	 * Gets a hashmap (package type, package type id) from SWAMP
+	 *
+	 *@return hashmap (package type, package type id)
+	 */
+	public Map<String, Integer> getPackageTypes() {
+
+		if (packageTypeMap == null) {
+
+			try {
+				packageTypeMap = handlerFactory.getPackageHandler().getTypes();
+			}catch (JSONException e) {
+
+				packageTypeMap = new HashMap<String, Integer>();
+
+				List<String> all_types = Arrays.asList("C/C++", "Java 7 Source Code", "Java 7 Bytecode",
+						"Python2", "Python3", "Android Java Source Code", "Ruby",
+						"Ruby Sinatra", "Ruby on Rails", "Ruby Padrino",
+						"Android .apk","Java 8 Source Code","Java 8 Bytecode");
+				int i = 0;
+				for (String pkg_type : all_types) {
+					packageTypeMap.put(pkg_type, Integer.valueOf(++i));
+				}
+			}
+
+		}
+		return packageTypeMap;
+	}
+
+	/**
+	 * Gets a list of package types from SWAMP
+	 *
+	 *@return list of package types
+	 */
+	public List<String> getPackageTypesList() {
+		return new ArrayList<String>(getPackageTypes().keySet());
+	}
+
+	/**
+	 * Creates a hash-map of package configuration attributes from package.conf hash-map
+	 * <p>
+	 * Creates a hash-map of package configuration attributes from package.conf hash-map.
+	 * The keys in the map are what SWAMP API understands 
+	 * <p>
+	 *
+	 *@param pkg_conf properties object of a package.conf file
+	 *@return hash-map for package version configuration 
+	 */
+	protected ConversionMapImpl getPkgConfMap(Properties pkg_conf) {
+		ConversionMapImpl map = new ConversionMapImpl();
+		map.put("version_string", pkg_conf.getProperty("package-version"));
+		map.put("source_path", pkg_conf.getProperty("package-dir"));
+
+		map.put("config_dir", pkg_conf.getProperty("config-dir", null));
+		map.put("config_cmd", pkg_conf.getProperty("config-cmd", null));
+		map.put("config_opt", pkg_conf.getProperty("config-opt", null));
+
+		map.put("build_dir", pkg_conf.getProperty("build-dir", null));
+		map.put("build_system", pkg_conf.getProperty("build-sys", null));
+		map.put("build_file", pkg_conf.getProperty("build-file", null));
+		map.put("build_target", pkg_conf.getProperty("build-target", null));
+		map.put("build_opt", pkg_conf.getProperty("build-opt", null));
+
+		map.put("language_version", pkg_conf.getProperty("package-language-version", null));
+		map.put("bytecode_class_path", pkg_conf.getProperty("package-classpath", null));
+		map.put("bytecode_aux_class_path", pkg_conf.getProperty("package-auxclasspath", null));
+		map.put("bytecode_source_path", pkg_conf.getProperty("package-srcdir", null));
+
+		map.put("use_gradle_wrapper", pkg_conf.getProperty("gradle-wrapper", "false"));
+		map.put("android_sdk_target", pkg_conf.getProperty("android-sdk-target", null));
+		map.put("android_lint_target", pkg_conf.getProperty("android-lint-target", null));
+		map.put("android_redo_build", pkg_conf.getProperty("android-redo-build", "false"));
+		map.put("android_maven_plugin", pkg_conf.getProperty("android-maven-plugin", null));
+		map.put("maven_version", pkg_conf.getProperty("maven_version", null));
+
+		return map;
+	}
+
+	/**
+	 * Login into SWAMP
+	 *
+	 * @param user_name: SWAMP Instance's user name
+	 * @param password: SWAMP Instance's password 
+	 * @param host_name: SWAMP Instance's host name
+	 *   
+	 * @return SWAMP user-id
+	 */
 	public String login(String user_name, String password, String host_name) {
 		setHost(host_name);
 		return login(user_name, password);
 	}
 
-	public String login(String user_name, String password) {
+	protected String login(String user_name, String password) {
 
 		handlerFactory = HandlerFactoryUtil.createHandlerFactory(getRwsAddress(),
 				getCsaAddress(),
@@ -242,12 +375,16 @@ public class SwampApiWrapper {
 		return handlerFactory == null;
 	}
 
+	/**
+	 * Logout from SWAMP
+	 *
+	 */
 	public void logout() {
 		HandlerFactoryUtil.shutdown();
 		deleteSession();
 	}
 
-	public void serialize(Object obj, String filepath) throws IOException{
+	protected void serialize(Object obj, String filepath) throws IOException{
 		FileOutputStream fileOut = new FileOutputStream(filepath);
 		ObjectOutputStream out = new ObjectOutputStream(fileOut);
 		out.writeObject(obj);
@@ -255,7 +392,7 @@ public class SwampApiWrapper {
 		fileOut.close();
 	}
 
-	public Object deserialize(String filepath) throws IOException, ClassNotFoundException{
+	protected Object deserialize(String filepath) throws IOException, ClassNotFoundException{
 		Object obj = null;
 		FileInputStream fileIn = new FileInputStream(filepath);
 		ObjectInputStream in = new ObjectInputStream(fileIn);
@@ -266,6 +403,10 @@ public class SwampApiWrapper {
 		return obj;
 	}
 
+	/**
+	 * Save SWAMP session object/cookies in ~/.SWAMP_SESSION/
+	 *
+	 */
 	public void saveSession() {
 		try {
 			File dir = new File(SWAMP_DIR_PATH);
@@ -287,7 +428,6 @@ public class SwampApiWrapper {
 	}
 
 	private static boolean fileExists(String filepath) {
-		// return new File(filepath).exists();
 		return new File(filepath).isFile();
 	}
 
@@ -303,6 +443,10 @@ public class SwampApiWrapper {
 		return a.equals(b);
 	}
 
+	/**
+	 * Deletes SWAMP session object/cookies in ~/.SWAMP_SESSION/
+	 *
+	 */
 	private void deleteSession() {
 		File file = new File(SWAMP_DIR_PATH);
 		if (file.isDirectory()){
@@ -314,7 +458,11 @@ public class SwampApiWrapper {
 		}
 	}
 
-	/* Restores sessions, returns true if valid, non-expired sessions instantiated */
+	/**
+	 * Reads and starts SWAMP session object/cookies in ~/.SWAMP_SESSION/
+	 *
+	 * @return true if valid, non-expired sessions instantiated 
+	 */
 	public boolean restoreSession() throws SessionExpiredException, SessionRestoreException {
 		String csa_object = SWAMP_DIR_PATH + "csa_session_object.ser";
 		String rws_object = SWAMP_DIR_PATH + "rws_session_object.ser";
@@ -351,22 +499,29 @@ public class SwampApiWrapper {
 		return (handlerFactory.getUserHandler().getCurrentUser() != null);
 	}
 
+	/**
+	 * Gets currently connected SWAMP host name
+	 *
+	 * @return SWAMP host name
+	 */
 	public String getConnectedHostName(){
 		return handlerFactory.getCSASession().getHost();
 	}
 
-	public void printUserInfo() {
-		User user = handlerFactory.getUserHandler().getCurrentUser();
-		System.out.printf("%s\n", "User:\t" + user.getFirstName() + " " + user.getLastName());
-		System.out.printf("%s\n", "Email:\t" + user.getEmail());
-		if (user.getPhone().equals("null")){
-			System.out.printf("%s\n", "Phone:\t<Not provided>");
-		}else{
-			System.out.printf("%s\n", "Phone:\t" + user.getPhone());
-		}
-		System.out.printf("%s\n", "UUID:\t" + user.getUUIDString());
+	/**
+	 * Gets currently logged-in user's information
+	 *
+	 * @return User object
+	 */
+	public User getUserInfo() {
+		return handlerFactory.getUserHandler().getCurrentUser();
 	}
 
+	/**
+	 * Gets currently logged-in user's projects in a hash-map
+	 *
+	 * @return hash-map of (project name, project object)
+	 */
 	protected Map<String, Project> getAllProjects() {
 		if (projectMap == null) {
 			projectMap = new HashMap<String, Project>();
@@ -377,6 +532,11 @@ public class SwampApiWrapper {
 		return projectMap;
 	}
 
+	/**
+	 * Gets currently logged-in user's projects as a list
+	 *
+	 * @return list of project objects
+	 */
 	public List<Project> getProjectsList() {
 		List<Project> proj_list = new ArrayList<Project>(getAllProjects().values());
 
@@ -388,6 +548,13 @@ public class SwampApiWrapper {
 		return proj_list;
 	}
 
+	/**
+	 * Gets a project object from a project UUID string
+	 *
+	 * @param project_uuid: project UUID string
+	 * @return project object
+	 * @throws InvalidIdentifierException if UUID provided is not a valid one
+	 */
 	public Project getProject(String project_uuid) {
 		Project project = getAllProjects().get(project_uuid);
 		if (project == null) {
@@ -396,80 +563,48 @@ public class SwampApiWrapper {
 		return project;
 	}
 
+	/**
+	 * Gets a project object from a project name string
+	 *
+	 * @param project_name: project name
+	 * @return project object
+	 * @throws InvalidNameException if UUID provided is not a valid one
+	 */
 	public Project getProjectFromName (String project_name){
-		Map<String,Project> proj_list = getAllProjects();
-		Iterator<Project> proj_iterator = proj_list.values().iterator();
-		while (proj_iterator.hasNext()){
-			Project next_proj = proj_iterator.next();
-			if (next_proj.getFullName().equals(project_name)){
-				return next_proj;
+		for (Project project : getProjectsList()){	
+			if (project.getFullName().equals(project_name)){
+				return project;
 			}
 		}
-		return null;
+		throw new InvalidNameException("Invalid project name: " + project_name);
 	}
 
-	public void printAllProjects() {
-		System.out.printf("\n\n%-21s %-38s %26s\n", "Project Name", "Project UUID", "Project Create Date");
-		for(Project proj : getProjectsList()) {
-			System.out.printf("%-21s %-38s '%26s'\n", proj.getFullName(),
-					proj.getUUIDString(), proj.getCreateDate());
-		}
-	}
-
-	public Map<String, Integer> getPackageTypes() {
-
-		if (packageTypeMap == null) {
-
-			try {
-				packageTypeMap = handlerFactory.getPackageHandler().getTypes();
-			}catch (JSONException e) {
-
-				packageTypeMap = new HashMap<String, Integer>();
-
-				List<String> all_types = Arrays.asList("C/C++", "Java 7 Source Code", "Java 7 Bytecode",
-						"Python2", "Python3", "Android Java Source Code", "Ruby",
-						"Ruby Sinatra", "Ruby on Rails", "Ruby Padrino",
-						"Android .apk","Java 8 Source Code","Java 8 Bytecode");
-				int i = 0;
-				for (String pkg_type : all_types) {
-					packageTypeMap.put(pkg_type, Integer.valueOf(++i));
-				}
-			}
-
-		}
-		return packageTypeMap;
-	}
-
-	public List<String> getPackageTypesList() {
-		return new ArrayList<String>(getPackageTypes().keySet());
-	}
-
-	protected ConversionMapImpl getPkgConfMap(Properties pkg_conf) {
-		ConversionMapImpl map = new ConversionMapImpl();
-		map.put("version_string", pkg_conf.getProperty("package-version"));
-		map.put("source_path", pkg_conf.getProperty("package-dir"));
-		map.put("config_dir", pkg_conf.getProperty("config-dir", null));
-		map.put("config_cmd", pkg_conf.getProperty("config-cmd", null));
-		map.put("config_opt", pkg_conf.getProperty("config-opt", null));
-		map.put("build_dir", pkg_conf.getProperty("build-dir", null));
-		map.put("build_system", pkg_conf.getProperty("build-sys", null));
-		map.put("build_file", pkg_conf.getProperty("build-file", null));
-		map.put("build_target", pkg_conf.getProperty("build-target", null));
-		map.put("build_opt", pkg_conf.getProperty("build-opt", null));
-		map.put("use_gradle_wrapper", pkg_conf.getProperty("gradle-wrapper", "false"));
-		return map;
-	}
-
-	public String uploadNewPackage(String pkg_conf_file, String pkg_archive_file, String project_uuid) {
+	/**
+	 * Upload a new software package
+	 *
+	 * @param pkg_conf_file: Path for the package.conf file for the package
+	 * @param pkg_archive_file: Path to the package archive 
+	 * @param project_uuid: UUID for the project that this package must be associated with
+	 * @param os_dep_map: hash-map of the OS dependencies 
+	 * Example: (key, value) = (ubuntu-16.04-64=libsqlite3-dev libmysqlclient-dev)
+	 * 
+	 * @return the new package's version UUID
+	 */
+	public String uploadNewPackage(String pkg_conf_file, 
+			String pkg_archive_file, 
+			String project_uuid,
+			Map<String, String> os_dep_map) {
 		PackageHandler<? extends PackageThing> pkg_handler = handlerFactory.getPackageHandler();
 		Properties pkg_conf = getProp(pkg_conf_file);
 
 		PackageThing pkg_thing = pkg_handler.create(pkg_conf.getProperty("package-short-name"),
 				pkg_conf.getProperty("package-description", "No Description Available"),
+				pkg_conf.getProperty("external-url", null),
 				getPkgTypeId(pkg_conf.getProperty("package-language"),
 						pkg_conf.getProperty("package-language-version", ""),
 						pkg_conf.getProperty("build-sys"),
-						pkg_conf.getProperty("package-type")));
+						pkg_conf.getProperty("package-type")),
+				pkg_conf.getProperty("package-language"));
 
 		ConversionMapImpl map = getPkgConfMap(pkg_conf);
 		map.put("project_uuid", project_uuid);
@@ -478,13 +613,36 @@ public class SwampApiWrapper {
 				new File(pkg_archive_file),
 				map);
 
-		getAllPackageVersions(project_uuid).put(pkg_version.getIdentifierString(), pkg_version);
-		getAllPackages(project_uuid).put(pkg_thing.getIdentifierString(), pkg_thing);
+		addPackageDependencies(pkg_version, os_dep_map);
+
+		packageVersionMap = null;
+		packageMap = null;
+		//getAllPackageVersions(project_uuid).put(pkg_version.getIdentifierString(), pkg_version);
+		//getAllPackages(project_uuid).put(pkg_thing.getIdentifierString(), pkg_thing);
 
 		return pkg_version.getUUIDString();
 	}
 
-	public String uploadPackageVersion(String pkg_conf_file, String pkg_archive_file, String project_uuid) {
+	/**
+	 * Upload a package version
+	 * 
+	 * <p>
+	 * If a package with the same name as the this package does not exist then
+	 * a new package is created
+	 * <p>
+	 *
+	 * @param pkg_conf_file: Path for the package.conf file for the package
+	 * @param pkg_archive_file: Path to the package archive 
+	 * @param project_uuid: UUID for the project that this package must be associated with
+	 * @param os_dep_map: hash-map of the OS dependencies 
+	 * Example: (key, value) = (ubuntu-16.04-64=libsqlite3-dev libmysqlclient-dev)
+	 * 
+	 * @return the new package's version UUID
+	 */
+	public String uploadPackageVersion(String pkg_conf_file, 
+			String pkg_archive_file, 
+			String project_uuid,
+			Map<String, String> os_dep_map) {
 		Properties pkg_conf = getProp(pkg_conf_file);
 		PackageThing pkg_thing = null;
 
@@ -496,7 +654,7 @@ public class SwampApiWrapper {
 		}
 
 		if (pkg_thing == null){
-			return uploadNewPackage(pkg_conf_file, pkg_archive_file, project_uuid);
+			return uploadNewPackage(pkg_conf_file, pkg_archive_file, project_uuid, os_dep_map);
 		}else{
 			ConversionMapImpl map = getPkgConfMap(pkg_conf);
 			map.put("project_uuid", project_uuid);
@@ -504,45 +662,177 @@ public class SwampApiWrapper {
 			PackageVersion pkg_version = handlerFactory.getPackageVersionHandler().create(pkg_thing,
 					new File(pkg_archive_file),
 					map);
-
-
-			getAllPackageVersions(project_uuid).put(pkg_version.getIdentifierString(), pkg_version);
+			addPackageDependencies(pkg_version, os_dep_map);
+			packageVersionMap = null;
+			//getAllPackageVersions(project_uuid);
 
 			return pkg_version.getUUIDString();
 		}
 	}
 
-	public String uploadPackage(String pkg_conf_file, String pkg_archive_file,
-			String project_uuid, boolean isNew) throws InvalidIdentifierException {
+	/**
+	 * Upload a package
+	 * 
+	 * <p>
+	 * If a package with the same name as the this package does not exist then
+	 * a new package is created
+	 * <p>
+	 *
+	 * @param pkg_conf_file: Path for the package.conf file for the package
+	 * @param pkg_archive_file: Path to the package archive 
+	 * @param project_uuid: UUID for the project that this package must be associated with
+	 * @param os_dep_map: hash-map of the OS dependencies
+	 * Example: (key, value) = (ubuntu-16.04-64=libsqlite3-dev libmysqlclient-dev)
+	 * @param is_new: flag to explictly say that this should be stored as a new package 
+	 * 
+	 * @return the new package's version UUID
+	 */
+
+	public String uploadPackage(String pkg_conf_file, 
+			String pkg_archive_file,
+			String project_uuid,
+			Map<String, String> os_dep_map,
+			boolean is_new) throws InvalidIdentifierException {
 
 		getProject(project_uuid);
 
-		if(isNew) {
-			return uploadNewPackage(pkg_conf_file, pkg_archive_file, project_uuid);
+		if(is_new) {
+			return uploadNewPackage(pkg_conf_file, pkg_archive_file, project_uuid, os_dep_map);
 		}else{
-			return uploadPackageVersion(pkg_conf_file, pkg_archive_file, project_uuid);
+			return uploadPackageVersion(pkg_conf_file, pkg_archive_file, project_uuid, os_dep_map);
 		}
 	}
 
+	/**
+	 * Add package version's OS dependencies
+	 * <p>
+	 * A package may require OS packages to be pre-installed/available.
+	 * Additional OS packages can be installed before the build 
+	 * by specifying OS dependencies
+	 * <p>
+	 *
+	 * @param package_version: PackageVersion object for the package
+	 * @param os_dep_map: hash-map of the OS dependencies
+	 * Example: (key, value) = (ubuntu-16.04-64=libsqlite3-dev libmysqlclient-dev)
+	 * 
+	 * @throws InvalidIdentifierException if UUID provided is not a valid one
+	 */
+	protected void addPackageDependencies(PackageVersion package_version, Map<String, String> os_dep_map) {
+		if (os_dep_map != null){
+			
+			ConversionMapImpl dep_map = new ConversionMapImpl();
+
+			for (PlatformVersion platform_version : getAllPlatformVersionsList()) {
+				String deps = os_dep_map.get(platform_version.getDisplayString());
+				if (deps != null) {
+					dep_map.put(platform_version.getIdentifierString(), deps);
+				}
+			}
+			handlerFactory.getPackageVersionHandler().addPackageVersionDependencies(package_version, dep_map);
+		}
+	}
+
+	/**
+	 * Delete a version of a package
+	 *
+	 * @param pkg_ver_uuid: package version UUID
+	 * @param project_uuid: project UUID
+	 * 
+	 * @return status: deleted or not deleted
+	 * @throws InvalidIdentifierException if UUID provided is not a valid one
+	 */
+	public boolean deletePackageVersion(String pkg_ver_uuid, String project_uuid) throws InvalidIdentifierException {
+
+		getProject(project_uuid);
+
+		for(PackageVersion pkg_ver : getAllPackageVersions(project_uuid).values()){
+			if (pkg_ver.getUUIDString().equals(pkg_ver_uuid)){
+				return deletePackageVersion(pkg_ver);
+			}
+		}
+
+		throw new InvalidIdentifierException("Invalid package version UUID: " + pkg_ver_uuid);
+	}
+
+	/**
+	 * Delete a version of a package
+	 *
+	 * @param pkg_ver_uuid: package version UUID
+	 * 
+	 * @return status: deleted or not deleted
+	 * @throws InvalidIdentifierException if UUID provided is not a valid one
+	 */
+	public boolean deletePackageVersion(String pkg_ver_uuid) throws InvalidIdentifierException {
+
+		for(PackageVersion pkg_ver : getAllPackageVersions().values()){
+			if (pkg_ver.getUUIDString().equals(pkg_ver_uuid)){
+				return deletePackageVersion(pkg_ver);
+			}
+		}
+
+		throw new InvalidIdentifierException("Invalid package version UUID: " + pkg_ver_uuid);
+	}
+
+	/**
+	 * Delete a version of a package
+	 *
+	 * @param pkg_ver: package version object
+	 * 
+	 * @return status: deleted or not deleted
+	 */
+	public boolean deletePackageVersion(PackageVersion pkg_ver) throws InvalidIdentifierException {
+		boolean ret_val = handlerFactory.getPackageVersionHandler().deletePackageVersion(pkg_ver);
+		if(ret_val) {
+			//packageVersionMap = null;
+			packageVersionMap.remove(pkg_ver.getIdentifierString());
+		}
+		return ret_val;
+	}
+
+	/**
+	 * Delete a package with all its versions
+	 *
+	 * @param pkg_uuid: package UUID
+	 * @param project_uuid: project UUID
+	 * 
+	 * @return status: deleted or not deleted
+	 * @throws InvalidIdentifierException if UUID provided is not a valid one
+	 */
 	public boolean deletePackage(String pkg_uuid, String project_uuid) throws InvalidIdentifierException {
 
 		getProject(project_uuid);
 
-		PackageThing pkg_thing = null;
-
 		for(PackageThing pkg : getAllPackages(project_uuid).values()){
 			if (pkg.getUUIDString().equals(pkg_uuid)){
-				pkg_thing = pkg;
-				break;
+				return deletePackage(pkg);
 			}
 		}
-		if (pkg_thing == null) {
-			throw new InvalidIdentifierException("Invalid package UUID: " + pkg_uuid);
-		}
-		return handlerFactory.getPackageHandler().deletePackage(pkg_thing);
+
+		throw new InvalidIdentifierException("Invalid package UUID: " + pkg_uuid);
 	}
 
+	/**
+	 * Delete a package with all its versions
+	 *
+	 * @param pkg: package object
+	 * 
+	 * @return status: deleted or not deleted
+	 */
+	public boolean deletePackage(PackageThing pkg) throws InvalidIdentifierException {
+		boolean ret_val = handlerFactory.getPackageHandler().deletePackage(pkg);
+		if(ret_val) {
+			packageVersionMap = null;
+		}
+		return ret_val;
+	}
 
+	/**
+	 * Get a hash-map of all the packages of a project
+	 *
+	 *  @param project_uuid: project UUID
+	 *  
+	 *  @return hash-map of package-uuid, package object
+	 */
 	protected Map<String, PackageThing> getAllPackages(String project_uuid) {
 		if ((packageMap == null) || (!stringsAreEqual(cachedPkgProjectID, project_uuid))) {
 			cachedPkgProjectID = project_uuid;
@@ -560,6 +850,28 @@ public class SwampApiWrapper {
 		return packageMap;
 	}
 
+	/**
+	 * Get a hash-map of all the packages uploaded by a user or accessible to a user
+	 *  
+	 *  @return hash-map of package-uuid, package object
+	 */
+	protected Map<String, PackageThing> getAllPackages() {
+		if (packageMap == null) {
+			packageMap = new HashMap<String, PackageThing>();
+			
+			for (PackageThing pkg : handlerFactory.getPackageHandler().getAll()){
+				packageMap.put(pkg.getUUIDString(), pkg);
+			}
+		}
+		return packageMap;
+	}
+
+	/**
+	 * Get a list of all the packages in a project
+	 * 
+	 *  @param project_uuid: project UUID
+	 *  @return hash-map of package-uuid, package object
+	 */
 	public List<PackageThing> getPackagesList(String project_uuid) {
 		List<PackageThing> pkg_list = new ArrayList<PackageThing>(getAllPackages(project_uuid).values());
 
@@ -571,6 +883,28 @@ public class SwampApiWrapper {
 		return pkg_list;
 	}
 
+	/**
+	 * Get a list of all the packages uploaded by a user or accessible to a user
+	 *  
+	 *  @return hash-map of package-uuid, package object
+	 */
+	public List<PackageThing> getPackagesList() {
+		List<PackageThing> pkg_list = new ArrayList<PackageThing>(getAllPackages().values());
+
+		Collections.sort(pkg_list, new Comparator<PackageThing>() {
+			public int compare(PackageThing i1, PackageThing i2) {
+				return (i2.getName().compareTo(i1.getName()));
+			}
+		});
+		return pkg_list;
+	}
+
+	/**
+	 * Get a hash-map of all the package versions in a project
+	 *  
+	 *  @param project_uuid: project UUID
+	 *  @return hash-map of package-version-uuid, package version object
+	 */
 	protected Map<String, PackageVersion> getAllPackageVersions(String project_uuid) {
 		if ((packageVersionMap == null) || (!stringsAreEqual(cachedPkgVersionProjectID, project_uuid))) {
 			cachedPkgVersionProjectID = project_uuid;
@@ -592,6 +926,30 @@ public class SwampApiWrapper {
 		return packageVersionMap;
 	}
 
+	/**
+	 * Get a hash-map of all the package versions uploaded by a user or accessible to a user
+	 *
+	 *  @return hash-map of package-version-uuid, package version object
+	 */
+	protected Map<String, PackageVersion> getAllPackageVersions() {
+		if (packageVersionMap == null) {
+			packageVersionMap = new HashMap<String, PackageVersion>();
+			
+			for (PackageThing pkg : handlerFactory.getPackageHandler().getAll()){
+				for (PackageVersion pkg_ver : handlerFactory.getPackageVersionHandler().getAll(pkg)) {
+					packageVersionMap.put(pkg_ver.getUUIDString(), pkg_ver);
+				}
+			}
+		}
+		return packageVersionMap;
+	}
+	
+	/**
+	 * Get a list of all the package versions in a project
+	 *  
+	 *  @param project_uuid: project UUID
+	 *  @return list of package version objects
+	 */
 	public List<PackageVersion> getPackageVersionsList(String project_uuid) {
 		List<PackageVersion> pkg_list = new ArrayList<PackageVersion>(getAllPackageVersions(project_uuid).values());
 
@@ -603,67 +961,77 @@ public class SwampApiWrapper {
 		return pkg_list;
 	}
 
+	/**
+	 * Get a list of all the package versions uploaded by a user or accessible to a user
+	 *  
+	 *  @return list of package version objects
+	 */
+	public List<PackageVersion> getPackageVersionsList() {
+		List<PackageVersion> pkg_list = new ArrayList<PackageVersion>(getAllPackageVersions().values());
+
+		Collections.sort(pkg_list, new Comparator<PackageVersion>() {
+			public int compare(PackageVersion i1, PackageVersion i2) {
+				return (i1.getVersionString().compareTo(i2.getVersionString()));
+			}
+		});
+		return pkg_list;
+	}
+	
+	/**
+	 * Get a package version object
+	 *  
+	 *  @param pkg_ver_uuid: package version UUID
+	 *  @param project_uuid: project UUID
+	 *  
+	 *  @return package version object
+	 */
 	public PackageVersion getPackageVersion(String pkg_ver_uuid, String project_uuid) {
 		PackageVersion pkg_ver = getAllPackageVersions(project_uuid).get(pkg_ver_uuid);
+
 		if (pkg_ver == null) {
 			throw new InvalidIdentifierException("Invalid Package Version UUID: " + pkg_ver_uuid);
 		}
 		return pkg_ver;
 	}
 
-	public void printAllPackagesSummary(String project_uuid) {
-		System.out.printf("\n\n%-21s %-38s %-20s %-30s\n", "Package Name", "Package UUID", "Package Versions", "Package Description");
-		for(PackageThing pkg : getPackagesList(project_uuid)){
-			System.out.printf("%-21s %-38s %-20s %-30s\n", pkg.getName(), pkg.getIdentifierString(),
-					pkg.getVersions(), pkg.getDescription());
-		}
-	}
-
-	public void printAllPackagesVerbose(String project_uuid) {
-		for(PackageThing pkg : getAllPackages(project_uuid).values()){
-			System.out.printf("\n\n%-21s %-38s %-30s\n", pkg.getName(), pkg.getIdentifierString(), pkg.getDescription());
-			for(PackageVersion pkg_ver : getPackageVersionsList(project_uuid)){
-				if (pkg_ver.getPackageThing().getUUIDString().equals(pkg.getUUIDString())) {
-					System.out.printf("\t%-13s %-38s\n", pkg_ver.getVersionString(), pkg_ver.getUUIDString());
-				}
-			}
-		}
-	}
-
-	public void printAllPackages(String project_uuid, boolean verbose) {
-		if(verbose){
-			printAllPackagesVerbose(project_uuid);
-		}else {
-			printAllPackagesSummary(project_uuid);
-		}
-	}
-
+	/**
+	 * Get a hash-map of all the tools along with any project specific tools
+	 *  
+	 *  @param project_uuid: project UUID (for project specific tools)
+	 *  
+	 *  @return hash-map of tool-uuid, tool object
+	 */
 	protected Map<String, Tool> getAllTools(String project_uuid) throws InvalidIdentifierException {
 
 		if ((toolMap == null) || (!stringsAreEqual(cachedToolProjectID, project_uuid))) {
 			cachedToolProjectID = project_uuid;
 			toolMap = new HashMap<String, Tool>();
 			for (Tool tool : handlerFactory.getToolHandler().getAll()) {
-				if (tool.getPolicyCode() == "null"){    //FIXME: This is temporary
+				//if (tool.getPolicyCode() == null){    //FIXME: This is temporary
 					toolMap.put(tool.getIdentifierString(), tool);
-				}
+				//}
 			}
 
 			if (project_uuid != null){
 				Project proj = getProject(project_uuid);
 
 				for (Tool tool : handlerFactory.getToolHandler().getAll(proj)) {
-					if (tool.getPolicyCode() == "null"){    //FIXME: This is temporary
+					//if (tool.getPolicyCode() == null){    //FIXME: This is temporary
 						toolMap.put(tool.getIdentifierString(), tool);
-					}
+					//}
 				}
 			}
 		}
 		return toolMap;
 	}
 
-	/*
-	 * pkg_type should be one of the Key return by the API getPackageTypes
+	/**
+	 * Get a list of tools provided package type and project uuid (for project specific tools)
+	 *  
+	 *  @param pkg_type: should be one of the Key return by the API getPackageTypes
+	 *  @param project_uuid: project UUID (for project specific tools)
+	 *  
+	 *  @return list of tool objects
 	 */
 	public List<Tool> getTools(String pkg_type, String project_uuid) throws InvalidIdentifierException {
 
@@ -682,6 +1050,14 @@ public class SwampApiWrapper {
 		return tool_list;
 	}
 
+	/**
+	 * Get a tool object
+	 *  
+	 *  @param tool_uuid: tool UUID
+	 *  @param project_uuid: project UUID (for project specific tools)
+	 *  
+	 *  @return tool object
+	 */
 	public Tool getTool(String tool_uuid, String project_uuid) throws InvalidIdentifierException {
 		Tool tool = getAllTools(project_uuid).get(tool_uuid);
 		if (tool == null){
@@ -690,6 +1066,14 @@ public class SwampApiWrapper {
 		return tool;
 	}
 
+	/**
+	 * Get a tool object from tool name
+	 *  
+	 *  @param tool_name: name of a tool
+	 *  @param project_uuid: project UUID (for project specific tools)
+	 *  
+	 *  @return tool object
+	 */
 	public Tool getToolFromName (String tool_name, String project_uuid) throws InvalidIdentifierException {
 		Map<String,Tool> tool_list = getAllTools(project_uuid);
 		Iterator<Tool> tool_iterator = tool_list.values().iterator();
@@ -702,85 +1086,136 @@ public class SwampApiWrapper {
 		return null;
 	}
 
-	public void printAllTools(String project_uuid) throws InvalidIdentifierException {
-		System.out.printf("\n\n%-21s %-38s %-40s %s\n", "Tool Name", "Tool UUID", "Supported Package Types", "Supported Platforms");
-		for(Tool tool : getAllTools(project_uuid).values()){
-			System.out.printf("%-21s %-38s %-40s %s\n", tool.getName(), tool.getIdentifierString(),
-					tool.getSupportedPkgTypes(), tool.getSupportedPlatforms());
-			List<? extends ToolVersion> tool_versions = handlerFactory.getToolVersionHandler().getAll(tool);
-			Collections.sort(tool_versions, 
-					new Comparator<ToolVersion>() {
-				public int compare(ToolVersion i1, ToolVersion i2) {
-					return (i2.getReleaseDate().compareTo(i1.getReleaseDate()));
-				}
-			});
-			for(ToolVersion tool_version : tool_versions){
-				System.out.printf("\t%-38s %-13s\n", tool_version.getIdentifier(),
-						tool_version.getVersion());
-			}
-		}
+	/**
+	 * Get the platform object given the platform UUID
+	 *  
+	 *  @param platform_uuid: platform UUID
+	 *  
+	 *  @return platform object
+	 */
+	public Platform getPlatform(String platform_uuid) {
+		return getAllPlatforms().get(platform_uuid);
 	}
 
+	/**
+	 * Get hash-map of all the platforms
+	 *  
+	 *  @return hash-map of platform UUID, platform object
+	 */
 	public Map<String, Platform> getAllPlatforms() {
+		HashMap<String, Platform> platforms = new HashMap<String, Platform>();
+
+		for (Platform plat : handlerFactory.getPlatformHandler().getAll()) {
+			platforms.put(plat.getIdentifierString(), plat);
+		}
+		return platforms;
+	}
+
+	/**
+	 * Get hash-map of all the platform versions
+	 *  
+	 *  @return hash-map of platform version UUID, platform version object
+	 */
+	public Map<String, PlatformVersion> getAllPlatformVersions() {
 		if (platformMap == null) {
-			platformMap = new HashMap<String, Platform>();
-			for (Platform plat : handlerFactory.getPlatformHandler().getAll()) {
-				platformMap.put(plat.getIdentifierString(), plat);
+			platformMap = new HashMap<String, PlatformVersion>();
+			for (Platform platform : handlerFactory.getPlatformHandler().getAll()) {
+				for (PlatformVersion platform_version : handlerFactory.getPlatformVersionHandler().getAll(platform) )
+					platformMap.put(platform_version.getIdentifierString(), platform_version);
 			}
 		}
 		return platformMap;
-	}
+	}	
 
-	public List<Platform> getPlatformsList() {
-		List<Platform> plat_list = new ArrayList<Platform>(getAllPlatforms().values());
+	/**
+	 * Get list of all the platform versions
+	 *  
+	 *  @return list of platform version objects
+	 */
+	public List<PlatformVersion> getAllPlatformVersionsList() {
+		List<PlatformVersion> platform_versions = new ArrayList<PlatformVersion>(getAllPlatformVersions().values());
 
-		Collections.sort(plat_list, new Comparator<Platform>() {
-			public int compare(Platform i1, Platform i2) {
-				return (i1.getName().compareTo(i2.getName()));
+		Collections.sort(platform_versions, new Comparator<PlatformVersion>() {
+			public int compare(PlatformVersion i1, PlatformVersion i2) {
+				return (i1.getDisplayString().compareTo(i2.getDisplayString()));
 			}
 		});
-		return plat_list;
-
+		return platform_versions;
 	}
 
-	public Platform getPlatform(String platform_uuid) {
-		Platform platform = getAllPlatforms().get(platform_uuid);
+	/**
+	 * Get the platform version object given the platform UUID
+	 *  
+	 *  @param platform_version_uuid: platform version UUID
+	 *  
+	 *  @return platform version object
+	 */
+	public PlatformVersion getPlatformVersion(String platform_version_uuid) {
+		PlatformVersion platform = getAllPlatformVersions().get(platform_version_uuid);
 		if (platform == null) {
-			throw new InvalidIdentifierException("Invalid Platform UUID: " + platform_uuid);
+			throw new InvalidIdentifierException("Invalid Platform UUID: " + platform_version_uuid);
 		}
 		return platform;
 	}
 
-	public Platform getPlatformFromName (String platform_name) throws InvalidIdentifierException  {
-		Map<String,Platform> platform_list = getAllPlatforms();
-		Iterator<Platform> platform_iterator = platform_list.values().iterator();
+	/**
+	 * Get the platform version object given the platform name
+	 *  
+	 *  @param platform_version_name: platform version name
+	 *  
+	 *  @return platform version object
+	 */
+
+	public PlatformVersion getPlatformVersionFromName (String platform_version_name) throws InvalidNameException  {
+		Map<String, PlatformVersion> platform_version_list = getAllPlatformVersions();
+		Iterator<PlatformVersion> platform_iterator = platform_version_list.values().iterator();
 		while (platform_iterator.hasNext()){
-			Platform next_platform = platform_iterator.next();
-			if (next_platform.getName().equals(platform_name)){
+			PlatformVersion next_platform = platform_iterator.next();
+			if (next_platform.getDisplayString().equals(platform_version_name)){
 				return next_platform;
 			}
 		}
 
-		throw new InvalidIdentifierException(String.format("Platform %s does not exist.\n", platform_name));
+		throw new InvalidNameException(String.format("Platform %s does not exist.\n", platform_version_name));
 	}
 
-	public List<Platform> getSupportedPlatforms(String tool_uuid, String project_uuid) throws InvalidIdentifierException {
+	/**
+	 * Get the platform version objects that a tool supports
+	 * <p>
+	 * Not all the tools run on all the platforms, this method returns 
+	 * a list of platform version objects that a given tool can run on
+	 * <p>
+	 *  
+	 *  @param tool_uuid: tool UUID
+	 *  @param project_uuid: project UUID
+	 *  
+	 *  @return list of platform version object
+	 */
+	public List<PlatformVersion> getSupportedPlatformVersions(String tool_uuid, 
+			String project_uuid) {
 		Tool tool = getTool(tool_uuid, project_uuid);
-		List<Platform> supported_plats = new ArrayList<>();
-		for (Platform plat : getPlatformsList()){
-			for (String plat_name : tool.getSupportedPlatforms()){
-				if (plat_name.equals(plat.getName())){
-					supported_plats.add(plat);
+		List<PlatformVersion> supported_platforms = new ArrayList<>();
+		for (PlatformVersion platform_version : new ArrayList<PlatformVersion>(getAllPlatformVersions().values())){
+			for (String supp_plat_name : tool.getSupportedPlatforms()){
+				if (supp_plat_name.equals(platform_version.getPlatform().getName())){
+					supported_platforms.add(platform_version);
 				}
 			}
 		}
-		return supported_plats;
+		return supported_platforms;
 	}
 
-	/*
-	 * pkg_type must be one of the values retured by getPackageTypesList()
+	/**
+	 * Get the default platform version a package type
+	 * <p>
+	 * Each package type has a default platform version assigned to it 
+	 * <p>
+	 *  
+	 *  @param pkg_type: must be one of the values retured by getPackageTypesList()
+	 *  
+	 *  @return platform version object
 	 */
-	public Platform getDefaultPlatform(String pkg_type) {
+	public PlatformVersion getDefaultPlatformVersion(String pkg_type) {
 
 		if(!getPackageTypesList().contains(pkg_type)) {
 			throw new InvalidIdentifierException(String.format("Invalid package type: %s", pkg_type));
@@ -791,125 +1226,126 @@ public class SwampApiWrapper {
 		try {
 			default_platform_uuid = handlerFactory.getPackageHandler().getDefaultPlatform(pkg_type);
 		}catch (JSONException e) {
-			if (pkg_type.startsWith("Android")) {
-				default_platform_uuid = "48f9a9b0-976f-11e4-829b-001a4a81450b";  // Android Ubuntu-12.04-64
-			}else {
-				default_platform_uuid = "fc55810b-09d7-11e3-a239-001a4a81450b";  // Red Hat Enterprise Linux 64-bit
-			}
+			throw new NoDefaultPlatformException("No default platform set for package type: " + pkg_type);
 		}
 
-		Platform default_platform = null;
 		if (default_platform_uuid != null) {
-			default_platform = getPlatform(default_platform_uuid);
-		}
-		return default_platform;
-	}
+			Platform platform = getPlatform(default_platform_uuid);
+			List<PlatformVersion> platform_versions = (List<PlatformVersion>) handlerFactory.getPlatformVersionHandler().getAll(platform);
+			Collections.sort(platform_versions, new Comparator<PlatformVersion>() {
+				public int compare(PlatformVersion i1, PlatformVersion i2) {
+					return (i2.getName().compareTo(i1.getName()));
+				}
+			});
 
-	public void printAllPlatforms(String pkg_type) {
-
-		if (pkg_type != null) {
-			Platform plat = getDefaultPlatform(pkg_type);
-			System.out.printf("\n%-40s %-38s %26s\n", "Project Name", "Platform UUID", "Platform Create Date");
-			System.out.printf("%-40s %-38s %s\n", plat.getName(), plat.getIdentifierString(), plat.getCreateDate());
+			return platform_versions.get(0);
 		}else {
-			System.out.printf("\n%-40s %-38s %26s\n", "Project Name", "Platform UUID", "Platform Create Date");
-			for(Platform plat : getAllPlatforms().values()){
-				System.out.printf("%-40s %-38s %s\n", plat.getName(), plat.getIdentifierString(), plat.getCreateDate());
-			}
+			return null;
 		}
 	}
 
-	public AssessmentRun getAssessment(String assess_uuid, Project proj) {
-		for (AssessmentRun arun : handlerFactory.getAssessmentHandler().getAllAssessments(proj)){
+	/**
+	 * Gets the list of assessment objects that are assigned to a project
+	 *  
+	 *  @param project_uuid: project UUID
+	 *  
+	 *  @return list of assessments objects
+	 */
+	public List<AssessmentRun> getAllAssessments(String project_uuid) {
+		Project project = getProject(project_uuid);
+		return (List<AssessmentRun>) handlerFactory.getAssessmentHandler().getAllAssessments(project);
+	}
+
+	/**
+	 * Gets the list of assessment objects that are assigned to a project
+	 *  
+	 *  @param assess_uuid: assessment UUID
+	 *  @param project_uuid: project UUID
+	 *  
+	 *  @return assessments objects
+	 *  @throws InvalidIdentifierException Invalid assessment UUI
+	 */
+	public AssessmentRun getAssessment(String assess_uuid, String project_uuid) {
+		for (AssessmentRun arun : getAllAssessments(project_uuid)){
 			if (arun.getIdentifierString().equals(assess_uuid)){
 				return arun;
 			}
 		}
-		return null;
+		throw new InvalidIdentifierException("Invalid assessment UUID: " + assess_uuid);
 	}
 
-	public void printAssessments(String project_uuid, boolean quiet) {
-		Project proj = getProject(project_uuid);
-		for (AssessmentRun arun : handlerFactory.getAssessmentHandler().getAllAssessments(proj)){
-			if (quiet){
-				System.out.printf(arun.getUUIDString() + "\n");
-			}else{
-				System.out.printf("Assessment on " + arun.getFilename() +":\n\tUUID: " + arun.getUUIDString() + "\n");
+	/**
+	 * Delete an assessment
+	 *  
+	 *  @param arun: assessment run object
+	 *  
+	 *  @return status: deleted or not
+	 *  
+	 */
+	public boolean deleteAssessment(AssessmentRun arun) {
+		return handlerFactory.getAssessmentHandler().delete(arun);
+	}
+
+	/**
+	 * Delete an assessment
+	 *  
+	 *  @param assess_uuid: assessment run UUID
+	 *  @param project_uuid: project UUID
+	 *  
+	 *  @return status: deleted or not
+	 *  @throws InvalidIdentifierException Invalid Assessment UUID
+	 */
+	public boolean deleteAssessment(String assess_uuid, String project_uuid) {
+
+		for (AssessmentRun arun : getAllAssessments(project_uuid)){
+			if (arun.getIdentifierString().equalsIgnoreCase(assess_uuid)) {
+				return deleteAssessment(arun);
 			}
 		}
+		throw new InvalidIdentifierException("Invalid Assessment UUID: " + assess_uuid);
 	}
 
-	public void printAssessment(String assessment_uuid, String project_uuid) {
-		AssessmentRun arun = getAssessment(assessment_uuid, getProject(project_uuid));
-		if (arun == null){
-			System.out.println("Assessment " + assessment_uuid + " not found. Please verify the UUID");
-		}else{
-			System.out.println("Assessment Results on " + arun.getIdentifierString());
-			System.out.println("Package: \t" + (arun.getPkg() == null ? "N/A" : arun.getPkg().getName()));
-			System.out.println("Project: \t" + (arun.getProject() == null ? "N/A" : arun.getProject().getFullName()));
-			System.out.println("Tool:    \t" + (arun.getTool() == null ? "N/A" : arun.getTool().getName()));
-			System.out.println("Platform:\t" + (arun.getPlatform() == null ? "N/A" : arun.getPlatform().getName()));
-		}
-	}
-
-	public String runAssessment(String pkg_ver_uuid,
-			String tool_uuid,
-			String project_uuid,
-			String platform_uuid) throws IncompatibleAssessmentTupleException, InvalidIdentifierException {
-
-		PackageVersion pkg_ver = getPackageVersion(pkg_ver_uuid, project_uuid);
-		Tool tool = getTool(tool_uuid, project_uuid);
-		Project proj = getProject(project_uuid);
-
-		Platform plat = null;
-		if(platform_uuid == null) {
-			plat = getDefaultPlatform(pkg_ver.getPackageThing().getType());
-		}else {
-			plat = getPlatform(platform_uuid);
-		}
-
-		if (!tool.getSupportedPkgTypes().contains(pkg_ver.getPackageThing().getType())) {
-			throw new IncompatibleAssessmentTupleException(String.format("%s (%s) does not support this package type \"%s\"",
-					tool.getName(),
-					tool.getSupportedPkgTypes(),
-					pkg_ver.getPackageThing().getType()));
-		}
-
-		if (!tool.getSupportedPlatforms().contains(plat.getName())) {
-			throw new IncompatibleAssessmentTupleException(String.format("%s (%s) is not supported on this platform \"%s\"",
-					tool.getName(),
-					tool.getSupportedPlatforms(),
-					plat.getName()));
-		}
-
-		return runAssessment(pkg_ver, tool, proj, plat);
-	}
-
+	/**
+	 * Run assessments on a package with a set of tools on a set of platforms
+	 *  <p>
+	 *  This method creates multiple assessments on a package with 
+	 *  multiple tools on multiple platforms
+	 *  
+	 *  @param pkg_ver_uuid: package version UUID
+	 *  @param tool_uuid_list: list of tool UUIDs
+	 *  @param project_uuid: project UUID
+	 *  @param platform_uuid_list: list of platform UUIDs
+	 *  
+	 *  @return list of assessment UUIDs
+	 *  @throws IncompatibleAssessmentTupleException if a tool does not support a package type
+	 *  
+	 */
 	public List<String> runAssessment(String pkg_ver_uuid,
 			List<String> tool_uuid_list,
 			String project_uuid,
-			List<String> platform_uuid_list) throws IncompatibleAssessmentTupleException, InvalidIdentifierException {
+			List<String> platform_uuid_list) throws IncompatibleAssessmentTupleException {
+		
 		PackageVersion pkg_ver = getPackageVersion(pkg_ver_uuid, project_uuid);
 		Project project = getProject(project_uuid);
 
-		List<Platform> platforms = new ArrayList<Platform>();
+		List<PlatformVersion> platforms = new ArrayList<PlatformVersion>();
 
 		if (null == platform_uuid_list || platform_uuid_list.isEmpty()){
 			platform_uuid_list = new ArrayList<String>(); 
-			platform_uuid_list.add(getDefaultPlatform(pkg_ver.getPackageThing().getType()).getUUIDString());
+			platform_uuid_list.add(getDefaultPlatformVersion(pkg_ver.getPackageThing().getType()).getUUIDString());
 		}
 
 		for (String platform_uuid: platform_uuid_list) {
-			Platform platform = null;
+			PlatformVersion platform_version = null;
 			if(platform_uuid == null) {
-				platform = getDefaultPlatform(pkg_ver.getPackageThing().getType());
+				platform_version = getDefaultPlatformVersion(pkg_ver.getPackageThing().getType());
 			}else {
-				platform = getPlatform(platform_uuid);
+				platform_version = getPlatformVersion(platform_uuid);
 			}
 
 			for (String tool_uuid: tool_uuid_list) {
 				Tool tool = getTool(tool_uuid, project_uuid);
-
+				
 				if (!tool.getSupportedPkgTypes().contains(pkg_ver.getPackageThing().getType())) {
 					throw new IncompatibleAssessmentTupleException(String.format("%s (%s) does not support this package type \"%s\"",
 							tool.getName(),
@@ -917,14 +1353,14 @@ public class SwampApiWrapper {
 							pkg_ver.getPackageThing().getType()));
 				}
 
-				if (!tool.getSupportedPlatforms().contains(platform.getName())) {
+				if (!tool.getSupportedPlatforms().contains(platform_version.getPlatform().getName())) {
 					throw new IncompatibleAssessmentTupleException(String.format("%s (%s) is not supported on this platform \"%s\"",
 							tool.getName(),
 							tool.getSupportedPlatforms(),
-							platform.getName()));
+							platform_version.getName()));
 				}
 			}
-			platforms.add(platform);
+			platforms.add(platform_version);
 		}
 
 		List<Tool> tools = new ArrayList<Tool>();
@@ -945,23 +1381,47 @@ public class SwampApiWrapper {
 		}
 	}
 
-	protected String runAssessment(PackageVersion pkg, Tool tool, Project project, Platform platform) {
+	/**
+	 * Run a single assessment, on a package with a tool on a platform
+	 *  
+	 *  
+	 *  @param pkg: package version object
+	 *  @param tool: tool object
+	 *  @param project: project object
+	 *  @param platform: platform object
+	 *  
+	 *  @return assessment run object
+	 *  
+	 */
+	public AssessmentRun runAssessment(PackageVersion pkg, Tool tool, Project project, PlatformVersion platform) {
 		AssessmentRun arun = handlerFactory.getAssessmentHandler().create(project, pkg, platform, tool);
-		handlerFactory.getRunRequestHandler().submitOneTimeRequest(arun, true);
-		return arun.getUUIDString();
+		if (handlerFactory.getRunRequestHandler().submitOneTimeRequest(arun, true)) {
+			return arun;
+		}else{
+			return null;
+		}
 	}
 
-	protected List<AssessmentRun> runAssessment(PackageVersion pkg, List<Tool> tools, Project project, List<Platform> platforms) {
+	/**
+	 * Run multiple assessments, on a package with a set of tools on a set of platforms
+	 *  
+	 *  
+	 *  @param pkg: package version object
+	 *  @param tools: list of tool object
+	 *  @param project: project object
+	 *  @param platform_versions: list of platform object
+	 *  
+	 *  @return list of assessment run objects
+	 *  
+	 */
+	protected List<AssessmentRun> runAssessment(PackageVersion pkg, List<Tool> tools, 
+			Project project, List<PlatformVersion> platform_versions) {
 		List<AssessmentRun> arun_list = new ArrayList<AssessmentRun>();
-		for (Platform platform : platforms) {
+		for (PlatformVersion platform_version : platform_versions) {
 			for (Tool tool : tools) {
-				AssessmentRun arun = handlerFactory.getAssessmentHandler().create(project, pkg, platform, tool);
-				arun_list.add(arun);
-				//TODO: This call should n't be here: This is broken 
-				handlerFactory.getRunRequestHandler().submitOneTimeRequest(arun, true);
+				arun_list.add(handlerFactory.getAssessmentHandler().create(project, pkg, platform_version, tool));
 			}
 		}
-		//TODO: This call does not do anything, this is broken
 		if (handlerFactory.getRunRequestHandler().submitOneTimeRequest(arun_list, true)){
 			return arun_list;
 		}else {
@@ -970,14 +1430,34 @@ public class SwampApiWrapper {
 
 	}
 
-	protected List<? extends AssessmentResults> getAssessmentResults(String project_uuid) {
+	/**
+	 * Get all assessment results objects in a project
+	 *  
+	 *  
+	 *  @param project_uuid: project UUID
+	 *  
+	 *  @return list of assessment run objects
+	 *  
+	 */
+	protected List<? extends AssessmentResults> getAllAssessmentResults(String project_uuid) {
 		Project project = getProject(project_uuid);
 		return handlerFactory.getAssessmentResultHandler().getAll(project);
 	}
 
-	public void getAssessmentResults(String project_uuid, String asssess_result_uuid, String filepath) throws FileNotFoundException, IOException {
+	/**
+	 * Write SCARF results from an assessment into a file
+	 *  
+	 *  
+	 *  @param project_uuid: project UUID
+	 *  @param asssess_result_uuid: asssess_result_uuid UUID
+	 *  @param filepath: filepath to write to  
+	 *  
+	 *  @throws IOException Exceptions when writing SCARF to a file
+	 */
+	public void getAssessmentResults(String project_uuid, String asssess_result_uuid, String filepath) 
+			throws IOException {
 
-		for(AssessmentResults results : getAssessmentResults(project_uuid)){
+		for(AssessmentResults results : getAllAssessmentResults(project_uuid)){
 			if (results.getUUIDString().equals(asssess_result_uuid)) {
 				ByteArrayOutputStream data = (ByteArrayOutputStream)handlerFactory.getAssessmentResultHandler().getScarfResults(results);
 				if (data != null) {
@@ -990,27 +1470,31 @@ public class SwampApiWrapper {
 		}
 	}
 
-	public List<? extends AssessmentRecord> getAllAssessmentRecords(Project project) {
+	/**
+	 * Get a list of all the assessment execution records associated with a project
+	 *  
+	 *  @param project_uuid: project UUID
+	 *  
+	 *  @return list of assessment record objects  
+	 *  
+	 */
+	public List<? extends AssessmentRecord> getAllAssessmentRecords(String project_uuid) {
+		Project project = getProject(project_uuid);
 		return handlerFactory.getassessmentRecordHandler().getExecutionRecords(project);
 	}
 
-	public void printAllAssessmentStatus(String project_uuid) {
-		Project project = getProject(project_uuid);
-		System.out.printf("\n\n%-38s %-38s %-22s %s\n", 
-				"ASSESSMENT RUN UUID", "ASSESSMENT RESULT UUID", 
-				"STATUS", "WEAKNESS COUNT");
-		for(AssessmentRecord assessment_record : getAllAssessmentRecords(project)) {
-			System.out.printf("%-38s %-38s %-22s %d\n", assessment_record.getAssessmentRunUUID(),
-					assessment_record.getAssessmentResultUUID(),
-					assessment_record.getStatus(),
-					assessment_record.getWeaknessCount());
-		}
-	}
-
+	/**
+	 * Get a single assessment execution record of an assessment run
+	 *  
+	 *  @param project_uuid: project UUID
+	 *  @param assessment_uuid: assessment UUID 
+	 *  
+  	 * @return assessment execution record
+	 *  
+	 */
 	public AssessmentRecord getAssessmentRecord(String project_uuid, String assessment_uuid){
-		Project project = getProject(project_uuid);
 
-		for(AssessmentRecord assessment_record : getAllAssessmentRecords(project)) {
+		for(AssessmentRecord assessment_record : getAllAssessmentRecords(project_uuid)) {
 			if (assessment_record.getAssessmentRunUUID().equals(assessment_uuid)){
 				return assessment_record;
 			}
@@ -1018,32 +1502,72 @@ public class SwampApiWrapper {
 
 		throw new InvalidIdentifierException("Invalid Assessment UUID: " + assessment_uuid);
 	}
-
-	public boolean deleteAssessmentRecord(String project_uuid, String assessment_uuid){
-		Project project = getProject(project_uuid);
-
-		for(AssessmentRecord assessment_record : getAllAssessmentRecords(project)) {
+	
+	/**
+	 * Get all the assessment execution records of an assessment run
+	 *  
+	 *  @param project_uuid: project UUID
+	 *  @param assessment_uuid: assessment UUID 
+	 *  
+  	 * @return list of assessment execution records
+	 *  
+	 */
+	public List<AssessmentRecord> getAssessmentRecords(String project_uuid, String assessment_uuid){
+		List<AssessmentRecord> execution_record_list = new ArrayList<AssessmentRecord>();
+		boolean found = false;
+		
+		for(AssessmentRecord assessment_record : getAllAssessmentRecords(project_uuid)) {
 			if (assessment_record.getAssessmentRunUUID().equals(assessment_uuid)){
-				return handlerFactory.getassessmentRecordHandler().deleteAssessmentRecord(assessment_record);
-
+				execution_record_list.add(assessment_record);
 			}
 		}
 
-		throw new InvalidIdentifierException("Invalid Assessment UUID: " + assessment_uuid);
-	}
-
-	public void printAssessmentStatus(String project_uuid, String assessment_uuid) {
-		AssessmentRecord assessment_record = getAssessmentRecord(project_uuid, assessment_uuid);        
-		System.out.printf("%s, %d", assessment_record.getStatus(), assessment_record.getWeaknessCount());
-
-		if (assessment_record.getAssessmentResultUUID() == null){
-			System.out.printf("\n");
-		}else{
-			System.out.printf(", %-38s\n", assessment_record.getAssessmentResultUUID());
+		if (!found) {
+			throw new InvalidIdentifierException("Invalid Assessment UUID: " + assessment_uuid);
 		}
+		
+		return execution_record_list;
+	}
+	
+	/**
+	 * Delete an assessment execution record
+	 *  
+	 *  @param assessment_record: assessment execution record object
+	 *  
+	 *  @return status: deleted or not  
+	 *  
+	 */
+	public boolean deleteAssessmentRecord(AssessmentRecord assessment_record){
+		return handlerFactory.getassessmentRecordHandler().deleteAssessmentRecord(assessment_record);
+	}
+	
+	/**
+	 * Delete assessment execution records of an assessment run
+	 *  
+	 *  @param project_uuid: project UUID
+	 *  @param assessment_uuid: assessment UUID 
+	 *  
+	 *  @return status: deleted or not  
+	 *  
+	 */
+	public boolean deleteAssessmentRecord(String assessment_uuid, String project_uuid){
+		//TODO: public boolean deleteAssessmentRecord(String project_uuid, String assessment_uuid){
+		boolean found = false;
+		boolean not_deleted = false;
+		
+		for(AssessmentRecord assessment_record : getAllAssessmentRecords(project_uuid)) {
+			if (assessment_record.getAssessmentRunUUID().equals(assessment_uuid)){
+				if (!deleteAssessmentRecord(assessment_record)) {
+					not_deleted = true;
+				};
+				found = true;
+			}
+		}
+
+		if (!found) {
+			throw new InvalidIdentifierException("Invalid Assessment UUID: " + assessment_uuid);
+		}
+		return not_deleted;
 	}
 
-	public void printAssessmentResultsUUID(String project_uuid, String assessment_uuid) {
-		System.out.println(getAssessmentRecord(project_uuid, assessment_uuid).getAssessmentResultUUID());
-	}
 }

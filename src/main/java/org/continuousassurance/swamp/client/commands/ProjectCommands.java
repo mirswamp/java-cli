@@ -4,12 +4,8 @@ import edu.uiuc.ncsa.security.core.Identifiable;
 import edu.uiuc.ncsa.security.core.Store;
 import edu.uiuc.ncsa.security.core.util.Iso8601;
 import edu.uiuc.ncsa.security.core.util.MyLoggingFacade;
-import edu.uiuc.ncsa.security.util.cli.InputLine;
-import org.continuousassurance.swamp.api.AssessmentResults;
 import org.continuousassurance.swamp.api.Project;
 import org.continuousassurance.swamp.session.storage.ProjectStore;
-
-import java.util.List;
 
 /**
  * <p>Created by Jeff Gaynor<br>
@@ -37,7 +33,7 @@ public class ProjectCommands extends SWAMPStoreCommands {
 
     }
 
-    protected void showResultsHelp() {
+  /*  protected void showResultsHelp() {
         say("Shows the assessment results for this package.");
         say("Syntax is ");
         say("results index|uid");
@@ -67,7 +63,7 @@ public class ProjectCommands extends SWAMPStoreCommands {
             say("Sorry, project not found");
         }
 
-    }
+    }*/
 
     @Override
     public String getName() {

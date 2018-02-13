@@ -32,11 +32,10 @@ public enum AssessmentStatus {
 	
 	private static boolean inList(List<String> status_list, String status_str) {
 		for (String str : status_list) {
-			if (str.equals(status_list)) {
+			if (str.equalsIgnoreCase(status_str)) {
 				return true;
 			}
 		}
-		
 		return false;
 	}
 	
@@ -75,13 +74,15 @@ public enum AssessmentStatus {
 				"Failed to preserve assessment results",
 				"Failed to compute assessment result metrics",
 				"Saving Results",
-				"Failed to save assessment results in database"			
+				"Failed to save assessment results in database",
+				"Terminating"
 				);
 		
 		List<String> failed_status_list = Arrays.asList("FAILED TO VALIDATE ASSESSMENT DATA",
 				"FAILED TO START",
 				"Finished with Errors",
-				"Finished with Errors - Retry");
+				"Finished with Errors - Retry",
+				"Terminated");
 		
 		List<String> success_status_list = Arrays.asList("Finished");
 		

@@ -1,0 +1,173 @@
+#!/bin/sh
+
+p=`basename $0`
+
+##
+## SWAMP CLI/API Test Harness Setup Tool
+##
+## Copyright 2017	Author:	Bolo -- Josef T. Burger
+##
+
+## Run the SWAMP-CLI tests, after
+## downloading the required components (if not already present)
+## 	jython
+## 	test_packages.zip
+## Needs to be run from the root directory of the workspace.
+
+wget_opts="-nv"
+setup_errs=false
+
+## test harness
+harness=./scripts/test.sh
+
+## always download the components, even if present
+force_dl=true
+force_dl=false
+
+## always re-unpack the test packages
+force_up=true
+force_up=false
+
+## try to make sure we are in the right place, not perfect
+## but prevents downloading things in the wrong place.
+if [ ! -d scripts  -o  ! -x $harness ] ; then
+	echo $p: this does not look like the workspace root 1>&2
+	echo $p: scripts dir and $harness missing 1>&2
+	exit 1
+fi
+
+jver=2.7.0		## jython version
+jython=jython-standalone-${jver}.jar 
+
+if [ ! -s $jython  -o  $force_dl = true ] ; then
+	echo $p: downloading $jython
+	wget $wget_opts -O $jython "http://search.maven.org/remotecontent?filepath=org/python/jython-standalone/${jver}/jython-standalone-${jver}.jar"
+	s=$?
+	if [ $s -ne 0 ] ; then
+		echo $p: status=$s: wget $jython fails 1>&2
+		setup_errs=true
+	fi
+
+fi
+
+## plugin / packages version to download from
+pver=1.3.3
+pkgs=test_packages.zip
+
+if [ ! -s $pkgs  -o  $force_dl = true ] ; then
+	echo $p: downloading $pkgs
+	wget $wget_opts -O $pkgs "https://github.com/mirswamp/java-cli/releases/download/releases%2F${pver}/test_packages.zip"
+	s=$?
+	if [ $s -ne 0 ] ; then
+		echo $p: status=$s: wget $pkgs fails 1>&2
+		setup_errs=true
+	fi
+fi
+
+
+res=scripts/resources
+mkdir -p $res || exit 1
+
+if [ ! -d $res/test_packages  -o  $force_up = true ] ; then
+	echo $p: unpacking test packages
+	unzip -q -d $res $pkgs
+	s=$?
+	if [ $s -ne 0 ] ; then
+		echo $p: status=$s: unzip $pkgs fails 1>&2
+		setup_errs=true
+	fi
+fi
+
+## XXX would be nice to use any swamp credentials
+swamp_creds="$res/userinfo.properties"
+
+if [ ! -s $swamp_creds ] ; then
+	echo $p: $swamp_creds: missing or empty 1>&2
+	setup_errs=true
+else
+	mode=`ls -l $swamp_creds | cut -d' ' -f1`
+	g=`expr "$mode" : '....\(r..\)...'`
+	o=`expr "$mode" : '.......\(r..\)'`
+	# echo mode $mode g $g o $o
+	if [ -n "$g"   -o   -n "$o" ] ; then
+		echo $p: $swamp_creds: XXX readable by others 1>&2
+		setup_errs=true
+	fi
+	if grep -q '^username=..*' $swamp_creds ; then
+		:
+	else
+		echo $p: $swamp_creds: username missing 1>&2
+		setup_errs=true
+	fi
+	if grep -q '^password=..*' $swamp_creds ; then
+		:
+	else
+		echo $p: $swamp_creds: password missing 1>&2
+		setup_errs=true
+	fi
+	if grep -q '^project=..*' $swamp_creds ; then
+		:
+	else
+		echo $p: $swamp_creds: project missing 1>&2
+		setup_errs=true
+	fi
+fi
+
+
+if [ ! -x $harness ] ; then
+	echo $p: $harness: missing / non-executable 1>&2
+	setup_errs=true
+fi
+
+pver=$(mvn -Dexec.executable='echo' -Dexec.args='${project.version}' --non-recursive exec:exec -q)
+## make sure the cli is available, check multiple names
+cli=
+check="
+	target/java-cli-$pver-jar-with-dependencies.jar
+	target/java-cli-jar-with-dependencies.jar
+	target/swamp-cli-jar-with-dependencies.jar
+"
+for t in $check ; do
+	if [ -s $t ] ; then
+		cli="$t"
+		break
+	fi
+done
+if [ -z "$cli" ] ; then
+	echo $p: swamp java cli not found 1>&2
+	setup_errs=true
+fi
+
+
+if $setup_errs ; then
+	echo $p: setup errors detected, aborting 1>&2
+	exit 1
+fi
+
+## absolute paths on JARS, please
+
+export JYTHON_JAR="`pwd`/$jython"
+export SWAMP_CLI_JAR="`pwd`/$cli"
+
+## try to log output nicely
+script=
+if t=`which script` ; then
+	script="$t"
+fi
+
+test_log=cli-test-log
+
+echo ==== RUNNING TEST HARNESS $harness ====
+if [ -n "$script" ] ; then
+	$script -c $harness $test_log
+else
+	$harness 2>&1 | tee $test_log
+fi
+s=$?
+if [ $s -ne 0 ] ; then
+	echo $p: status=$s: test-harness exited abnormally 1>&2
+	echo $p: $test_log: test log 1>&2
+	exit $s
+fi
+
+echo $p: $test_log: test log 1>&2

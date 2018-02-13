@@ -71,14 +71,6 @@ public class SWAMPCommands extends ConfigurableCommandsImpl {
         about();
     }
 
-    /**
-     * This will take a String and append the correct number of blanks on the
-     * left so it is the right width. This is used for making the banner.
-     *
-     * @param x
-     * @param width
-     * @return
-     */
     protected String padLineWithBlanks(String x, int width) {
         String xx = StringUtils.rightPad(x, width, " ");
         return xx;
