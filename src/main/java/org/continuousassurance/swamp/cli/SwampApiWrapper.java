@@ -1469,6 +1469,53 @@ public class SwampApiWrapper {
 	}
 
 	/**
+	 * Run a single assessment, on a package with a tool on a platform
+	 *  
+	 *  
+	 *  @param pkg: package version object
+	 *  @param tool: tool object
+	 *  @param project: project object
+	 *  @param platform: platform object
+	 *  
+	 *  @return assessment run object
+	 *  
+	 */
+	public AssessmentRun runAssessment(PackageVersion pkg, ToolVersion tool_version, Project project, PlatformVersion platform) {
+		AssessmentRun arun = handlerFactory.getAssessmentHandler().create(project, pkg, platform, tool_version);
+		if (handlerFactory.getRunRequestHandler().submitOneTimeRequest(arun, true)) {
+			return arun;
+		}else{
+			return null;
+		}
+	}
+
+	/**
+	 * Run a single assessment, on a package with a tool on a platform
+	 *  
+	 *  
+	 *  @param pkg: package version object
+	 *  @param tool: tool object
+	 *  @param project: project object
+	 *  @param platform: platform object
+	 *  
+	 *  @return assessment run object
+	 *  
+	 */
+	public List<AssessmentRun> runAssessment(PackageVersion pkg, ToolVersion tool_version, Project project, 
+			List<PlatformVersion> platform_versions) {
+		
+		List<AssessmentRun> arun_list = new ArrayList<AssessmentRun>();
+		for (PlatformVersion platform_version : platform_versions) {
+			arun_list.add(handlerFactory.getAssessmentHandler().create(project, pkg, platform_version, tool_version));
+		}
+		if (handlerFactory.getRunRequestHandler().submitOneTimeRequest(arun_list, true)) {
+			return arun_list;
+		}else{
+			return null;
+		}
+	}
+
+	/**
 	 * Run multiple assessments, on a package with a set of tools on a set of platforms
 	 *  
 	 *  
@@ -1480,12 +1527,12 @@ public class SwampApiWrapper {
 	 *  @return list of assessment run objects
 	 *  
 	 */
-	protected List<AssessmentRun> runAssessment(PackageVersion pkg, List<Tool> tools, 
+	protected List<AssessmentRun> runAssessment(PackageVersion pkg_ver, List<Tool> tools, 
 			Project project, List<PlatformVersion> platform_versions) {
 		List<AssessmentRun> arun_list = new ArrayList<AssessmentRun>();
 		for (PlatformVersion platform_version : platform_versions) {
 			for (Tool tool : tools) {
-				arun_list.add(handlerFactory.getAssessmentHandler().create(project, pkg, platform_version, tool));
+				arun_list.add(handlerFactory.getAssessmentHandler().create(project, pkg_ver, platform_version, tool));
 			}
 		}
 		if (handlerFactory.getRunRequestHandler().submitOneTimeRequest(arun_list, true)){
@@ -1495,7 +1542,7 @@ public class SwampApiWrapper {
 		}
 
 	}
-
+	
 	/**
 	 * Get all assessment results objects in a project
 	 *  

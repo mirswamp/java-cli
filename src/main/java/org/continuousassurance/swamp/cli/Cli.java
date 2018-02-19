@@ -646,11 +646,15 @@ public class Cli {
 			
 			return cred_map;
 		}else if (main_options.hasOption("L")){
-			if (!main_options.hasOption("P")){
-				throw new CommandLineOptionException(optionMissingStr(options.getOption("P")));
-			}
-			cred_map.put("project-uuid", main_options.getOptionValue("P"));
-			cred_map.put("list-assess", "list-assess");
+			CommandLine parsed_options = new DefaultParser().parse(list_options, args.toArray(new String[0]));
+			cred_map.put("sub-command", "list");
+			cred_map.put("quiet", parsed_options.hasOption("Q"));
+			cred_map.put("verbose", parsed_options.hasOption("V"));
+			cred_map.put("package", parsed_options.getOptionValue("K"));
+			cred_map.put("project", main_options.getOptionValue("P"));
+			cred_map.put("tool", parsed_options.getOptionValue("T"));
+			cred_map.put("platform", parsed_options.getOptionValue("F"));			
+
 			return cred_map;
 		}else {
 			if (!main_options.hasOption("P")){
@@ -990,10 +994,11 @@ public class Cli {
 		}
 	}
 
-	public void runAssessments(String pkg, String pkg_ver_num, List<String> tool, String tool_ver_num, List<String> platform) {
+	public void runAssessments(String pkg, String pkg_ver_num, List<String> tool_names,
+			String tool_ver_num, List<String> platforms) {
 		
-		String project_uuid = null;
-		String pkg_ver_uuid = null;
+		Project target_project = null;
+		PackageVersion target_pkg = null;
 			
 		for (Project project : api_wrapper.getProjectsList()) {
 			if (!Cli.isUuid(pkg)) {
@@ -1007,28 +1012,28 @@ public class Cli {
 									return (i1.getVersionString().compareTo(i2.getVersionString()));
 								}
 							});
-							pkg_ver_uuid = pkg_vers.get(pkg_vers.size()-1).getIdentifierString();
+							target_pkg = pkg_vers.get(pkg_vers.size()-1);
 						}else {
 							for (PackageVersion pkg_ver : pkg_vers) {
 								if (pkg_ver.getVersionString().equals(pkg_ver_num)) {
-									pkg_ver_uuid = pkg_ver.getIdentifierString();
+									target_pkg = pkg_ver;
 									break;
 								}
 							}
 						}
-						project_uuid = project.getIdentifierString();
+						target_project = project;
 					}
 				}
 			}else {
 				for (PackageVersion pkg_ver : api_wrapper.getPackageVersionsList(project.getIdentifierString())) {
 					if (pkg_ver.getIdentifierString().equals(pkg)) {
-						pkg_ver_uuid = pkg_ver.getIdentifierString();
-						project_uuid = project.getIdentifierString();
+						target_pkg = pkg_ver;
+						target_project = project;
 						break;
 					}
 				}
 
-				if (pkg_ver_uuid  == null) {
+				if (target_pkg  == null) {
 					for (PackageThing pkg_thing : api_wrapper.getPackagesList(project.getIdentifierString())) {
 						if (pkg_thing.getIdentifierString().equals(pkg)) {
 							List<PackageVersion> pkg_vers = api_wrapper.getPackageVersions(pkg_thing);
@@ -1039,19 +1044,19 @@ public class Cli {
 							});
 							
 							if (pkg_ver_num == null) {
-								pkg_ver_uuid = pkg_vers.get(pkg_vers.size()-1).getIdentifierString();
-								project_uuid = project.getIdentifierString();
+								target_pkg = pkg_vers.get(pkg_vers.size()-1);
+								target_project = project;
 								break;
 							}else {
 								for (PackageVersion pkg_ver : pkg_vers) {
 									if (pkg_ver.getVersionString().equals(pkg_ver_num)) {
-										pkg_ver_uuid = pkg_ver.getIdentifierString();
-										project_uuid = project.getIdentifierString();
+										target_pkg = pkg_ver;
+										target_project = project;
 										break;										
 									}
 								}
 								
-								if (pkg_ver_uuid != null && project_uuid != null) {
+								if (target_pkg != null && target_project != null) {
 									break;
 								}
 							}
@@ -1061,17 +1066,108 @@ public class Cli {
 			}
 		}
 		
+		if (target_pkg == null && target_project == null) {
+			//TODO: throw 
+		}
 		
-		System.out.println(project_uuid + pkg_ver_uuid);
-//		List<String> runAssessment(pkg_ver_uuid,
-//				List<String> tool_uuid_list,
-//				String project_uuid,
-//				List<String> platform_uuid_list);
+		List<PlatformVersion> valid_platforms = new ArrayList<PlatformVersion>();
+		if (platforms != null && target_pkg.getPackageThing().getType().equalsIgnoreCase("C/C++")) {
+			for (PlatformVersion plat_ver: api_wrapper.getAllPlatformVersionsList()) {
+				if (platforms.contains(plat_ver.getFullName())){
+					valid_platforms.add(plat_ver);
+				}
+			}
+		}
+		
+		//Use default platform
+		if (valid_platforms.size() == 0) {
+			valid_platforms.add(api_wrapper.getDefaultPlatformVersion(target_pkg.getPackageThing().getType()));
+		}
+		
+		if (tool_names.size() > 1) {
+			// tool_ver_num will be ignored
+			List<Tool> valid_tools = new ArrayList<Tool>();
+			for (String tool_name: tool_names) {
+				Tool tool = api_wrapper.getToolFromName(tool_name, target_project.getIdentifierString());
+				if (tool != null && tool.getSupportedPkgTypes().contains(target_pkg.getPackageThing().getType())) {
+					valid_tools.add(tool);
+				}else {
+					//TODO: throw
+				}
+			}
+			api_wrapper.runAssessment(target_pkg, valid_tools, target_project, valid_platforms);
+		}else {
+			Tool tool = api_wrapper.getToolFromName(tool_names.get(0), target_project.getIdentifierString());
+			List<ToolVersion> valid_tools = new ArrayList<ToolVersion>();
+			for (ToolVersion tool_version :  api_wrapper.getToolVersions(tool)) {
+				if (tool_version.getVersion().equalsIgnoreCase(tool_ver_num)) {
+					valid_tools.add(tool_version);
+				}
+			}
+			api_wrapper.runAssessment(target_pkg, valid_tools.get(0), target_project, valid_platforms);
+		}		
+	}
+	
+	public void listAssessments(String project_name, 
+			String package_name, 
+			String tool_name,
+			String plat_name,
+			boolean quiet, 
+			boolean verbose) {
+
+		List<AssessmentRun> all_assessments = new ArrayList<AssessmentRun>();
+
+		if (project_name != null) {
+			all_assessments.addAll(api_wrapper.getAllAssessments(api_wrapper.getProjectFromName(project_name).getIdentifierString()));
+		}else {
+			for (Project project : api_wrapper.getProjectsList()) {
+				all_assessments.addAll(api_wrapper.getAllAssessments(project.getIdentifierString()));
+			}
+		}
+
+		if (verbose) {
+			System.out.printf("%-37s %-25s %-25s %-25s %-25s\n",
+					"UUID", "Package", "Version", "Tool","Platform");
+		}else if (!quiet) {
+			System.out.printf("%-25s %-25s %-25s %-25s\n",
+					"Package", "Version", "Tool","Platform");
+		}		
+
+		for (AssessmentRun arun : all_assessments) {
+			if (package_name != null && !arun.getPackageName().equals(package_name)) {
+				continue;
+			}
+			
+			if (tool_name != null && !arun.getToolName().equals(tool_name)) {
+				continue;
+			}
+			
+			if (plat_name != null && !arun.getPlatformName().equals(plat_name)) {
+				continue;
+			}
+			
+			if (verbose) {
+				System.out.printf("%-37s %-25s %-25s %-25s %s-%s\n",
+						arun.getIdentifierString(),
+						arun.getPackageName(),
+						arun.getPackageVersion(),
+						arun.getToolName(),
+						arun.getPlatformName(),
+						arun.getPlatformVersion());
+			}else {
+				System.out.printf("%-25s %-25s %-25s %s-%s\n",
+						arun.getPackageName(),
+						arun.getPackageVersion(),
+						arun.getToolName(),
+						arun.getPlatformName(),
+						arun.getPlatformVersion());
+			}
+		}
 	}
 	
 	public void assessmentHandler(HashMap<String, Object> opt_map) {
 		
-		if (((String)opt_map.get("sub-command")).equalsIgnoreCase("run")){
+		if (((String)opt_map.get("sub-command")).equalsIgnoreCase("run")) {
 
 			runAssessments((String)opt_map.get("package"), 
 						(String)opt_map.get("pkg-version"),
@@ -1079,66 +1175,13 @@ public class Cli {
 						(String)opt_map.get("tool-version"), 
 						(List<String>)opt_map.get("platform"));
 			
-		}
-
-	}
-	
-	public void assessmentHandlerOld(HashMap<String, Object> opt_map) {
-		
-		if (((String)opt_map.get("sub-command")).equalsIgnoreCase("run")){
-
-			//For all tools
-			for (String tool_uuid: (List<String>)opt_map.get("tool-uuid")) {
-				if (tool_uuid.equalsIgnoreCase("all")) {
-					PackageVersion pkg_ver= api_wrapper.getPackageVersion((String)opt_map.get("pkg-uuid"), 
-							(String)opt_map.get("project-uuid"));
-
-					List<String> all_tools = new ArrayList<String>();
-					for(Tool tool : api_wrapper.getTools(pkg_ver.getPackageThing().getType(), 
-							(String)opt_map.get("project-uuid"))){	
-						all_tools.add(tool.getIdentifierString());
-					}
-					opt_map.put("tool-uuid", all_tools);
-				}
-			}
-
-			//For all platforms
-			if(opt_map.containsKey("platform-uuid")) { 
-				for (String platform: (List<String>)opt_map.get("platform-uuid")) {
-					if (platform.equalsIgnoreCase("all")) {
-
-						Set<PlatformVersion> plat_set = new HashSet<PlatformVersion>();
-
-						for (String tool_uuid: (List<String>)opt_map.get("tool-uuid")) {
-							plat_set.addAll(api_wrapper.getSupportedPlatformVersions(tool_uuid, 
-									(String)opt_map.get("project-uuid")));
-						}
-
-						//plat uuids
-						List<String> all_plats = new ArrayList<String>();
-						for (PlatformVersion platform_version : plat_set) {
-							all_plats.add(platform_version.getIdentifierString());
-						}
-						opt_map.put("platform-uuid", all_plats);
-					}
-				}
-			}
-
-			@SuppressWarnings({"unchecked"})
-			List<String> assess_uuids = api_wrapper.runAssessment((String)opt_map.get("pkg-uuid"), 
-					removeDuplicates((List<String>)opt_map.get("tool-uuid")),
-					(String)opt_map.get("project-uuid"), 
-					removeDuplicates((List<String>)opt_map.get("platform-uuid")));
-
-			if ((boolean)opt_map.get("quiet") == false) {
-				System.out.println("Assessment UUIDs");
-			}
-			for (String uuid: assess_uuids) {
-				System.out.println(uuid);
-			}
-		}
-		if (opt_map.containsKey("list-assess")){
-			printAssessments((String)opt_map.get("project-uuid"), (boolean)opt_map.get("quiet"));
+		}else if (((String)opt_map.get("sub-command")).equalsIgnoreCase("list")) {
+			listAssessments((String)opt_map.get("project"), 
+							(String)opt_map.get("package"), 
+							(String)opt_map.get("tool"),
+							(String)opt_map.get("platform"),
+							(boolean)opt_map.get("quiet"),
+							(boolean)opt_map.get("verbose"));
 		}
 
 	}
