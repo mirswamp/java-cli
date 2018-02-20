@@ -4,10 +4,10 @@
 
   <groupId>org.continuousassurance.swamp</groupId>
   <artifactId>java-cli</artifactId>
-  <version>1.3.6</version>
+  <version>1.3.7-SNAPSHOT</version>
   <packaging>jar</packaging>
 
-  <name>java-api-client</name>
+  <name>java-cli</name>
   <url>http://maven.apache.org</url>
 
   <properties>
