@@ -3,14 +3,14 @@ package org.continuousassurance.swamp.client.commands;
 import edu.uiuc.ncsa.security.core.Identifiable;
 import edu.uiuc.ncsa.security.core.Store;
 import edu.uiuc.ncsa.security.core.util.MyLoggingFacade;
-import edu.uiuc.ncsa.security.util.cli.StoreCommands;
 import org.continuousassurance.swamp.api.PackageThing;
+import org.continuousassurance.swamp.api.PackageVersion;
 
 /**
  * <p>Created by Jeff Gaynor<br>
  * on 4/19/16 at  11:06 AM
  */
-public class PackageCommands extends StoreCommands {
+public class PackageCommands extends SWAMPStoreCommands {
     public PackageCommands(MyLoggingFacade logger, String defaultIndent, Store store) {
         super(logger, defaultIndent, store);
     }
@@ -50,16 +50,25 @@ public class PackageCommands extends StoreCommands {
     @Override
     protected String format(Identifiable identifiable) {
         PackageThing p = (PackageThing) identifiable;
-        String rc = p.getName() + ", " + p.getDescription() + ", " + p.getIdentifierString();
+        String rc = p.getName() + ", " + p.getDescription() + " (uid" + ATTRIBUTE_DELIMITER + p.getIdentifierString() + ")";
         return rc;
     }
 
     @Override
     protected void longFormat(Identifiable identifiable) {
         PackageThing p = (PackageThing) identifiable;
-        say("Package name = \"" + p.getName() + "\"");
-        sayi("file name=\"" + p.getFilename() + "\"");
-        sayi("uuid=" + p.getUUIDString());
-        sayi("description=" + p.getDescription());
+        printAttribute("package name", p.getName());
+        if (p.getFilename() != null) {
+            printAttributei("file name", p.getFilename());
+        }
+        printAttributei("uid", p.getUUIDString());
+        printAttributei("description", p.getDescription(), true);
+        if (p.getVersions() == null || p.getVersions().isEmpty()) {
+            sayi("no versions");
+        } else {
+            for (PackageVersion x : p.getVersions()) {
+                sayi("  version" + ATTRIBUTE_DELIMITER + x.getFilename() + ", uid" + ATTRIBUTE_DELIMITER + x.getIdentifierString());
+            }
+        }
     }
 }

@@ -1,7 +1,5 @@
 package org.continuousassurance.swamp.client;
 
-import org.continuousassurance.swamp.client.commands.PackageCommands;
-import org.continuousassurance.swamp.client.commands.ProjectCommands;
 import edu.uiuc.ncsa.security.core.util.AbstractEnvironment;
 import edu.uiuc.ncsa.security.core.util.ConfigurationLoader;
 import edu.uiuc.ncsa.security.core.util.MyLoggingFacade;
@@ -9,9 +7,13 @@ import edu.uiuc.ncsa.security.util.cli.CLIDriver;
 import edu.uiuc.ncsa.security.util.cli.CommonCommands;
 import edu.uiuc.ncsa.security.util.cli.ConfigurableCommandsImpl;
 import edu.uiuc.ncsa.security.util.cli.InputLine;
+import org.apache.commons.lang.StringUtils;
+import org.continuousassurance.swamp.client.commands.PackageCommands;
+import org.continuousassurance.swamp.client.commands.PlatformCommands;
+import org.continuousassurance.swamp.client.commands.ProjectCommands;
+import org.continuousassurance.swamp.client.commands.ToolCommands;
 import org.continuousassurance.swamp.session.util.SWAMPConfigurationLoader;
 import org.continuousassurance.swamp.session.util.SWAMPServiceEnvironment;
-import org.apache.commons.lang.StringUtils;
 
 /**
  * <p>Created by Jeff Gaynor<br>
@@ -20,6 +22,8 @@ import org.apache.commons.lang.StringUtils;
 public class SWAMPCommands extends ConfigurableCommandsImpl {
     public static final String PROJECTS = "projects";
     public static final String PACKAGES = "packages";
+    public static final String PLATFORMS = "platforms";
+    public static final String TOOLS = "tools";
     public static final String VERSIONS = "versions";
 
     public SWAMPCommands(MyLoggingFacade logger) {
@@ -42,30 +46,19 @@ public class SWAMPCommands extends ConfigurableCommandsImpl {
     }
 
     public static void main(String[] args) {
+        SWAMPCommands swampCommands = new SWAMPCommands(null);
         try {
-            SWAMPCommands swampCommands = new SWAMPCommands(null);
             swampCommands.start(args);
-            //SWAMPServiceEnvironment sse = (SWAMPServiceEnvironment) swampCommands.getEnvironment();
-            /**
-             * Set up all the handlers for this CLI.
-             */
-       /*     try {
-                HandlerFactoryUtil.createHandlerFactory(sse.getRwsAddress().toString(),
-                        sse.getCsaAddress().toString(),
-                        sse.getHeaders().get(SWAMPConfigTags.ORIGIN_HEADER_TAG),
-                        sse.getHeaders().get(SWAMPConfigTags.REFERER_HEADER_TAG),
-                        sse.getHeaders().get(SWAMPConfigTags.HOST_HEADER_TAG),
-                        sse.getUsername(),
-                        sse.getPassword());
-                sse.getMyLogger().info("Successful logon");
-            } catch (Throwable t) {
-                System.out.println("There was an error. Check the logs at \"" + swampCommands.getLogfileName() + "\" for more information.");
-                sse.getMyLogger().error("Logon failed!", t);
-            }*/
+        } catch (Throwable t) {
+            System.out.println("Unable to start SWAMP session:" + t.getMessage());
+            return;
+        }
+        try {
+
             CLIDriver cli = new CLIDriver(swampCommands);
             cli.start();
         } catch (Throwable t) {
-            t.printStackTrace();
+            swampCommands.getMyLogger().error("Error executing.", t);
         }
     }
 
@@ -108,6 +101,13 @@ public class SWAMPCommands extends ConfigurableCommandsImpl {
             commands = getPackageCommands();
         }
 
+        if (inputLine.hasArg(TOOLS)) {
+            commands = getToolCommands();
+        }
+
+        if (inputLine.hasArg(PLATFORMS)) {
+            commands = getPlatformCommands();
+        }
         if (commands != null) {
             CLIDriver cli = new CLIDriver(commands);
             cli.start();
@@ -122,13 +122,24 @@ public class SWAMPCommands extends ConfigurableCommandsImpl {
     }
 
     public CommonCommands getProjectCommands() throws Exception {
-        ProjectCommands projectCommands = new ProjectCommands(getMyLogger(), ((SWAMPServiceEnvironment) getEnvironment()).getProjectStore());
+        ProjectCommands projectCommands = new ProjectCommands(getMyLogger(),
+                ((SWAMPServiceEnvironment) getEnvironment()).getProjectStore());
         return projectCommands;
     }
 
     public CommonCommands getPackageCommands() throws Exception {
         PackageCommands packageCommands = new PackageCommands(getMyLogger(), ((SWAMPServiceEnvironment) getEnvironment()).getPackageStore());
         return packageCommands;
+    }
+
+    public CommonCommands getToolCommands() throws Exception {
+        ToolCommands toolCommands = new ToolCommands(getMyLogger(), ((SWAMPServiceEnvironment) getEnvironment()).getToolStore());
+        return toolCommands;
+    }
+
+    public CommonCommands getPlatformCommands() throws Exception {
+        PlatformCommands platformCommands = new PlatformCommands(getMyLogger(), ((SWAMPServiceEnvironment) getEnvironment()).getPlatformStore());
+        return platformCommands;
     }
 
     @Override
@@ -142,5 +153,7 @@ public class SWAMPCommands extends ConfigurableCommandsImpl {
         say("\nNote that you need to correctly specify the server addresses. If this fails you will not get the corresponding");
         say("prompt for that component.");
     }
+
+
 }
 

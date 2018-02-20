@@ -19,21 +19,19 @@
 package org.continuousassurance.swamp.cli;
 
 import edu.uiuc.ncsa.security.util.ssl.SSLConfiguration;
+import net.sf.json.JSONException;
+import org.apache.http.client.CookieStore;
 import org.continuousassurance.swamp.api.*;
+import org.continuousassurance.swamp.cli.exceptions.*;
 import org.continuousassurance.swamp.session.Session;
 import org.continuousassurance.swamp.session.handlers.HandlerFactory;
 import org.continuousassurance.swamp.session.handlers.PackageHandler;
 import org.continuousassurance.swamp.session.util.ConversionMapImpl;
 import org.continuousassurance.swamp.session.util.SWAMPConfigurationLoader;
 import org.continuousassurance.swamp.util.HandlerFactoryUtil;
-import net.sf.json.JSONException;
-import org.apache.http.client.CookieStore;
-import org.continuousassurance.swamp.cli.exceptions.*;
-import org.continuousassurance.swamp.cli.util.AssessmentStatus;
 
 import java.io.*;
 import java.util.*;
-import java.util.Map.Entry;
 
 /**
  * @author      Vamshi Basupalli vamshi@cs.wisc.edu
