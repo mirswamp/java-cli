@@ -786,6 +786,29 @@ class TestAssess(TestSwampApiWrapper):
                                                          None)
         self.assertIsNotNone(arun_uuid)
 
+    def test_get_run_assess16(self):
+
+        pkg_conf = osp.join(osp.dirname(__file__),
+                            'resources/test_packages/c_hashmap-2013-01-08/package.conf')
+        pkg_archive = osp.join(osp.dirname(__file__),
+                               'resources/test_packages/c_hashmap-2013-01-08/c_hashmap-master.zip')
+
+        pkg_uuid = TestAssess.API_WRAPPER.uploadPackage(pkg_conf,
+                                                        pkg_archive,
+                                                        TestSwampApiWrapper.PROJECT,
+                                                        dict(),
+                                                        True)
+        self.assertIsNotNone(pkg_uuid)
+        TestAssess.PKG_LIST.append(pkg_uuid)
+
+        tool = TestAssess.API_WRAPPER.getToolFromName('Clang Static Analyzer',
+                                                      TestSwampApiWrapper.PROJECT)
+        arun_uuid = TestAssess.API_WRAPPER.runAssessment(pkg_uuid,
+                                                         [tool.getIdentifierString()],
+                                                         TestSwampApiWrapper.PROJECT,
+                                                         None)
+        self.assertIsNotNone(arun_uuid)
+
 
 class TestReporting(TestSwampApiWrapper):
 

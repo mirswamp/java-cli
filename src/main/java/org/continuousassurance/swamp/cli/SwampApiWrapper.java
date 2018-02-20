@@ -312,30 +312,34 @@ public class SwampApiWrapper {
 	 */
 	protected ConversionMapImpl getPkgConfMap(Properties pkg_conf) {
 		ConversionMapImpl map = new ConversionMapImpl();
-		map.put("version_string", pkg_conf.getProperty("package-version"));
-		map.put("source_path", pkg_conf.getProperty("package-dir"));
+		map.put("android_sdk_target", pkg_conf.getProperty("android-sdk-target", null));
+		map.put("android_lint_target", pkg_conf.getProperty("android-lint-target", null));
+		map.put("android_maven_plugin", pkg_conf.getProperty("android-maven-plugin", null));
+		map.put("android_redo_build", pkg_conf.getProperty("android-redo-build", "false"));
+		
+		map.put("ant-version", pkg_conf.getProperty("ant-version", null));
 
-		map.put("config_dir", pkg_conf.getProperty("config-dir", null));
+		map.put("build_cmd", pkg_conf.getProperty("build-cmd", null));
+		map.put("build_dir", pkg_conf.getProperty("build-dir", null));
+		map.put("build_file", pkg_conf.getProperty("build-file", null));
+		map.put("build_opt", pkg_conf.getProperty("build-opt", null));
+		map.put("build_system", pkg_conf.getProperty("build-sys", null));
+		map.put("build_target", pkg_conf.getProperty("build-target", null));
+		
 		map.put("config_cmd", pkg_conf.getProperty("config-cmd", null));
 		map.put("config_opt", pkg_conf.getProperty("config-opt", null));
+		map.put("config_dir", pkg_conf.getProperty("config-dir", null));
 
-		map.put("build_dir", pkg_conf.getProperty("build-dir", null));
-		map.put("build_system", pkg_conf.getProperty("build-sys", null));
-		map.put("build_file", pkg_conf.getProperty("build-file", null));
-		map.put("build_target", pkg_conf.getProperty("build-target", null));
-		map.put("build_opt", pkg_conf.getProperty("build-opt", null));
+		map.put("use_gradle_wrapper", pkg_conf.getProperty("gradle-wrapper", "false"));
+		map.put("maven_version", pkg_conf.getProperty("maven_version", null));
+		
+		map.put("version_string", pkg_conf.getProperty("package-version"));
+		map.put("source_path", pkg_conf.getProperty("package-dir"));
 
 		map.put("language_version", pkg_conf.getProperty("package-language-version", null));
 		map.put("bytecode_class_path", pkg_conf.getProperty("package-classpath", null));
 		map.put("bytecode_aux_class_path", pkg_conf.getProperty("package-auxclasspath", null));
 		map.put("bytecode_source_path", pkg_conf.getProperty("package-srcdir", null));
-
-		map.put("use_gradle_wrapper", pkg_conf.getProperty("gradle-wrapper", "false"));
-		map.put("android_sdk_target", pkg_conf.getProperty("android-sdk-target", null));
-		map.put("android_lint_target", pkg_conf.getProperty("android-lint-target", null));
-		map.put("android_redo_build", pkg_conf.getProperty("android-redo-build", "false"));
-		map.put("android_maven_plugin", pkg_conf.getProperty("android-maven-plugin", null));
-		map.put("maven_version", pkg_conf.getProperty("maven_version", null));
 
 		return map;
 	}
