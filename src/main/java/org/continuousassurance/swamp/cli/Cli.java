@@ -36,6 +36,7 @@ import org.continuousassurance.swamp.cli.util.AssessmentStatus;
 
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -723,7 +724,7 @@ public class Cli {
 		return opt_map;
 	}
 
-	public void loginHandler(HashMap<String, Object> opt_map) {
+	public void loginHandler(HashMap<String, Object> opt_map) throws MalformedURLException {
 		String host_name = (String)opt_map.get("swamp-host");
 
 		String user_uuid = api_wrapper.login((String)opt_map.get("username"), 

@@ -27,10 +27,13 @@ import org.continuousassurance.swamp.session.Session;
 import org.continuousassurance.swamp.session.handlers.HandlerFactory;
 import org.continuousassurance.swamp.session.handlers.PackageHandler;
 import org.continuousassurance.swamp.session.util.ConversionMapImpl;
+import org.continuousassurance.swamp.session.util.Proxy;
 import org.continuousassurance.swamp.session.util.SWAMPConfigurationLoader;
 import org.continuousassurance.swamp.util.HandlerFactoryUtil;
 
 import java.io.*;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.*;
 
 /**
@@ -128,9 +131,9 @@ public class SwampApiWrapper {
 		sslConfig.setTlsVersion("TLSv1.2");
 	}
 
-	protected final void setHost(String host_name) {
+	protected final void setHost(String host_name) throws MalformedURLException {
 
-		String web_server = SWAMPConfigurationLoader.getWebServiceURL(host_name, sslConfig);
+		String web_server = SWAMPConfigurationLoader.getWebServiceURL(host_name, sslConfig, getProxy());
 		if (web_server == null) {
 			web_server = host_name;
 		}
@@ -350,14 +353,45 @@ public class SwampApiWrapper {
 	 * @param host_name: SWAMP Instance's host name
 	 *   
 	 * @return SWAMP user-id
+	 * @throws MalformedURLException 
 	 */
-	public String login(String user_name, String password, String host_name) {
+	public String login(String user_name, String password, String host_name) throws MalformedURLException {
 		setHost(host_name);
 		return login(user_name, password);
 	}
 
-	protected String login(String user_name, String password) {
+	protected Proxy getProxy() throws MalformedURLException {
+		
+		String env_https_proxy = System.getenv("https_proxy");
+		String env_http_proxy = System.getenv("http_proxy");
+		
+		String https_proxy_host = System.getProperty("https.proxyHost", null);
+		String https_proxy_port = System.getProperty("https.proxyPort", null);
+		
+		String http_proxy_host = System.getProperty("http.proxyHost", null);
+		String http_proxy_port = System.getProperty("http.proxyPort", null);
 
+		Proxy proxy = null;
+		
+		if (env_https_proxy != null) {
+			URL url = new URL(env_https_proxy);
+			proxy = new Proxy(url.getPort(), url.getHost(), url.getProtocol(), true);
+		}else if (env_http_proxy != null){ 
+			URL url = new URL(env_http_proxy);
+			proxy = new Proxy(url.getPort(), url.getHost(), url.getProtocol(), true);
+		}else if (https_proxy_host != null && https_proxy_port != null) {
+			proxy = new Proxy(Integer.parseInt(https_proxy_port), https_proxy_host, "https", true);
+		}else if (http_proxy_host != null && http_proxy_port != null){
+			proxy = new Proxy(Integer.parseInt(http_proxy_port), http_proxy_host, "http", true);
+		}else {
+			proxy = new Proxy();
+		}
+		
+		return proxy;
+	}
+	
+	protected String login(String user_name, String password) throws MalformedURLException {
+		
 		handlerFactory = HandlerFactoryUtil.createHandlerFactory(getRwsAddress(),
 				getCsaAddress(),
 				getOriginHeader(),
@@ -365,7 +399,8 @@ public class SwampApiWrapper {
 				getHostHeader(),
 				user_name,
 				password,
-				sslConfig);
+				sslConfig,
+				getProxy());
 
 		if (handlerFactory != null){
 			return handlerFactory.getUserHandler().getCurrentUser().getIdentifierString();
