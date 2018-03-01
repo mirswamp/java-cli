@@ -373,16 +373,29 @@ public class SwampApiWrapper {
 
 		Proxy proxy = null;
 		
-		if (env_https_proxy != null) {
-			URL url = new URL(env_https_proxy);
-			proxy = new Proxy(url.getPort(), url.getHost(), url.getProtocol(), true);
-		}else if (env_http_proxy != null){ 
-			URL url = new URL(env_http_proxy);
-			proxy = new Proxy(url.getPort(), url.getHost(), url.getProtocol(), true);
+		if (env_https_proxy != null || env_http_proxy != null) {
+		    URL url = null;
+		    
+		    if (env_https_proxy != null) {
+		        url = new URL(env_https_proxy);
+		    }else {
+		        url = new URL(env_http_proxy);
+		    }
+			
+		    proxy = new Proxy(url.getPort(), url.getHost(), url.getProtocol(), true);
+			String userinfo = url.getUserInfo();
+			if (userinfo != null) {
+			    proxy.setUsername(userinfo.substring(0, userinfo.indexOf(':')));
+			    proxy.setPassword(userinfo.substring(userinfo.indexOf(':') + 1));
+			}
 		}else if (https_proxy_host != null && https_proxy_port != null) {
 			proxy = new Proxy(Integer.parseInt(https_proxy_port), https_proxy_host, "https", true);
+			proxy.setUsername(System.getProperty("https.proxyUser", null));
+            proxy.setPassword(System.getProperty("http.proxyPassword", null));
 		}else if (http_proxy_host != null && http_proxy_port != null){
 			proxy = new Proxy(Integer.parseInt(http_proxy_port), http_proxy_host, "http", true);
+			proxy.setUsername(System.getProperty("http.proxyUser", null));
+            proxy.setPassword(System.getProperty("http.proxyPassword", null));
 		}else {
 			proxy = new Proxy();
 		}
