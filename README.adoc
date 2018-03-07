@@ -10,13 +10,13 @@ The SWAMP Java CLI is a Java library and a command line interface that provides 
 
 == Installation
 
-From https://github.com/mirswamp/java-cli/releases page, download the latest java-cli-X.Y.Z-with-dependencies.jar archive, where X.Y.Z stands for the latest release. Extract/Unarchive the zip file to get the jar file for the Java CLI. Pre-requisites for running the Java CLI is Java-7 or above. For the rest of this document we will use `java-cli-1.3.5-with-dependencies.jar` as the latest jar file as the reference.
+From https://github.com/mirswamp/java-cli/releases page, download the latest java-cli-X.Y.Z-with-dependencies.jar archive, where X.Y.Z stands for the latest release. Extract/Unarchive the zip file to get the jar file for the Java CLI. Pre-requisites for running the Java CLI is Java-7 or above. For the rest of this document we will use `java-cli-1.4.0-with-dependencies.jar` as the latest jar file as the reference.
 
 
 To check if the `jar` file works run the following command on the terminal:
 ```
 
-java -jar java-cli-1.3.5-with-dependencies.jar
+java -jar java-cli-1.4.0-with-dependencies.jar
 ```
 
 If the above command is successfull, the output will be:
@@ -44,10 +44,10 @@ For information on the <options> for a <sub-command> execute:
 
 SiB instances have self signed SSL/TLS certificates. Java's security model does not allow talking to an unknown server with a self-signed SSL/TLS certificates. Because of this restriction, the self-signed certificate has to be first added the trusted keystore in the local Java installation. The following are the instructions on how to do it:
 
-1. Go to SiB from the web-browser and download the SiB self-signed certificate by following these instruction here:
+. Go to SiB from the web-browser and download the SiB self-signed certificate by following these instruction here:
 https://www.thesslstore.com/blog/how-to-view-ssl-certificate-details-in-chrome-56/
 
-2. Run the folloing commands to add the self-signed certificate to the local Java Installation's keystore:
+. Run the folloing commands to add the self-signed certificate to the local Java Installation's keystore:
 --
 a. Change the present working directory to your Java installtion directory + `jre/lib/security/`.
 +
@@ -68,7 +68,58 @@ c. Add the certificate to the keystore (Assuming here that the self-signed certi
 .................
 --
 
-3) To check if CLI works with SiB, run `login` sub-command, see section <<login>>
+To check if CLI works with SiB, run `login` sub-command, see section <<login>>
+
+=== Using CLI with HTTP Proxy
+
+Connecting to SWAMP via a http proxy server is supported via standard environment variables and java system properties.
+
+==== Setup the environment variables `http_proxy` or `https_proxy`
+--
+Example-1:
+.................
+% export http_proxy=http://squid.cs.wisc.edu:3128
+% java -jar target/java-cli-1.4.0-jar-with-dependencies.jar login -F ./scripts/resources/userinfo.properties
+.................
+
+Example-2:
+.................
+% export http_proxy=http://user1:password1@squid.cs.wisc.edu:3128
+% java -jar target/java-cli-1.4.0-jar-with-dependencies.jar login -F ./scripts/resources/userinfo.properties
+.................
+
+Example-3:
+.................
+% export https_proxy=https://user1:password1@squid.cs.wisc.edu:3128
+% java -jar target/java-cli-1.4.0-jar-with-dependencies.jar login -F ./scripts/resources/userinfo.properties
+.................
+--
+
+==== Using CLI via HTTP proxy with java system properties: `http.proxyHost`, `http.proxyPort`, `http.proxyUser` and `http.proxyPassword`
+--
+Example-1:
+.................
+% java -Dhttp.proxyHost=squid.cs.wisc.edu -Dhttp.proxyPort=3128 -jar target/java-cli-1.4.0-jar-with-dependencies.jar login -F ./scripts/resources/userinfo.properties
+.................
+
+Example-2:
+.................
+% java -Dhttp.proxyHost=squid.cs.wisc.edu -Dhttp.proxyPort=3128 -Dhttp.proxyUser=user1 -Dhttp.proxyPassword=password1 -jar target/java-cli-1.4.0-jar-with-dependencies.jar login -F ./scripts/resources/userinfo.properties
+.................
+--
+
+==== Using CLI via HTTP proxy with java system properties: `https.proxyHost`, `https.proxyPort`, `https.proxyUser`  and `https.proxyPassword`
+--
+Example-1:
+.................
+% java -Dhttps.proxyHost=squid.cs.wisc.edu -Dhttps.proxyPort=3128 -jar target/java-cli-1.4.0-jar-with-dependencies.jar login -F ./scripts/resources/userinfo.properties
+.................
+
+Example-2:
+.................
+% java -Dhttps.proxyHost=squid.cs.wisc.edu -Dhttps.proxyPort=3128 -Dhttps.proxyUser=user1 -Dhttps.proxyPassword=password1 -jar target/java-cli-1.4.0-jar-with-dependencies.jar login -F ./scripts/resources/userinfo.properties
+.................
+--
 
 == Using the CLI
 
@@ -89,7 +140,7 @@ SWAMP Java CLI provides *sub-commands* to perform various operations on SWAMP. A
 | user | Information about the current user
 |=======================================================================
 
-To get help on each sub-command run `java -jar java-cli-1.3.5-with-dependencies.jar <sub-command> --help` or `java -jar java-cli-1.3.5-with-dependencies.jar <sub-command> --H`.
+To get help on each sub-command run `java -jar java-cli-1.4.0-with-dependencies.jar <sub-command> --help` or `java -jar java-cli-1.4.0-with-dependencies.jar <sub-command> --H`.
 
 [[login]]
 === Login
@@ -144,7 +195,7 @@ To get a list of all the projects that user of part of, use `--list` option with
 
 Example:
 ```
-java -jar java-cli-1.3.5-with-dependencies.jar projects --list
+java -jar java-cli-1.4.0-with-dependencies.jar projects --list
 ```
 
 Example for the output of the above command:
@@ -174,7 +225,7 @@ To get a list of all the projects that user of part of, use `--uuid` option with
 
 Example:
 ```
-java -jar java-cli-1.3.5-with-dependencies.jar projects --uuid --name 4plugins
+java -jar java-cli-1.4.0-with-dependencies.jar projects --uuid --name 4plugins
 ```
 
 Example for the output of the above command:
@@ -195,7 +246,7 @@ To get a list of all the platforms that user of part of, use `--list` option wit
 
 Example:
 ```
-java -jar java-cli-1.3.5-with-dependencies.jar platforms --list
+java -jar java-cli-1.4.0-with-dependencies.jar platforms --list
 ```
 
 Example for the output of the above command:
@@ -235,7 +286,7 @@ To get UUID of a platform, use `--uuid` option with the `platforms` sub-command.
 
 Example:
 ```
-java -jar java-cli-1.3.5-with-dependencies.jar platforms --uuid --name ubuntu-16.04-64
+java -jar java-cli-1.4.0-with-dependencies.jar platforms --uuid --name ubuntu-16.04-64
 ```
 
 Example for the output of the above command:
@@ -263,7 +314,7 @@ To get a list of all the `tools` that SWAMP supports, use `--list` option with t
 
 Example:
 ```
-java -jar java-cli-1.3.5-with-dependencies.jar tools --list
+java -jar java-cli-1.4.0-with-dependencies.jar tools --list
 ```
 
 Example for the output of the above command:
@@ -288,7 +339,7 @@ To get a tool's UUID, use `--uuid` option with the `tools` sub-command.
 
 Example:
 ```
-java -jar java-cli-1.3.5-with-dependencies.jar tools --uuid --name PMD
+java -jar java-cli-1.4.0-with-dependencies.jar tools --uuid --name PMD
 ```
 
 Example for the output of the above command:
@@ -322,7 +373,7 @@ The following additional options are required to upload a package:
 
 Example:
 ```
-java -jar java-cli-1.3.5-with-dependencies.jar package --upload --pkg-archive /Users/vamshi/swamp/api-dev/java-cli/scripts/resources/test_packages/railsgoat-9052b4fcf0/railsgoat-9052b4fcf0.zip -pkg-conf /Users/vamshi/swamp/api-dev/java-cli/scripts/resources/test_packages/railsgoat-9052b4fcf0/package.conf --os-deps 'ubuntu-16.04-64=libsqlite3-dev libmysqlclient-dev' --os-deps 'debian-7-64=libsqlite3-dev libmysqlclient-dev' --project-uuid df2e7c15-4d28-4224-b25c-c2570bd91156 --new
+java -jar java-cli-1.4.0-with-dependencies.jar package --upload --pkg-archive /Users/vamshi/swamp/api-dev/java-cli/scripts/resources/test_packages/railsgoat-9052b4fcf0/railsgoat-9052b4fcf0.zip -pkg-conf /Users/vamshi/swamp/api-dev/java-cli/scripts/resources/test_packages/railsgoat-9052b4fcf0/package.conf --os-deps 'ubuntu-16.04-64=libsqlite3-dev libmysqlclient-dev' --os-deps 'debian-7-64=libsqlite3-dev libmysqlclient-dev' --project-uuid df2e7c15-4d28-4224-b25c-c2570bd91156 --new
 ```
 
 If the above command is successfull, the output will be:
@@ -335,7 +386,7 @@ To display the *types of software packages* supported by SWAMP, `--pkg-types` op
 
 Example:
 ```
-java -jar java-cli-1.3.5-with-dependencies.jar package -pkg-types
+java -jar java-cli-1.4.0-with-dependencies.jar package -pkg-types
 ```
 
 Output from the above command:
@@ -405,7 +456,7 @@ To *perform* an assessment, `--run` option is used with `assess` sub-command.
 
 Example:
 ```
-java -jar java-cli-1.3.5-with-dependencies.jar assess --run --pkg-uuid 74029aa1-f6e4-41cc-b1a0-df2116be2cbe --project-uuid df2e7c15-4d28-4224-b25c-c2570bd91156 --tool-uuid 56872C2E-1D78-4DB0-B976-83ACF5424C52 163f2b01-156e-11e3-a239-001a4a81450b
+java -jar java-cli-1.4.0-with-dependencies.jar assess --run --pkg-uuid 74029aa1-f6e4-41cc-b1a0-df2116be2cbe --project-uuid df2e7c15-4d28-4224-b25c-c2570bd91156 --tool-uuid 56872C2E-1D78-4DB0-B976-83ACF5424C52 163f2b01-156e-11e3-a239-001a4a81450b
 ```
 
 Example output of the above command:
@@ -436,7 +487,7 @@ The output of the above sub-command will display (SUCCESS|FAILURE|INPROGRESS). I
 Example:
 
 ```
-java -jar java-cli-1.3.5-with-dependencies.jar status --assess-uuid 96e6e4e0-efce-4216-bff9-b20b30ca2e83 --project-uuid df2e7c15-4d28-4224-b25c-c2570bd91156
+java -jar java-cli-1.4.0-with-dependencies.jar status --assess-uuid 96e6e4e0-efce-4216-bff9-b20b30ca2e83 --project-uuid df2e7c15-4d28-4224-b25c-c2570bd91156
 ```
 
 Example output of the above command:
@@ -461,7 +512,7 @@ SCARF results from the assessment will be stored into SCARF_FILEPATH.
 
 Example:
 ```
-java -jar java-cli-1.3.5-with-dependencies.jar results --results-uuid f4856ee8-b402-11e7-92c3-001a4a814413 --project-uuid df2e7c15-4d28-4224-b25c-c2570bd91156 --file-path $PWD/scarf-results.xml
+java -jar java-cli-1.4.0-with-dependencies.jar results --results-uuid f4856ee8-b402-11e7-92c3-001a4a814413 --project-uuid df2e7c15-4d28-4224-b25c-c2570bd91156 --file-path $PWD/scarf-results.xml
 ```
 === Exit Codes
 In case of errrors or exceptions the Java CLI program returns the following exit codes:
