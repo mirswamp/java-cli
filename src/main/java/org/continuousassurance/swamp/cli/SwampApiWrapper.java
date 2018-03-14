@@ -132,19 +132,20 @@ public class SwampApiWrapper {
 
 	protected final void setHost(String host_name, Proxy proxy) throws MalformedURLException {
 
-		String web_server = SWAMPConfigurationLoader.getWebServiceURL(host_name, sslConfig, proxy);
+        if (host_name == null) {
+            throw new InvalidIdentifierException("host_name cannot be null");
+        }
+
+        String web_server = SWAMPConfigurationLoader.getWebServiceURL(host_name, sslConfig, proxy);
 		if (web_server == null) {
 			web_server = host_name;
 		}
 		
-		if (host_name == null) {
-			throw new InvalidIdentifierException("host_name cannot be null");
-		}
-		setRwsAddress(host_name);
-		setCsaAddress(host_name);
-		setOriginHeader(host_name);
-		setRefereHeader(host_name);
-		setHostHeader(host_name);
+		setRwsAddress(web_server);
+		setCsaAddress(web_server);
+		setOriginHeader(web_server);
+		setRefereHeader(web_server);
+		setHostHeader(web_server);
 	}
 
 
@@ -154,10 +155,10 @@ public class SwampApiWrapper {
 		String env_http_proxy = System.getenv("http_proxy");
 		
 		String https_proxy_host = System.getProperty("https.proxyHost", null);
-		String https_proxy_port = System.getProperty("https.proxyPort", null);
+		int https_proxy_port = Integer.parseInt(System.getProperty("https.proxyPort", "443"));
 		
 		String http_proxy_host = System.getProperty("http.proxyHost", null);
-		String http_proxy_port = System.getProperty("http.proxyPort", null);
+		int http_proxy_port = Integer.parseInt(System.getProperty("http.proxyPort", "80"));
 
 		Proxy proxy = null;
 		
@@ -165,23 +166,33 @@ public class SwampApiWrapper {
 		    URL url = null;
 		    
 		    if (env_https_proxy != null) {
+		        if (!env_https_proxy.startsWith("https://")) {
+		            env_https_proxy = "https://" + env_https_proxy;
+		        }
 		        url = new URL(env_https_proxy);
 		    }else {
+		        if (!env_http_proxy.startsWith("http://")) {
+                    env_http_proxy = "http://" + env_http_proxy;
+                }
 		        url = new URL(env_http_proxy);
 		    }
 			
-		    proxy = new Proxy(url.getPort(), url.getHost(), url.getProtocol(), true);
+		    if (url.getPort() != -1) {
+		        proxy = new Proxy(url.getPort(), url.getHost(), url.getProtocol(), true);
+		    }else {
+		        proxy = new Proxy(url.getDefaultPort(), url.getHost(), url.getProtocol(), true);
+		    }
 			String userinfo = url.getUserInfo();
 			if (userinfo != null) {
 			    proxy.setUsername(userinfo.substring(0, userinfo.indexOf(':')));
 			    proxy.setPassword(userinfo.substring(userinfo.indexOf(':') + 1));
 			}
-		}else if (https_proxy_host != null && https_proxy_port != null) {
-			proxy = new Proxy(Integer.parseInt(https_proxy_port), https_proxy_host, "https", true);
+		}else if (https_proxy_host != null && https_proxy_port != -1) {
+			proxy = new Proxy(https_proxy_port, https_proxy_host, "https", true);
 			proxy.setUsername(System.getProperty("https.proxyUser", null));
             proxy.setPassword(System.getProperty("http.proxyPassword", null));
-		}else if (http_proxy_host != null && http_proxy_port != null){
-			proxy = new Proxy(Integer.parseInt(http_proxy_port), http_proxy_host, "http", true);
+		}else if (http_proxy_host != null && http_proxy_port != -1){
+			proxy = new Proxy(http_proxy_port, http_proxy_host, "http", true);
 			proxy.setUsername(System.getProperty("http.proxyUser", null));
             proxy.setPassword(System.getProperty("http.proxyPassword", null));
 		}else {
@@ -1041,6 +1052,25 @@ public class SwampApiWrapper {
 	}
 	
 	/**
+     * Get a hash-map of all the package versions uploaded by a user or accessible to a user
+     *
+     *  @return hash-map of package-version-uuid, package version object
+     */
+    protected List<PackageVersion> getPackageVersions(PackageThing pkg) {
+        if (packageVersionMap == null) {
+            packageVersionMap = new HashMap<String, PackageVersion>();
+        }   
+        
+        List <PackageVersion> package_versions = (List <PackageVersion>)handlerFactory.getPackageVersionHandler().getAll(pkg);
+        for (PackageVersion pkg_ver : package_versions) {
+            packageVersionMap.put(pkg_ver.getUUIDString(), pkg_ver);
+        }
+        
+        return package_versions;
+    }
+
+
+	/**
 	 * Get a package version object
 	 *  
 	 *  @param pkg_ver_uuid: package version UUID
@@ -1148,6 +1178,20 @@ public class SwampApiWrapper {
 		}
 		return null;
 	}
+
+	/**
+     * Get a list of tools provided package type and project uuid (for project specific tools)
+     *  
+     *  @param pkg_type: should be one of the Key return by the API getPackageTypes
+     *  @param project_uuid: project UUID (for project specific tools)
+     *  
+     *  @return list of tool objects
+     */
+    @SuppressWarnings("unchecked")
+    public List<ToolVersion> getToolVersions(Tool tool) throws InvalidIdentifierException {
+        return (List<ToolVersion>)handlerFactory.getToolVersionHandler().getAll(tool);
+    }
+
 
 	/**
 	 * Get the platform object given the platform UUID
@@ -1492,6 +1536,33 @@ public class SwampApiWrapper {
 		}
 
 	}
+
+	   /**
+     * Run a single assessment, on a package with a tool on a platform
+     *  
+     *  
+     *  @param pkg: package version object
+     *  @param tool: tool object
+     *  @param project: project object
+     *  @param platform: platform object
+     *  
+     *  @return assessment run object
+     *  
+     */
+    public List<AssessmentRun> runAssessment(PackageVersion pkg, ToolVersion tool_version, Project project, 
+            List<PlatformVersion> platform_versions) {
+        
+        List<AssessmentRun> arun_list = new ArrayList<AssessmentRun>();
+        for (PlatformVersion platform_version : platform_versions) {
+            arun_list.add(handlerFactory.getAssessmentHandler().create(project, pkg, platform_version, tool_version));
+        }
+        if (handlerFactory.getRunRequestHandler().submitOneTimeRequest(arun_list, true)) {
+            return arun_list;
+        }else{
+            return null;
+        }
+    }
+
 
 	/**
 	 * Get all assessment results objects in a project
