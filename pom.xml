@@ -4,7 +4,7 @@
 
   <groupId>org.continuousassurance.swamp</groupId>
   <artifactId>java-cli</artifactId>
-  <version>1.4.0</version>
+  <version>1.4.1-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <name>java-cli</name>
@@ -26,7 +26,7 @@
     <dependency>
       <groupId>org.continuousassurance.swamp</groupId>
       <artifactId>java-api</artifactId>
-      <version>1.5</version>
+      <version>1.6</version>
     </dependency>
     <dependency>
       <groupId>edu.uiuc.ncsa.security</groupId>

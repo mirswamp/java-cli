@@ -136,10 +136,7 @@ public class SwampApiWrapper {
 		if (web_server == null) {
 			web_server = host_name;
 		}
-		setHostName(web_server);
-	}
-
-	protected void setHostName(String host_name) {
+		
 		if (host_name == null) {
 			throw new InvalidIdentifierException("host_name cannot be null");
 		}
