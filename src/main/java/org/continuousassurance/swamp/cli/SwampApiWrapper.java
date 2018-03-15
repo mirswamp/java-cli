@@ -19,21 +19,22 @@
 package org.continuousassurance.swamp.cli;
 
 import edu.uiuc.ncsa.security.util.ssl.SSLConfiguration;
+import net.sf.json.JSONException;
+import org.apache.http.client.CookieStore;
 import org.continuousassurance.swamp.api.*;
+import org.continuousassurance.swamp.cli.exceptions.*;
 import org.continuousassurance.swamp.session.Session;
 import org.continuousassurance.swamp.session.handlers.HandlerFactory;
 import org.continuousassurance.swamp.session.handlers.PackageHandler;
 import org.continuousassurance.swamp.session.util.ConversionMapImpl;
+import org.continuousassurance.swamp.session.util.Proxy;
 import org.continuousassurance.swamp.session.util.SWAMPConfigurationLoader;
 import org.continuousassurance.swamp.util.HandlerFactoryUtil;
-import net.sf.json.JSONException;
-import org.apache.http.client.CookieStore;
-import org.continuousassurance.swamp.cli.exceptions.*;
-import org.continuousassurance.swamp.cli.util.AssessmentStatus;
 
 import java.io.*;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.*;
-import java.util.Map.Entry;
 
 /**
  * @author      Vamshi Basupalli vamshi@cs.wisc.edu
@@ -64,7 +65,6 @@ public class SwampApiWrapper {
 	private SSLConfiguration sslConfig;
 
 	private HandlerFactory handlerFactory;
-
 
 	public Properties getProp(String filepath){
 		Properties prop = new Properties();
@@ -130,232 +130,108 @@ public class SwampApiWrapper {
 		sslConfig.setTlsVersion("TLSv1.2");
 	}
 
-	protected final void setHost(String host_name) {
+	protected final void setHost(String host_name, Proxy proxy) throws MalformedURLException {
 
-		String web_server = SWAMPConfigurationLoader.getWebServiceURL(host_name, sslConfig);
+        if (host_name == null) {
+            throw new InvalidIdentifierException("host_name cannot be null");
+        }
+
+        String web_server = SWAMPConfigurationLoader.getWebServiceURL(host_name, sslConfig, proxy);
 		if (web_server == null) {
 			web_server = host_name;
 		}
-		setHostName(web_server);
+		
+		setRwsAddress(web_server);
+		setCsaAddress(web_server);
+		setOriginHeader(web_server);
+		setRefereHeader(web_server);
+		setHostHeader(web_server);
 	}
 
-	protected void setHostName(String host_name) {
-		if (host_name == null) {
-			throw new InvalidIdentifierException("host_name cannot be null");
-		}
-		setRwsAddress(host_name);
-		setCsaAddress(host_name);
-		setOriginHeader(host_name);
-		setRefereHeader(host_name);
-		setHostHeader(host_name);
-	}
 
-	/**
-	 * Converts package.conf values to a package type
-	 * <p>
-	 * Takes attributes in package.conf and converts it into package types
-	 * that SWAMP UI understands
-	 * <p>
-	 *
-	 * @param pkg_lang any one of: [Java, C, C++, Ruby, 
-	 * Python-2, Python-3, Javascript, CSS, XML, HTML, PHP]
-	 * @param pkg_lang_version: The version of language 
-	 * required at build time Example: java-7, java-8, ruby-2.0.0
-	 * @param pkg_build_sys: Package build system, see package.conf documentation
-	 * @param package_type: Package application type, valid only for ruby: Any one of [sinatra, rails, padrino]  
-	 * @return One of ["C/C++", "Java 7 Source Code", "Java 7 Bytecode",
-						"Python2", "Python3", "Android Java Source Code", "Ruby",
-						"Ruby Sinatra", "Ruby on Rails", "Ruby Padrino",
-						"Android .apk","Java 8 Source Code","Java 8 Bytecode"].
-	 */
-	public String getPkgTypeString(String pkg_lang,
-			String pkg_lang_version,
-			String pkg_build_sys,
-			String package_type) {
+	public static Proxy getProxy() throws MalformedURLException {
+		
+		String env_https_proxy = System.getenv("https_proxy");
+		String env_http_proxy = System.getenv("http_proxy");
+		
+		String https_proxy_host = System.getProperty("https.proxyHost", null);
+		int https_proxy_port = Integer.parseInt(System.getProperty("https.proxyPort", "443"));
+		
+		String http_proxy_host = System.getProperty("http.proxyHost", null);
+		int http_proxy_port = Integer.parseInt(System.getProperty("http.proxyPort", "80"));
 
-		String pkg_type = null;
-
-		if (pkg_build_sys.toLowerCase().equals("android-apk")) {
-			pkg_type = "Android .apk";
+		Proxy proxy = null;
+		
+		if (env_https_proxy != null || env_http_proxy != null) {
+		    URL url = null;
+		    
+		    if (env_https_proxy != null) {
+		        if (!env_https_proxy.startsWith("https://")) {
+		            env_https_proxy = "https://" + env_https_proxy;
+		        }
+		        url = new URL(env_https_proxy);
+		    }else {
+		        if (!env_http_proxy.startsWith("http://")) {
+                    env_http_proxy = "http://" + env_http_proxy;
+                }
+		        url = new URL(env_http_proxy);
+		    }
+			
+		    if (url.getPort() != -1) {
+		        proxy = new Proxy(url.getPort(), url.getHost(), url.getProtocol(), true);
+		    }else {
+		        proxy = new Proxy(url.getDefaultPort(), url.getHost(), url.getProtocol(), true);
+		    }
+			String userinfo = url.getUserInfo();
+			if (userinfo != null) {
+			    proxy.setUsername(userinfo.substring(0, userinfo.indexOf(':')));
+			    proxy.setPassword(userinfo.substring(userinfo.indexOf(':') + 1));
+			}
+		}else if (https_proxy_host != null && https_proxy_port != -1) {
+			proxy = new Proxy(https_proxy_port, https_proxy_host, "https", true);
+			proxy.setUsername(System.getProperty("https.proxyUser", null));
+            proxy.setPassword(System.getProperty("http.proxyPassword", null));
+		}else if (http_proxy_host != null && http_proxy_port != -1){
+			proxy = new Proxy(http_proxy_port, http_proxy_host, "http", true);
+			proxy.setUsername(System.getProperty("http.proxyUser", null));
+            proxy.setPassword(System.getProperty("http.proxyPassword", null));
 		}else {
-			if (pkg_lang != null) {
-				pkg_lang = pkg_lang.split(" ")[0];
-			}
-			switch (pkg_lang){
-			case "Java":
-				if(pkg_build_sys.toLowerCase().startsWith("android")) {
-					pkg_type = "Android Java Source Code";
-				}else if(pkg_build_sys.toLowerCase().equals("java-bytecode")) {
-					if (pkg_lang_version.toLowerCase().startsWith("java-7")) {
-						pkg_type = "Java 7 Bytecode";
-					}else {
-						pkg_type = "Java 8 Bytecode";
-					}
-				}else {
-					if (pkg_lang_version.toLowerCase().startsWith("java-7")) {
-						pkg_type = "Java 7 Source Code";
-					}else {
-						pkg_type = "Java 8 Source Code";
-					}
-				}
-				break;
-			case "C":
-			case "C++":
-				pkg_type = "C/C++";
-				break;
-			case "Python-2":
-				pkg_type = "Python2";
-				break;
-			case "Python-2 Python-3":
-				pkg_type = "Python3";
-				break;
-			case "Python-3":
-				pkg_type = "Python3";
-				break;
-			case "Ruby":
-				if (package_type == null) {
-					pkg_type = "Ruby";
-				}else if (package_type.toLowerCase().equals("rails")) {
-					pkg_type = "Ruby on Rails";
-				}else if (package_type.toLowerCase().equals("sinatra")) {
-					pkg_type = "Ruby Sinatra";
-				}else if (package_type.toLowerCase().equals("padrino")) {
-					pkg_type = "Ruby Padrino";
-				}
-				break;
-			case "PHP":
-			case "JavaScript":
-			case "HTML":
-			case "CSS":
-			case "XML":
-				pkg_type = "Web Scripting";
-				break;
-			}
+			proxy = new Proxy();
 		}
-		return pkg_type;
+		
+		return proxy;
 	}
+	
+    
+    /**
+     * Login into SWAMP
+     *
+     * @param user_name: SWAMP Instance's user name
+     * @param password: SWAMP Instance's password 
+     * @param host_name: SWAMP Instance's host name
+     *   
+     * @return SWAMP user-id
+     * @throws MalformedURLException 
+     */
+    public String login(String user_name, String password, String host_name) throws MalformedURLException {
+        Proxy proxy = getProxy();
+        return login(user_name, password, host_name, proxy); 
+    }
+    
 
-	/**
-	 * Converts package.conf values to a package type id
-	 * <p>
-	 * Takes attributes in package.conf and converts it into a package type id
-	 * that SWAMP UI understands
-	 * <p>
-	 *
-	 * @param pkg_lang any one of: [Java, C, C++, Ruby, 
-	 * Python-2, Python-3, Javascript, CSS, XML, HTML, PHP]
-	 * @param pkg_lang_version: The version of language 
-	 * required at build time Example: java-7, java-8, ruby-2.0.0
-	 * @param pkg_build_sys: Package build system, see package.conf documentation
-	 * @param package_type: Package application type, valid only for ruby: Any one of [sinatra, rails, padrino]  
-	 * @return One of ["C/C++": 1 , "Java 7 Source Code": 2, "Java 7 Bytecode": 3,
-						"Python2": 4, "Python3": 5, "Android Java Source Code": 6, "Ruby": 7,
-						"Ruby Sinatra": 8, "Ruby on Rails": 9, "Ruby Padrino": 10,
-						"Android .apk": 11, "Java 8 Source Code": 12, 
-						"Java 8 Bytecode": 13, "Web Scripting": 14].
-	 */
-	public Integer getPkgTypeId(String pkg_lang,
-			String pkg_lang_version,
-			String pkg_build_sys,
-			String package_type) {
-		String pkg_type = getPkgTypeString(pkg_lang, pkg_lang_version, pkg_build_sys, package_type);
-		return getPackageTypes().get(pkg_type);
-	}
-
-	/**
-	 * Gets a hashmap (package type, package type id) from SWAMP
-	 *
-	 *@return hashmap (package type, package type id)
-	 */
-	public Map<String, Integer> getPackageTypes() {
-
-		if (packageTypeMap == null) {
-
-			try {
-				packageTypeMap = handlerFactory.getPackageHandler().getTypes();
-			}catch (JSONException e) {
-
-				packageTypeMap = new HashMap<String, Integer>();
-
-				List<String> all_types = Arrays.asList("C/C++", "Java 7 Source Code", "Java 7 Bytecode",
-						"Python2", "Python3", "Android Java Source Code", "Ruby",
-						"Ruby Sinatra", "Ruby on Rails", "Ruby Padrino",
-						"Android .apk","Java 8 Source Code","Java 8 Bytecode");
-				int i = 0;
-				for (String pkg_type : all_types) {
-					packageTypeMap.put(pkg_type, Integer.valueOf(++i));
-				}
-			}
-
-		}
-		return packageTypeMap;
-	}
-
-	/**
-	 * Gets a list of package types from SWAMP
-	 *
-	 *@return list of package types
-	 */
-	public List<String> getPackageTypesList() {
-		return new ArrayList<String>(getPackageTypes().keySet());
-	}
-
-	/**
-	 * Creates a hash-map of package configuration attributes from package.conf hash-map
-	 * <p>
-	 * Creates a hash-map of package configuration attributes from package.conf hash-map.
-	 * The keys in the map are what SWAMP API understands 
-	 * <p>
-	 *
-	 *@param pkg_conf properties object of a package.conf file
-	 *@return hash-map for package version configuration 
-	 */
-	protected ConversionMapImpl getPkgConfMap(Properties pkg_conf) {
-		ConversionMapImpl map = new ConversionMapImpl();
-		map.put("version_string", pkg_conf.getProperty("package-version"));
-		map.put("source_path", pkg_conf.getProperty("package-dir"));
-
-		map.put("config_dir", pkg_conf.getProperty("config-dir", null));
-		map.put("config_cmd", pkg_conf.getProperty("config-cmd", null));
-		map.put("config_opt", pkg_conf.getProperty("config-opt", null));
-
-		map.put("build_dir", pkg_conf.getProperty("build-dir", null));
-		map.put("build_system", pkg_conf.getProperty("build-sys", null));
-		map.put("build_file", pkg_conf.getProperty("build-file", null));
-		map.put("build_target", pkg_conf.getProperty("build-target", null));
-		map.put("build_opt", pkg_conf.getProperty("build-opt", null));
-
-		map.put("language_version", pkg_conf.getProperty("package-language-version", null));
-		map.put("bytecode_class_path", pkg_conf.getProperty("package-classpath", null));
-		map.put("bytecode_aux_class_path", pkg_conf.getProperty("package-auxclasspath", null));
-		map.put("bytecode_source_path", pkg_conf.getProperty("package-srcdir", null));
-
-		map.put("use_gradle_wrapper", pkg_conf.getProperty("gradle-wrapper", "false"));
-		map.put("android_sdk_target", pkg_conf.getProperty("android-sdk-target", null));
-		map.put("android_lint_target", pkg_conf.getProperty("android-lint-target", null));
-		map.put("android_redo_build", pkg_conf.getProperty("android-redo-build", "false"));
-		map.put("android_maven_plugin", pkg_conf.getProperty("android-maven-plugin", null));
-		map.put("maven_version", pkg_conf.getProperty("maven_version", null));
-
-		return map;
-	}
-
-	/**
-	 * Login into SWAMP
-	 *
-	 * @param user_name: SWAMP Instance's user name
-	 * @param password: SWAMP Instance's password 
-	 * @param host_name: SWAMP Instance's host name
-	 *   
-	 * @return SWAMP user-id
-	 */
-	public String login(String user_name, String password, String host_name) {
-		setHost(host_name);
-		return login(user_name, password);
-	}
-
-	protected String login(String user_name, String password) {
-
+    /**
+     * Login into SWAMP
+     *
+     * @param user_name: SWAMP Instance's user name
+     * @param password: SWAMP Instance's password 
+     * @param host_name: SWAMP Instance's host name
+     * @param proxy: http[s] proxy setting to connect to SWAMP
+     * @return SWAMP user-id
+     * @throws MalformedURLException 
+     */
+    public String login(String user_name, String password, String host_name, Proxy proxy) throws MalformedURLException {
+        setHost(host_name, proxy);   
+		
 		handlerFactory = HandlerFactoryUtil.createHandlerFactory(getRwsAddress(),
 				getCsaAddress(),
 				getOriginHeader(),
@@ -363,7 +239,8 @@ public class SwampApiWrapper {
 				getHostHeader(),
 				user_name,
 				password,
-				sslConfig);
+				sslConfig,
+				proxy);
 
 		if (handlerFactory != null){
 			return handlerFactory.getUserHandler().getCurrentUser().getIdentifierString();
@@ -519,6 +396,201 @@ public class SwampApiWrapper {
 		return handlerFactory.getUserHandler().getCurrentUser();
 	}
 
+
+    /**
+     * Converts package.conf values to a package type
+     * <p>
+     * Takes attributes in package.conf and converts it into package types
+     * that SWAMP UI understands
+     * <p>
+     *
+     * @param pkg_lang any one of: [Java, C, C++, Ruby, 
+     * Python-2, Python-3, Javascript, CSS, XML, HTML, PHP]
+     * @param pkg_lang_version: The version of language 
+     * required at build time Example: java-7, java-8, ruby-2.0.0
+     * @param pkg_build_sys: Package build system, see package.conf documentation
+     * @param package_type: Package application type, valid only for ruby: Any one of [sinatra, rails, padrino]  
+     * @return One of ["C/C++", "Java 7 Source Code", "Java 7 Bytecode",
+                        "Python2", "Python3", "Android Java Source Code", "Ruby",
+                        "Ruby Sinatra", "Ruby on Rails", "Ruby Padrino",
+                        "Android .apk","Java 8 Source Code","Java 8 Bytecode"].
+     */
+    public String getPkgTypeString(String pkg_lang,
+            String pkg_lang_version,
+            String pkg_build_sys,
+            String package_type) {
+
+        String pkg_type = null;
+
+        if (pkg_build_sys.toLowerCase().equals("android-apk")) {
+            pkg_type = "Android .apk";
+        }else {
+            if (pkg_lang != null) {
+                pkg_lang = pkg_lang.split(" ")[0];
+            }
+            switch (pkg_lang){
+            case "Java":
+                if(pkg_build_sys.toLowerCase().startsWith("android")) {
+                    pkg_type = "Android Java Source Code";
+                }else if(pkg_build_sys.toLowerCase().equals("java-bytecode")) {
+                    if (pkg_lang_version.toLowerCase().startsWith("java-7")) {
+                        pkg_type = "Java 7 Bytecode";
+                    }else {
+                        pkg_type = "Java 8 Bytecode";
+                    }
+                }else {
+                    if (pkg_lang_version.toLowerCase().startsWith("java-7")) {
+                        pkg_type = "Java 7 Source Code";
+                    }else {
+                        pkg_type = "Java 8 Source Code";
+                    }
+                }
+                break;
+            case "C":
+            case "C++":
+                pkg_type = "C/C++";
+                break;
+            case "Python-2":
+                pkg_type = "Python2";
+                break;
+            case "Python-2 Python-3":
+                pkg_type = "Python3";
+                break;
+            case "Python-3":
+                pkg_type = "Python3";
+                break;
+            case "Ruby":
+                if (package_type == null) {
+                    pkg_type = "Ruby";
+                }else if (package_type.toLowerCase().equals("rails")) {
+                    pkg_type = "Ruby on Rails";
+                }else if (package_type.toLowerCase().equals("sinatra")) {
+                    pkg_type = "Ruby Sinatra";
+                }else if (package_type.toLowerCase().equals("padrino")) {
+                    pkg_type = "Ruby Padrino";
+                }
+                break;
+            case "PHP":
+            case "JavaScript":
+            case "HTML":
+            case "CSS":
+            case "XML":
+                pkg_type = "Web Scripting";
+                break;
+            }
+        }
+        return pkg_type;
+    }
+
+    /**
+     * Converts package.conf values to a package type id
+     * <p>
+     * Takes attributes in package.conf and converts it into a package type id
+     * that SWAMP UI understands
+     * <p>
+     *
+     * @param pkg_lang any one of: [Java, C, C++, Ruby, 
+     * Python-2, Python-3, Javascript, CSS, XML, HTML, PHP]
+     * @param pkg_lang_version: The version of language 
+     * required at build time Example: java-7, java-8, ruby-2.0.0
+     * @param pkg_build_sys: Package build system, see package.conf documentation
+     * @param package_type: Package application type, valid only for ruby: Any one of [sinatra, rails, padrino]  
+     * @return One of ["C/C++": 1 , "Java 7 Source Code": 2, "Java 7 Bytecode": 3,
+                        "Python2": 4, "Python3": 5, "Android Java Source Code": 6, "Ruby": 7,
+                        "Ruby Sinatra": 8, "Ruby on Rails": 9, "Ruby Padrino": 10,
+                        "Android .apk": 11, "Java 8 Source Code": 12, 
+                        "Java 8 Bytecode": 13, "Web Scripting": 14].
+     */
+    public Integer getPkgTypeId(String pkg_lang,
+            String pkg_lang_version,
+            String pkg_build_sys,
+            String package_type) {
+        String pkg_type = getPkgTypeString(pkg_lang, pkg_lang_version, pkg_build_sys, package_type);
+        return getPackageTypes().get(pkg_type);
+    }
+
+    /**
+     * Gets a hashmap (package type, package type id) from SWAMP
+     *
+     *@return hashmap (package type, package type id)
+     */
+    public Map<String, Integer> getPackageTypes() {
+
+        if (packageTypeMap == null) {
+
+            try {
+                packageTypeMap = handlerFactory.getPackageHandler().getTypes();
+            }catch (JSONException e) {
+
+                packageTypeMap = new HashMap<String, Integer>();
+
+                List<String> all_types = Arrays.asList("C/C++", "Java 7 Source Code", "Java 7 Bytecode",
+                        "Python2", "Python3", "Android Java Source Code", "Ruby",
+                        "Ruby Sinatra", "Ruby on Rails", "Ruby Padrino",
+                        "Android .apk","Java 8 Source Code","Java 8 Bytecode");
+                int i = 0;
+                for (String pkg_type : all_types) {
+                    packageTypeMap.put(pkg_type, Integer.valueOf(++i));
+                }
+            }
+
+        }
+        return packageTypeMap;
+    }
+
+    /**
+     * Gets a list of package types from SWAMP
+     *
+     *@return list of package types
+     */
+    public List<String> getPackageTypesList() {
+        return new ArrayList<String>(getPackageTypes().keySet());
+    }
+
+    /**
+     * Creates a hash-map of package configuration attributes from package.conf hash-map
+     * <p>
+     * Creates a hash-map of package configuration attributes from package.conf hash-map.
+     * The keys in the map are what SWAMP API understands 
+     * <p>
+     *
+     *@param pkg_conf properties object of a package.conf file
+     *@return hash-map for package version configuration 
+     */
+    protected ConversionMapImpl getPkgConfMap(Properties pkg_conf) {
+        ConversionMapImpl map = new ConversionMapImpl();
+        map.put("android_sdk_target", pkg_conf.getProperty("android-sdk-target", null));
+        map.put("android_lint_target", pkg_conf.getProperty("android-lint-target", null));
+        map.put("android_maven_plugin", pkg_conf.getProperty("android-maven-plugin", null));
+        map.put("android_redo_build", pkg_conf.getProperty("android-redo-build", "false"));
+        
+        map.put("ant-version", pkg_conf.getProperty("ant-version", null));
+
+        map.put("build_cmd", pkg_conf.getProperty("build-cmd", null));
+        map.put("build_dir", pkg_conf.getProperty("build-dir", null));
+        map.put("build_file", pkg_conf.getProperty("build-file", null));
+        map.put("build_opt", pkg_conf.getProperty("build-opt", null));
+        map.put("build_system", pkg_conf.getProperty("build-sys", null));
+        map.put("build_target", pkg_conf.getProperty("build-target", null));
+        
+        map.put("config_cmd", pkg_conf.getProperty("config-cmd", null));
+        map.put("config_opt", pkg_conf.getProperty("config-opt", null));
+        map.put("config_dir", pkg_conf.getProperty("config-dir", null));
+
+        map.put("use_gradle_wrapper", pkg_conf.getProperty("gradle-wrapper", "false"));
+        map.put("maven_version", pkg_conf.getProperty("maven_version", null));
+        
+        map.put("version_string", pkg_conf.getProperty("package-version"));
+        map.put("source_path", pkg_conf.getProperty("package-dir"));
+
+        map.put("language_version", pkg_conf.getProperty("package-language-version", null));
+        map.put("bytecode_class_path", pkg_conf.getProperty("package-classpath", null));
+        map.put("bytecode_aux_class_path", pkg_conf.getProperty("package-auxclasspath", null));
+        map.put("bytecode_source_path", pkg_conf.getProperty("package-srcdir", null));
+
+        return map;
+    }
+    
 	/**
 	 * Gets currently logged-in user's projects in a hash-map
 	 *
@@ -644,46 +716,6 @@ public class SwampApiWrapper {
 	public String uploadPackageVersion(String pkg_conf_file, 
 			String pkg_archive_file, 
 			String project_uuid,
-			Map<String, String> os_dep_map,
-			PackageThing pkg_thing) {
-		Properties pkg_conf = getProp(pkg_conf_file);
-		
-		if (pkg_thing == null){
-			return uploadNewPackage(pkg_conf_file, pkg_archive_file, project_uuid, os_dep_map);
-		}else{
-			ConversionMapImpl map = getPkgConfMap(pkg_conf);
-			map.put("project_uuid", project_uuid);
-
-			PackageVersion pkg_version = handlerFactory.getPackageVersionHandler().create(pkg_thing,
-					new File(pkg_archive_file),
-					map);
-			addPackageDependencies(pkg_version, os_dep_map);
-			packageVersionMap = null;
-			//getAllPackageVersions(project_uuid);
-
-			return pkg_version.getUUIDString();
-		}
-	}
-	
-	/**
-	 * Upload a package version
-	 * 
-	 * <p>
-	 * If a package with the same name as the this package does not exist then
-	 * a new package is created
-	 * <p>
-	 *
-	 * @param pkg_conf_file: Path for the package.conf file for the package
-	 * @param pkg_archive_file: Path to the package archive 
-	 * @param project_uuid: UUID for the project that this package must be associated with
-	 * @param os_dep_map: hash-map of the OS dependencies 
-	 * Example: (key, value) = (ubuntu-16.04-64=libsqlite3-dev libmysqlclient-dev)
-	 * 
-	 * @return the new package's version UUID
-	 */
-	public String uploadPackageVersion(String pkg_conf_file, 
-			String pkg_archive_file, 
-			String project_uuid,
 			Map<String, String> os_dep_map) {
 		Properties pkg_conf = getProp(pkg_conf_file);
 		PackageThing pkg_thing = null;
@@ -698,11 +730,17 @@ public class SwampApiWrapper {
 		if (pkg_thing == null){
 			return uploadNewPackage(pkg_conf_file, pkg_archive_file, project_uuid, os_dep_map);
 		}else{
-			return uploadPackageVersion(pkg_conf_file, 
-					pkg_archive_file, 
-					project_uuid,
-					os_dep_map,
-					pkg_thing);
+			ConversionMapImpl map = getPkgConfMap(pkg_conf);
+			map.put("project_uuid", project_uuid);
+
+			PackageVersion pkg_version = handlerFactory.getPackageVersionHandler().create(pkg_thing,
+					new File(pkg_archive_file),
+					map);
+			addPackageDependencies(pkg_version, os_dep_map);
+			packageVersionMap = null;
+			//getAllPackageVersions(project_uuid);
+
+			return pkg_version.getUUIDString();
 		}
 	}
 
@@ -981,24 +1019,6 @@ public class SwampApiWrapper {
 	}
 	
 	/**
-	 * Get a hash-map of all the package versions uploaded by a user or accessible to a user
-	 *
-	 *  @return hash-map of package-version-uuid, package version object
-	 */
-	protected List<PackageVersion> getPackageVersions(PackageThing pkg) {
-		if (packageVersionMap == null) {
-			packageVersionMap = new HashMap<String, PackageVersion>();
-		}	
-		
-		List <PackageVersion> package_versions = (List <PackageVersion>)handlerFactory.getPackageVersionHandler().getAll(pkg);
-		for (PackageVersion pkg_ver : package_versions) {
-			packageVersionMap.put(pkg_ver.getUUIDString(), pkg_ver);
-		}
-		
-		return package_versions;
-	}
-
-	/**
 	 * Get a list of all the package versions in a project
 	 *  
 	 *  @param project_uuid: project UUID
@@ -1031,6 +1051,25 @@ public class SwampApiWrapper {
 		return pkg_list;
 	}
 	
+	/**
+     * Get a hash-map of all the package versions uploaded by a user or accessible to a user
+     *
+     *  @return hash-map of package-version-uuid, package version object
+     */
+    protected List<PackageVersion> getPackageVersions(PackageThing pkg) {
+        if (packageVersionMap == null) {
+            packageVersionMap = new HashMap<String, PackageVersion>();
+        }   
+        
+        List <PackageVersion> package_versions = (List <PackageVersion>)handlerFactory.getPackageVersionHandler().getAll(pkg);
+        for (PackageVersion pkg_ver : package_versions) {
+            packageVersionMap.put(pkg_ver.getUUIDString(), pkg_ver);
+        }
+        
+        return package_versions;
+    }
+
+
 	/**
 	 * Get a package version object
 	 *  
@@ -1129,28 +1168,30 @@ public class SwampApiWrapper {
 	 *  @return tool object
 	 */
 	public Tool getToolFromName (String tool_name, String project_uuid) throws InvalidIdentifierException {
-		
-		for (Tool tool : getAllTools(project_uuid).values()) {
-			if (tool.getName().equals(tool_name)){
-				return tool;
+		Map<String,Tool> tool_list = getAllTools(project_uuid);
+		Iterator<Tool> tool_iterator = tool_list.values().iterator();
+		while (tool_iterator.hasNext()){
+			Tool next_tool = tool_iterator.next();
+			if (next_tool.getName().equals(tool_name)){
+				return next_tool;
 			}
 		}
-		
 		return null;
 	}
 
 	/**
-	 * Get a list of tools provided package type and project uuid (for project specific tools)
-	 *  
-	 *  @param pkg_type: should be one of the Key return by the API getPackageTypes
-	 *  @param project_uuid: project UUID (for project specific tools)
-	 *  
-	 *  @return list of tool objects
-	 */
-	@SuppressWarnings("unchecked")
-	public List<ToolVersion> getToolVersions(Tool tool) throws InvalidIdentifierException {
-		return (List<ToolVersion>)handlerFactory.getToolVersionHandler().getAll(tool);
-	}
+     * Get a list of tools provided package type and project uuid (for project specific tools)
+     *  
+     *  @param pkg_type: should be one of the Key return by the API getPackageTypes
+     *  @param project_uuid: project UUID (for project specific tools)
+     *  
+     *  @return list of tool objects
+     */
+    @SuppressWarnings("unchecked")
+    public List<ToolVersion> getToolVersions(Tool tool) throws InvalidIdentifierException {
+        return (List<ToolVersion>)handlerFactory.getToolVersionHandler().getAll(tool);
+    }
+
 
 	/**
 	 * Get the platform object given the platform UUID
@@ -1469,53 +1510,6 @@ public class SwampApiWrapper {
 	}
 
 	/**
-	 * Run a single assessment, on a package with a tool on a platform
-	 *  
-	 *  
-	 *  @param pkg: package version object
-	 *  @param tool: tool object
-	 *  @param project: project object
-	 *  @param platform: platform object
-	 *  
-	 *  @return assessment run object
-	 *  
-	 */
-	public AssessmentRun runAssessment(PackageVersion pkg, ToolVersion tool_version, Project project, PlatformVersion platform) {
-		AssessmentRun arun = handlerFactory.getAssessmentHandler().create(project, pkg, platform, tool_version);
-		if (handlerFactory.getRunRequestHandler().submitOneTimeRequest(arun, true)) {
-			return arun;
-		}else{
-			return null;
-		}
-	}
-
-	/**
-	 * Run a single assessment, on a package with a tool on a platform
-	 *  
-	 *  
-	 *  @param pkg: package version object
-	 *  @param tool: tool object
-	 *  @param project: project object
-	 *  @param platform: platform object
-	 *  
-	 *  @return assessment run object
-	 *  
-	 */
-	public List<AssessmentRun> runAssessment(PackageVersion pkg, ToolVersion tool_version, Project project, 
-			List<PlatformVersion> platform_versions) {
-		
-		List<AssessmentRun> arun_list = new ArrayList<AssessmentRun>();
-		for (PlatformVersion platform_version : platform_versions) {
-			arun_list.add(handlerFactory.getAssessmentHandler().create(project, pkg, platform_version, tool_version));
-		}
-		if (handlerFactory.getRunRequestHandler().submitOneTimeRequest(arun_list, true)) {
-			return arun_list;
-		}else{
-			return null;
-		}
-	}
-
-	/**
 	 * Run multiple assessments, on a package with a set of tools on a set of platforms
 	 *  
 	 *  
@@ -1527,12 +1521,12 @@ public class SwampApiWrapper {
 	 *  @return list of assessment run objects
 	 *  
 	 */
-	protected List<AssessmentRun> runAssessment(PackageVersion pkg_ver, List<Tool> tools, 
+	protected List<AssessmentRun> runAssessment(PackageVersion pkg, List<Tool> tools, 
 			Project project, List<PlatformVersion> platform_versions) {
 		List<AssessmentRun> arun_list = new ArrayList<AssessmentRun>();
 		for (PlatformVersion platform_version : platform_versions) {
 			for (Tool tool : tools) {
-				arun_list.add(handlerFactory.getAssessmentHandler().create(project, pkg_ver, platform_version, tool));
+				arun_list.add(handlerFactory.getAssessmentHandler().create(project, pkg, platform_version, tool));
 			}
 		}
 		if (handlerFactory.getRunRequestHandler().submitOneTimeRequest(arun_list, true)){
@@ -1542,7 +1536,34 @@ public class SwampApiWrapper {
 		}
 
 	}
-	
+
+	   /**
+     * Run a single assessment, on a package with a tool on a platform
+     *  
+     *  
+     *  @param pkg: package version object
+     *  @param tool: tool object
+     *  @param project: project object
+     *  @param platform: platform object
+     *  
+     *  @return assessment run object
+     *  
+     */
+    public List<AssessmentRun> runAssessment(PackageVersion pkg, ToolVersion tool_version, Project project, 
+            List<PlatformVersion> platform_versions) {
+        
+        List<AssessmentRun> arun_list = new ArrayList<AssessmentRun>();
+        for (PlatformVersion platform_version : platform_versions) {
+            arun_list.add(handlerFactory.getAssessmentHandler().create(project, pkg, platform_version, tool_version));
+        }
+        if (handlerFactory.getRunRequestHandler().submitOneTimeRequest(arun_list, true)) {
+            return arun_list;
+        }else{
+            return null;
+        }
+    }
+
+
 	/**
 	 * Get all assessment results objects in a project
 	 *  
