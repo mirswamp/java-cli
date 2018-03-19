@@ -1588,7 +1588,7 @@ public class SwampApiWrapper {
 	 *  
 	 *  @throws IOException Exceptions when writing SCARF to a file
 	 */
-	public void getAssessmentResults(String project_uuid, String asssess_result_uuid, String filepath) 
+	public boolean getAssessmentResults(String project_uuid, String asssess_result_uuid, String filepath) 
 			throws IOException {
 
 		for(AssessmentResults results : getAllAssessmentResults(project_uuid)){
@@ -1600,10 +1600,41 @@ public class SwampApiWrapper {
 					data.close();
 					outputStream.close();
 				}
+				return true;
 			}
 		}
+		
+		throw new InvalidIdentifierException("Invalid Assessment Results UUID: " + asssess_result_uuid);
 	}
 
+	   /**
+     * Write SCARF results from an assessment into a file
+     *  
+     *  @param asssess_result_uuid: asssess_result_uuid UUID
+     *  @param filepath: filepath to write to  
+     *  
+     *  @throws IOException Exceptions when writing SCARF to a file
+     */
+    public boolean getAssessmentResults(String asssess_result_uuid, String filepath) 
+            throws IOException {
+        
+        for (Project project : getProjectsList()) {
+            for(AssessmentResults results : getAllAssessmentResults(project.getIdentifierString())){
+                if (results.getUUIDString().equals(asssess_result_uuid)) {
+                    ByteArrayOutputStream data = (ByteArrayOutputStream)handlerFactory.getAssessmentResultHandler().getScarfResults(results);
+                    if (data != null) {
+                        OutputStream outputStream = new FileOutputStream(filepath);
+                        data.writeTo(outputStream);
+                        data.close();
+                        outputStream.close();
+                    }
+                    return true;
+                }
+            }
+        }
+        
+        throw new InvalidIdentifierException("Invalid Assessment Results UUID: " + asssess_result_uuid);
+    }
 	/**
 	 * Get a list of all the assessment execution records associated with a project
 	 *  

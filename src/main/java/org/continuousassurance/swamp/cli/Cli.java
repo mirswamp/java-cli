@@ -40,8 +40,10 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.MalformedURLException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
@@ -51,6 +53,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.TimeZone;
 import java.util.regex.Pattern;
 
 
@@ -244,41 +247,98 @@ public class Cli {
         }
     }
 
-    public HashMap<String, Object> resultsOptionsHandler(ArrayList<String> args) throws ParseException, CommandLineOptionException {
+    public HashMap<String, Object> resultsOptionsHandler(String cmd_name, ArrayList<String> args) throws ParseException, CommandLineOptionException {
 
         Options options = new Options();
-        options.addOption(Option.builder("H").required(false).longOpt("help").desc("Shows Help").build());
-        options.addOption(Option.builder("R").required(false).hasArg(true).longOpt("results-uuid").argName("RESULTS_UUID")
-                .desc("Assessment Results UUID of a project").build());
-        options.addOption(Option.builder("P").required(false).hasArg(true).longOpt("project-uuid").argName("PROJECT_UUID")
-                .desc("Project UUID of a project").build());
-        options.addOption(Option.builder("F").required(false).hasArg(true).longOpt("file-path").argName("SCARF_FILEPATH")
-                .desc("Filepath to write SCARF Results into").build());
+        OptionGroup opt_grp = new OptionGroup();
+        opt_grp.setRequired(true);
 
-        String[] cmd_args = (String[]) args.toArray(new String[0]);
-        CommandLine parsed_options = new DefaultParser().parse(options, cmd_args);
-        if (args.size() == 0 || parsed_options.hasOption("H")) {
+        opt_grp.addOption(Option.builder("H").required(false).longOpt("help").desc("Shows Help").build());
+        opt_grp.addOption(Option.builder("L").required(false).longOpt("list").hasArg(false).desc("List results").build());
+        opt_grp.addOption(Option.builder("D").required(false).longOpt("download").hasArg(false).desc("Download SCARF ").build());
+        options.addOptionGroup(opt_grp);
+
+        Options list_options = new Options();
+        {
+            OptionGroup list_opt_grps = new OptionGroup();
+            list_opt_grps.addOption(Option.builder("Q").required(false).hasArg(false).longOpt("quiet")
+                    .desc("Do not print Headers, Description, Type ").build());
+            list_options.addOptionGroup(list_opt_grps);
+            list_options.addOption(Option.builder("PK").required(false).hasArg().argName("PACKAGE").longOpt("package")
+                    .desc("Show results for this package").build());
+            list_options.addOption(Option.builder("TL").required(false).hasArg().argName("TOOL").longOpt("tool")
+                    .desc("Show results for this tool").build());
+            list_options.addOption(Option.builder("PJ").required(false).hasArg().argName("PROJECT").longOpt("project")
+                    .desc("Show result for this Project").build());
+            list_options.addOption(Option.builder("PL").required(false).hasArg().argName("PLATFORM").longOpt("platform")
+                    .desc("Show results for this Platform").build());
+        }
+
+        Options download_options = new Options();
+        {
+            download_options.addOption(Option.builder("Q").required(false).hasArg(false).longOpt("quiet")
+                    .desc("Print only the Package UUID with no formatting").build());
+            download_options.addOption(Option.builder("R").required(true).hasArg(true).longOpt("results-uuid").argName("RESULTS_UUID")
+                    .desc("Assessment Results UUID of a project").build());
+            download_options.addOption(Option.builder("P").required(false).hasArg(true).longOpt("project-uuid").argName("PROJECT_UUID")
+                    .desc("Project UUID of a project").build());
+            download_options.addOption(Option.builder("F").required(false).hasArg(true).longOpt("file-path").argName("SCARF_FILEPATH")
+                    .desc("Filepath to write SCARF Results into, DEFAULT: ./<RESULTS_UUID>.xml").build());
+        }
+        
+        if (args.size() == 0 ) {
+            args.add("-H");
+        }
+
+        CommandLine main_options = null;
+        try {
+            main_options = new DefaultParser().parse(options, args.toArray(new String[0]), true);
+        } catch (ParseException e) {
+            //For backwards compatibility, adding option -D
+            ArrayList<String> new_args = new ArrayList<String>();
+            new_args.add("-D");
+            new_args.addAll(args);
+            args = new_args;
+            main_options = new DefaultParser().parse(options, args.toArray(new String[0]), true);
+        }
+        
+        if (main_options.hasOption("help") || args.contains("-H") || args.contains("--help")) {
             HelpFormatter formatter = new HelpFormatter();
-            formatter.printHelp("Command Line Parameters", options);
+            formatter.printHelp("sub-commands", options, true);
+            formatter.printHelp(new PrintWriter(System.out, true), 120, 
+                    cmd_name + " --" + options.getOption("-L").getLongOpt(), 
+                    "", list_options, 4, 4, "", true);
+            formatter.printHelp(new PrintWriter(System.out, true), 120, 
+                    cmd_name + " --" + options.getOption("-D").getLongOpt(), 
+                    "", download_options, 4, 4, "", true);
             return null;
-        }else {
+        }
 
-            if(!parsed_options.hasOption("results-uuid")){
-                throw new CommandLineOptionException(optionMissingStr(options.getOption("R")));
-            }
-            if(!parsed_options.hasOption("project-uuid")){
-                throw new CommandLineOptionException(optionMissingStr(options.getOption("P")));
-            }
-            if(!parsed_options.hasOption("file-path")){
-                throw new CommandLineOptionException(optionMissingStr(options.getOption("F")));
-            }
+        args.remove(0);
 
-            HashMap<String, Object> cred_map = new HashMap<String, Object>();
-            cred_map.put("project-uuid", parsed_options.getOptionValue("project-uuid"));
-            cred_map.put("results-uuid", parsed_options.getOptionValue("results-uuid"));
-            cred_map.put("file-path", parsed_options.getOptionValue("file-path"));
+        HashMap<String, Object> cred_map = new HashMap<String, Object>();
+
+        if (main_options.hasOption("D")) {
+            CommandLine parsed_options = new DefaultParser().parse(download_options, args.toArray(new String[0]));
+            cred_map.put("sub-command", "download");
+
+            cred_map.put("quiet", parsed_options.hasOption("Q"));
+            cred_map.put("results-uuid", parsed_options.getOptionValue("R"));
+            cred_map.put("project-uuid", parsed_options.getOptionValue("P"));
+            cred_map.put("filepath", parsed_options.getOptionValue("F"));
+            return cred_map;
+        }else if (main_options.hasOption("L")){
+            CommandLine parsed_options = new DefaultParser().parse(list_options, args.toArray(new String[0]));
+            cred_map.put("sub-command", "list");
+            cred_map.put("quiet", parsed_options.hasOption("Q"));
+            cred_map.put("package", parsed_options.getOptionValue("PK"));
+            cred_map.put("project", main_options.getOptionValue("PJ"));
+            cred_map.put("tool", parsed_options.getOptionValue("TL"));
+            cred_map.put("platform", parsed_options.getOptionValue("PL"));           
+
             return cred_map;
         }
+        return cred_map;
     }
 
     public HashMap<String, Object> statusOptionsHandler(ArrayList<String> args) throws ParseException, CommandLineOptionException {
@@ -668,7 +728,6 @@ public class Cli {
             cred_map.put("assess-uuid", main_options.getOptionValue("A"));
             return cred_map;
         }
-
     }
 
     public HashMap<String, Object> processCliArgs(String command, ArrayList<String> cli_args) throws CommandLineOptionException, ParseException, FileNotFoundException, IOException{
@@ -695,7 +754,7 @@ public class Cli {
             opt_map = platformOptionsHandler(cli_args);
             break;
         case "results":
-            opt_map = resultsOptionsHandler(cli_args);
+            opt_map = resultsOptionsHandler(command, cli_args);
             break;
         case "status":
             opt_map = statusOptionsHandler(cli_args);
@@ -1186,11 +1245,118 @@ public class Cli {
         }
 
     }
-
+    
     public void resultsHandler(HashMap<String, Object> opt_map) throws IOException{
-        api_wrapper.getAssessmentResults((String)opt_map.get("project-uuid"), 
-                (String)opt_map.get("results-uuid"),
-                (String)opt_map.get("file-path"));
+        if (opt_map.get("sub-command").equals("download")) {
+            downloadScarf((String)opt_map.get("project-uuid"), 
+                    (String)opt_map.get("results-uuid"),
+                    (String)opt_map.get("filepath"),
+                    (boolean)opt_map.get("quiet"));
+        }else {
+            listResults((String)opt_map.get("project"), 
+                    (String)opt_map.get("package"), 
+                    (String)opt_map.get("tool"),
+                    (String)opt_map.get("platform"),
+                    (boolean)opt_map.get("quiet"));
+        }
+    }
+
+    public void downloadScarf(String project_uuid, String asssess_result_uuid, String filepath, boolean quiet) throws IOException {
+        if (filepath == null) {
+            filepath = "./" + asssess_result_uuid + ".xml";
+        }
+        
+        boolean status = false;
+        if (project_uuid != null) {
+            status =  api_wrapper.getAssessmentResults(project_uuid, asssess_result_uuid, filepath); 
+        }else {
+            status =  api_wrapper.getAssessmentResults(asssess_result_uuid, filepath);
+        }
+        
+        if (!quiet) {
+            if (status) {
+                System.out.println("Downloaded SCARF into: " + filepath);
+            }else {
+                System.out.println("Downloaded SCARF for " + asssess_result_uuid + " failed" );
+            }
+        }
+    }
+
+    public String toCurrentTimeZone(Date date) {
+        String converted_date = "";
+        
+        try {
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTime(date);
+            
+            TimeZone this_time_zone = Calendar.getInstance().getTimeZone();
+            if (!this_time_zone.inDaylightTime(date)) {
+                calendar.add(Calendar.MILLISECOND, this_time_zone.getDSTSavings());
+            }
+            
+            SimpleDateFormat date_format = new SimpleDateFormat("MM/dd/yyyy HH:mm");
+            date_format.setTimeZone(Calendar.getInstance().getTimeZone());
+            converted_date =  date_format.format(calendar.getTime());
+        }catch (Exception e){ 
+            e.printStackTrace();
+        }
+
+        return converted_date;
+    }
+    
+    public void listResults(String project_name, 
+            String package_name, 
+            String tool_name,
+            String plat_name,
+            boolean quiet) {
+
+        List<AssessmentRecord> all_results = new ArrayList<AssessmentRecord>();
+
+        if (project_name != null) {
+            all_results.addAll(api_wrapper.getAllAssessmentRecords(api_wrapper.getProjectFromName(project_name).getIdentifierString()));
+        }else {
+            for (Project project : api_wrapper.getProjectsList()) {
+                all_results.addAll(api_wrapper.getAllAssessmentRecords(project.getIdentifierString()));
+            }
+        }
+        
+        Collections.sort(all_results, new Comparator<AssessmentRecord>() {
+            public int compare(AssessmentRecord i1, AssessmentRecord i2) {
+                return (i2.getConversionMap().getDate("create_date").compareTo(i1.getConversionMap().getDate("create_date")));
+            }
+        });
+                
+        System.out.printf("%-37s %-35s %-25s %-25s %-30s %-20s %10s\n",
+                "Assessment Result UUID", "Package", "Tool","Platform", "Date", "Status", "Results");      
+
+        for (AssessmentRecord arun : all_results) {
+            if (package_name != null && !arun.getPkg().getName().equals(package_name)) {
+                continue;
+            }
+
+            if (tool_name != null && !arun.getTool().getName().equals(tool_name)) {
+                continue;
+            }
+
+            if (plat_name != null && !arun.getPlatform().getName().equals(plat_name)) {
+                continue;
+            }
+
+            //Date create_date = arun.getConversionMap().getDate("create_date");
+            
+            System.out.printf("%-37s %-35s %-25s %-25s %-30s %-20s %10d\n",
+                    arun.getAssessmentResultUUID(),
+                    arun.getConversionMap().getString("package_name") + "-" +
+                            arun.getConversionMap().getString("package_version"),
+                    arun.getConversionMap().getString("tool_name") + "-" +
+                            arun.getConversionMap().getString("tool_version"),
+                    arun.getConversionMap().getString("platform_name") + "-" +
+                            arun.getConversionMap().getString("platform_version"),
+                    toCurrentTimeZone(arun.getConversionMap().getDate("create_date")),
+                    arun.getConversionMap().getString("status"),
+                    arun.getWeaknessCount());
+            
+        }
     }
 
     public void assessmentStatusHandler(HashMap<String, Object> opt_map) {
