@@ -80,6 +80,7 @@ public class Cli {
             "projects",
             "tools",
             "platforms",
+            "status",
             "user"));
 
     public static void printHelp() {
@@ -345,9 +346,9 @@ public class Cli {
 
         Options options = new Options();
         options.addOption(Option.builder("H").required(false).longOpt("help").desc("Shows Help").build());
-        options.addOption(Option.builder("P").required(false).hasArg(true).longOpt("project-uuid")
+        options.addOption(Option.builder("P").required(false).hasArg(true).argName("PROJECT_UUID").longOpt("project-uuid")
                 .desc("Project UUID of the project").build());
-        options.addOption(Option.builder("A").required(false).hasArg(true).longOpt("assess-uuid")
+        options.addOption(Option.builder("A").required(false).hasArg(true).argName("ASSESSMENT_UUID").longOpt("assess-uuid")
                 .desc("assessment UUID of an assessment run").build());
 
         String[] cmd_args = (String[]) args.toArray(new String[0]);
@@ -357,9 +358,7 @@ public class Cli {
             formatter.printHelp("Command Line Parameters", options);
             return null;
         }else {
-            if(!parsed_options.hasOption("project-uuid")){
-                throw new CommandLineOptionException(optionMissingStr(options.getOption("P")));
-            }
+
             if(!parsed_options.hasOption("assess-uuid")){
                 throw new CommandLineOptionException(optionMissingStr(options.getOption("A")));
             }
@@ -396,22 +395,28 @@ public class Cli {
                     .desc("File path to the package archive file").build());
             upload_options.addOption(Option.builder("C").required().hasArg().argName("PACKAGE_CONF_FILEPATH").longOpt("pkg-conf")
                     .desc("File path to the package.conf file").build());
-            upload_options.addOption(Option.builder("P").required(false).hasArg().argName("PROJECT").longOpt("project")
+            upload_options.addOption(Option.builder("PJ").required(false).hasArg().argName("PROJECT").longOpt("project")
                     .desc("Name or UUID of the project that this package must be added to.  Default: MyProject").build());
-            upload_options.addOption(Option.builder("N").required(false).hasArg(false).longOpt("new")
+            upload_options.addOption(Option.builder("N").required(false).hasArg(false).longOpt("new-pkg")
                     .desc("Flag if this package must be added as a new package, and not as a new version of an existing package").build());
             upload_options.addOption(Option.builder("O").argName("property=value").numberOfArgs(2).valueSeparator('=').longOpt("os-deps")
                     .desc("use value for given property" ).build());
+            upload_options.addOption(Option.builder("P").required(false).hasArg().argName("PROJECT_UUID").longOpt("project-uuid")
+                    .desc("UUID of the project that this package must be added to. (this option is deprecated, use -PJ)").build());
         }
 
         Options delete_options = new Options();
         {
             delete_options.addOption(Option.builder("Q").required(false).hasArg(false).longOpt("quiet")
                     .desc("Do not print anything").build());
-            delete_options.addOption(Option.builder("P").required(false).hasArg().argName("PROJECT").longOpt("project")
+            delete_options.addOption(Option.builder("PJ").required(false).hasArg().argName("PROJECT").longOpt("project")
                     .desc("Delete packages in this project. if --packages option is not specified, delete all").build());
-            delete_options.addOption(Option.builder("K").required(false).hasArgs().argName("PACKAGES").longOpt("packages")
+            delete_options.addOption(Option.builder("PK").required(false).hasArgs().argName("PACKAGES").longOpt("packages")
                     .desc("Delete packages with these names or UUIDs. Accepts multiple names or UUIDs").build());
+            delete_options.addOption(Option.builder("I").required(false).hasArgs().argName("PACKAGE_UUID").longOpt("pkg-uuid")
+                    .desc("Package Version UUIDs (this option is deprecated, use -PK)").build());
+            delete_options.addOption(Option.builder("P").required(false).hasArg().argName("PROJECT_UUID").longOpt("project-uuid")
+                    .desc("UUID of the project that this package must be added to. (this option is deprecated, use -PJ)").build());
         }
 
         Options list_options = new Options();
@@ -421,10 +426,13 @@ public class Cli {
                     .desc("Do not print Headers, Description, Type ").build());
             list_opt_grps.addOption(Option.builder("V").required(false).hasArg(false).longOpt("verbose")
                     .desc("Print UUIDs also").build());
-            list_options.addOption(Option.builder("P").required(false).hasArg().argName("PROJECT").longOpt("project")
+            list_options.addOption(Option.builder("PJ").required(false).hasArg().argName("PROJECT").longOpt("project")
                     .desc("Only show packages in this Project (Name or UUID)").build());
             list_options.addOption(Option.builder("KT").required(false).hasArgs().argName("PACKAGE_TYPE").longOpt("pkg-type")
                     .desc("Only show packages of this Type").build());
+            list_options.addOption(Option.builder("P").required(false).hasArg().argName("PROJECT_UUID").longOpt("project-uuid")
+                    .desc("UUID of the project that this package must be added to.  (this option is deprecated, use -PJ)").build());
+
             list_options.addOptionGroup(list_opt_grps);
         }
 
@@ -462,7 +470,11 @@ public class Cli {
             cred_map.put("sub-command", "list");
             cred_map.put("quiet", parsed_options.hasOption("Q"));
             cred_map.put("verbose", parsed_options.hasOption("V"));
-            cred_map.put("project", parsed_options.getOptionValue("P", null));
+            cred_map.put("project", parsed_options.getOptionValue("PJ", null));
+            if (cred_map.get("project") == null) {
+                //Use the deprecated option
+                cred_map.put("project", parsed_options.getOptionValue("P", null));
+            }
             cred_map.put("pkg-type", parsed_options.getOptionValue("KT", null));
         }else if (main_options.hasOption("U")) {
             CommandLine parsed_options = new DefaultParser().parse(upload_options, args.toArray(new String[0]), true);
@@ -470,7 +482,11 @@ public class Cli {
             cred_map.put("quiet", parsed_options.hasOption("Q"));
             cred_map.put("pkg-archive", parsed_options.getOptionValue("A"));
             cred_map.put("pkg-conf", parsed_options.getOptionValue("C"));
-            cred_map.put("project", parsed_options.getOptionValue("P", null));
+            cred_map.put("project", parsed_options.getOptionValue("PJ", null));
+            if (cred_map.get("project") == null) {
+                //Use the deprecated option
+                cred_map.put("project", parsed_options.getOptionValue("P", null));
+            }
             cred_map.put("new-pkg", parsed_options.hasOption("N"));	
 
             if(parsed_options.hasOption("O")){
@@ -481,17 +497,23 @@ public class Cli {
             CommandLine parsed_options = new DefaultParser().parse(delete_options, args.toArray(new String[0]), true);			
             cred_map.put("sub-command", "delete");
             cred_map.put("quiet", parsed_options.hasOption("Q"));
-            cred_map.put("project", parsed_options.getOptionValue("P", null));
-
-            if (parsed_options.getOptionValues("K") != null) {
-                cred_map.put("packages", Arrays.asList(parsed_options.getOptionValues("K")));
-            }else {
+            cred_map.put("project", parsed_options.getOptionValue("PJ", null));
+            if (cred_map.get("project") == null) {
+                //Use the deprecated option
+                cred_map.put("project", parsed_options.getOptionValue("P", null));
+            }
+            if (parsed_options.getOptionValues("PK") != null) {
+                cred_map.put("packages", Arrays.asList(parsed_options.getOptionValues("PK")));
+            }else if (parsed_options.getOptionValues("I") != null) {
+              //Use the deprecated option
+                cred_map.put("packages", Arrays.asList(parsed_options.getOptionValues("I")));
+            } else {
                 cred_map.put("packages", null);
             }
 
             if (cred_map.get("project") == null && cred_map.get("packages") == null) {
-                throw new CommandLineOptionException(optionMissingStr(delete_options.getOption("P")) + 
-                        " or|and " + optionMissingStr(delete_options.getOption("K")));
+                throw new CommandLineOptionException(optionMissingStr(delete_options.getOption("PJ")) + 
+                        " or|and " + optionMissingStr(delete_options.getOption("PK")));
             }
         }
         return cred_map;
@@ -641,15 +663,15 @@ public class Cli {
         {
             run_options.addOption(Option.builder("Q").required(false).hasArg(false).longOpt("quiet")
                     .desc("Print only the Package UUID with no formatting").build());
-            run_options.addOption(Option.builder("K").required(true).hasArg().argName("PACKAGE").longOpt("package")
+            run_options.addOption(Option.builder("PK").required(true).hasArg().argName("PACKAGE").longOpt("package")
                     .desc("Package name or UUID").build());
-            run_options.addOption(Option.builder("KV").required(false).hasArg().argName("PACKAGE_VERSION").longOpt("pkg-version")
+            run_options.addOption(Option.builder("PV").required(false).hasArg().argName("PACKAGE_VERSION").longOpt("pkg-version")
                     .desc("Package version").build());
-            run_options.addOption(Option.builder("T").required(true).hasArgs().argName("TOOL").longOpt("tool")
+            run_options.addOption(Option.builder("TL").required(true).hasArgs().argName("TOOL").longOpt("tool")
                     .desc("Package version").build());
             run_options.addOption(Option.builder("TV").required(false).hasArg().argName("TOOL_VERSION").longOpt("tool-version")
                     .desc("Package version").build());
-            run_options.addOption(Option.builder("F").required(false).hasArgs().argName("PLATFORM").longOpt("platform")
+            run_options.addOption(Option.builder("PL").required(false).hasArgs().argName("PLATFORM").longOpt("platform")
                     .desc("Platform name").build());
         }
 
@@ -661,13 +683,13 @@ public class Cli {
             list_opt_grps.addOption(Option.builder("V").required(false).hasArg(false).longOpt("verbose")
                     .desc("Print UUIDs also").build());
             list_options.addOptionGroup(list_opt_grps);
-            list_options.addOption(Option.builder("K").required(false).hasArg().argName("PACKAGE").longOpt("package")
+            list_options.addOption(Option.builder("PK").required(false).hasArg().argName("PACKAGE").longOpt("package")
                     .desc("Package name or UUID").build());
-            list_options.addOption(Option.builder("T").required(false).hasArg().argName("TOOL").longOpt("tool")
+            list_options.addOption(Option.builder("TL").required(false).hasArg().argName("TOOL").longOpt("tool")
                     .desc("Package version").build());
-            list_options.addOption(Option.builder("P").required(false).hasArg().argName("PROJECT").longOpt("project")
+            list_options.addOption(Option.builder("PJ").required(false).hasArg().argName("PROJECT").longOpt("project")
                     .desc("Only show packages in this Project (Name or UUID)").build());
-            list_options.addOption(Option.builder("F").required(false).hasArg().argName("PLATFORM").longOpt("platform")
+            list_options.addOption(Option.builder("PL").required(false).hasArg().argName("PLATFORM").longOpt("platform")
                     .desc("Platform name").build());
         }
 
@@ -697,12 +719,12 @@ public class Cli {
             cred_map.put("sub-command", "run");
 
             cred_map.put("quiet", parsed_options.hasOption("Q"));
-            cred_map.put("package", parsed_options.getOptionValue("K"));
-            cred_map.put("pkg-version", parsed_options.getOptionValue("KV"));
-            cred_map.put("tool", Arrays.asList(parsed_options.getOptionValues("T")));
+            cred_map.put("package", parsed_options.getOptionValue("PK"));
+            cred_map.put("pkg-version", parsed_options.getOptionValue("PV"));
+            cred_map.put("tool", Arrays.asList(parsed_options.getOptionValues("TL")));
             cred_map.put("tool-version", parsed_options.getOptionValue("TV"));			
-            if (main_options.hasOption("F")){
-                cred_map.put("platform-uuid", Arrays.asList(parsed_options.getOptionValues('F')));
+            if (main_options.hasOption("PL")){
+                cred_map.put("platform-uuid", Arrays.asList(parsed_options.getOptionValues("PL")));
             }
 
             return cred_map;
@@ -711,23 +733,16 @@ public class Cli {
             cred_map.put("sub-command", "list");
             cred_map.put("quiet", parsed_options.hasOption("Q"));
             cred_map.put("verbose", parsed_options.hasOption("V"));
-            cred_map.put("package", parsed_options.getOptionValue("K"));
-            cred_map.put("project", main_options.getOptionValue("P"));
-            cred_map.put("tool", parsed_options.getOptionValue("T"));
-            cred_map.put("platform", parsed_options.getOptionValue("F"));			
+            cred_map.put("package", parsed_options.getOptionValue("PK"));
+            cred_map.put("project", main_options.getOptionValue("PJ"));
+            cred_map.put("tool", parsed_options.getOptionValue("TL"));
+            cred_map.put("platform", parsed_options.getOptionValue("PL"));			
 
             return cred_map;
-        }else {
-            if (!main_options.hasOption("P")){
-                throw new CommandLineOptionException(optionMissingStr(options.getOption("P")));
-            }
-            if (!main_options.hasOption("A")){
-                throw new CommandLineOptionException(optionMissingStr(options.getOption("A")));
-            }
-            cred_map.put("project-uuid", main_options.getOptionValue("P"));
-            cred_map.put("assess-uuid", main_options.getOptionValue("A"));
-            return cred_map;
         }
+            
+        return cred_map;
+        
     }
 
     public HashMap<String, Object> processCliArgs(String command, ArrayList<String> cli_args) throws CommandLineOptionException, ParseException, FileNotFoundException, IOException{
@@ -1009,7 +1024,7 @@ public class Cli {
             }
         }else if(verbose) {
             System.out.printf("%-37s %-25s %-40s %-25s %-25s\n",
-                    "UUID", "Package", "Description","Type", "Version");
+                    "UUID", "Package", "Description","Type", "Versions");
 
             for(PackageThing pkg : api_wrapper.getPackagesList(project)) {
                 if (pkg_type == null ||
@@ -1359,12 +1374,8 @@ public class Cli {
         }
     }
 
-    public void assessmentStatusHandler(HashMap<String, Object> opt_map) {
-        if (opt_map.containsKey("assess-uuid")){
-            printAssessmentStatus((String)opt_map.get("project-uuid"), (String)opt_map.get("assess-uuid"));
-        }else{
-            printAllAssessmentStatus((String)opt_map.get("project-uuid"));
-        }
+    public void statusHandler(HashMap<String, Object> opt_map) {
+        printAssessmentStatus((String)opt_map.get("project-uuid"), (String)opt_map.get("assess-uuid"));
     }
 
     public void printUserInfo(HashMap<String, Object> opt_map) {
@@ -1412,7 +1423,7 @@ public class Cli {
                 resultsHandler(opt_map);
                 break;
             case "status":
-                assessmentStatusHandler(opt_map);
+                statusHandler(opt_map);
                 break;
             case "user":
                 printUserInfo(opt_map);
@@ -1501,35 +1512,38 @@ public class Cli {
     }
 
     public void printAssessmentStatus(String project_uuid, String assessment_uuid) {
-        AssessmentRecord assessment_record = api_wrapper.getAssessmentRecord(project_uuid, assessment_uuid);        
-        System.out.printf("%s, %d", 
-                AssessmentStatus.translateAssessmentStatus(assessment_record.getStatus()), 
-                assessment_record.getWeaknessCount());
+       
+       AssessmentRecord assessment_record = null;
+       
+       if (project_uuid != null) {
+           assessment_record = api_wrapper.getAssessmentRecord(project_uuid, assessment_uuid);
+       }else {
+           for (Project project : api_wrapper.getProjectsList()) {
+               for (AssessmentRecord record : api_wrapper.getAllAssessmentRecords(project.getUUIDString())) {
+                   
+                   if (record.getAssessmentRunUUID().equals(assessment_uuid)) {
+                       assessment_record = record;
+                       break;
+                   }
+               }
+           }
+       }
+       
+       if (assessment_record != null) {
+           System.out.printf("%s, %d", 
+                   //AssessmentStatus.translateAssessmentStatus(assessment_record.getStatus()),
+                   assessment_record.getStatus(),
+                   assessment_record.getWeaknessCount());
 
-        if (assessment_record.getAssessmentResultUUID() == null){
-            System.out.printf("\n");
-        }else{
-            System.out.printf(", %-37s\n", assessment_record.getAssessmentResultUUID());
-        }
-    }
-
-    public void printAssessmentResultsUUID(String project_uuid, String assessment_uuid) {
-        System.out.println(api_wrapper.getAssessmentRecord(project_uuid, assessment_uuid).getAssessmentResultUUID());
-    }
-
-    public void printAllAssessmentStatus(String project_uuid) {
-
-        System.out.printf("\n\n%-37s %-37s %-22s %s\n", 
-                "ASSESSMENT RUN UUID", "ASSESSMENT RESULT UUID", 
-                "STATUS", "WEAKNESS COUNT");
-        for(AssessmentRecord assessment_record : api_wrapper.getAllAssessmentRecords(project_uuid)) {
-            System.out.printf("%-37s %-37s %-22s %d\n", assessment_record.getAssessmentRunUUID(),
-                    assessment_record.getAssessmentResultUUID(),
-                    assessment_record.getStatus(),
-                    assessment_record.getWeaknessCount());
-        }
-    }
-
+           if (assessment_record.getAssessmentResultUUID() == null){
+               System.out.printf("\n");
+           }else{
+               System.out.printf(", %-37s\n", assessment_record.getAssessmentResultUUID());
+           }
+       }else {
+           throw new InvalidIdentifierException("Invalid Assessment UUID: " + assessment_uuid);  
+       }
+   }
 
     public static void main(String[] args) throws Exception {
 
