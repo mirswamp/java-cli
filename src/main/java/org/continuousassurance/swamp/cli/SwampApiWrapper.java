@@ -1179,6 +1179,95 @@ public class SwampApiWrapper {
 		return null;
 	}
 
+	//Code copied from https://stackoverflow.com/questions/41198379/sorting-version-numbers
+	public int mycompare(String o1, String o2) {
+
+	    if (o1 == null && o2 == null) {
+	        return 0;
+	    } else if (o1 == null && o2 != null) {
+	        return -1;
+	    } else if (o1 != null && o2 == null) {
+	        return 1;
+	    } else {
+	        if (o1.length() == 0 && o2.length() == 0) {
+	            return 0;
+	        } else if (o1.length() == 0 && o2.length() > 0) {
+	            return -1;
+	        } else if (o1.length() > 0 && o2.length() == 0) {
+	            return 1;
+	        } else {
+	            return compareVersion(o1, o2);
+	        }
+	    }
+	}
+
+	//Code copied from https://stackoverflow.com/questions/41198379/sorting-version-numbers
+	public static int compareVersion(String version1, String version2) {
+	    if (version1.contains(" ")) {
+	        version1 = version1.substring(0, version1.indexOf(" "));
+	    }
+
+	    if (version2.contains(" ")) {
+	        version2 = version2.substring(0, version2.indexOf(" "));
+	    }
+
+	    String[] arr1 = version1.split("\\.");
+	    String[] arr2 = version2.split("\\.");
+
+	    try {
+
+	        int i = 0;
+	        while (i < arr1.length || i < arr2.length) {
+	            if (i < arr1.length && i < arr2.length) {
+	                if (Integer.parseInt(arr1[i]) < Integer.parseInt(arr2[i])) {
+	                    return -1;
+	                } else if (Integer.parseInt(arr1[i]) > Integer.parseInt(arr2[i])) {
+	                    return 1;
+	                } else if (Integer.parseInt(arr1[i]) == Integer.parseInt(arr2[i])) {
+	                    int result = specialCompare(version1, version2);
+	                    if (result != 0) {
+	                        return result;
+	                    }
+	                }
+	            } else if (i < arr1.length) {
+	                if (Integer.parseInt(arr1[i]) != 0) {
+	                    return 1;
+	                }
+	            } else if (i < arr2.length) {
+	                if (Integer.parseInt(arr2[i]) != 0) {
+	                    return -1;
+	                }
+	            }
+
+	            i++;
+	        }
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	    }
+	    return 0;
+	}
+
+    //Code copied from https://stackoverflow.com/questions/41198379/sorting-version-numbers
+	public static int specialCompare(String str1, String str2) {	    
+	    String[] arr1 = str1.split("\\.");
+	    String[] arr2 = str2.split("\\.");
+	    for (int i = 1; i < arr1.length; i++) {
+	        if (Integer.parseInt(arr1[i]) != 0) {
+	            return 0;
+	        }
+	    }
+	    for (int j = 1; j < arr2.length; j++) {
+	        if (Integer.parseInt(arr2[j]) != 0) {
+	            return 0;
+	        }
+	    }
+	    if (arr1.length < arr2.length) {
+	        return -1;
+	    } else {
+	        return 1;
+	    }
+	}
+
 	/**
      * Get a list of tools provided package type and project uuid (for project specific tools)
      *  
@@ -1189,7 +1278,16 @@ public class SwampApiWrapper {
      */
     @SuppressWarnings("unchecked")
     public List<ToolVersion> getToolVersions(Tool tool) throws InvalidIdentifierException {
-        return (List<ToolVersion>)handlerFactory.getToolVersionHandler().getAll(tool);
+        List<ToolVersion>  tool_versions = (List<ToolVersion>)handlerFactory.getToolVersionHandler().getAll(tool);
+        
+        Collections.sort(tool_versions, new Comparator<ToolVersion>() {
+            public int compare(ToolVersion i1, ToolVersion i2) {
+                //return (i2.getVersion().compareTo(i1.getVersion()));
+                return mycompare(i2.getVersion(), i1.getVersion());
+            }
+        });
+        
+        return tool_versions;
     }
 
 
