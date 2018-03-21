@@ -33,7 +33,6 @@ import org.continuousassurance.swamp.session.HTTPException;
 import org.apache.commons.cli.*;
 import org.apache.log4j.varia.NullAppender;
 import org.continuousassurance.swamp.cli.exceptions.*;
-import org.continuousassurance.swamp.cli.util.AssessmentStatus;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -286,7 +285,7 @@ public class Cli {
             download_options.addOption(Option.builder("F").required(false).hasArg(true).longOpt("file-path").argName("SCARF_FILEPATH")
                     .desc("Filepath to write SCARF Results into, DEFAULT: ./<RESULTS_UUID>.xml").build());
         }
-        
+
         if (args.size() == 0 ) {
             args.add("-H");
         }
@@ -302,7 +301,7 @@ public class Cli {
             args = new_args;
             main_options = new DefaultParser().parse(options, args.toArray(new String[0]), true);
         }
-        
+
         if (main_options.hasOption("help") || args.contains("-H") || args.contains("--help")) {
             HelpFormatter formatter = new HelpFormatter();
             formatter.printHelp("sub-commands", options, true);
@@ -505,7 +504,7 @@ public class Cli {
             if (parsed_options.getOptionValues("PK") != null) {
                 cred_map.put("packages", Arrays.asList(parsed_options.getOptionValues("PK")));
             }else if (parsed_options.getOptionValues("I") != null) {
-              //Use the deprecated option
+                //Use the deprecated option
                 cred_map.put("packages", Arrays.asList(parsed_options.getOptionValues("I")));
             } else {
                 cred_map.put("packages", null);
@@ -673,7 +672,7 @@ public class Cli {
                     .desc("Tool version").build());
             run_options.addOption(Option.builder("PL").required(false).hasArgs().argName("PLATFORM").longOpt("platform")
                     .desc("Platform name").build());
-            
+
             run_options.addOption(Option.builder("K").required(false).hasArg().argName("PACKAGE_VERSION_UUID").longOpt("pkg-uuid")
                     .desc("Package version UUID (this option is deprecated, use -PK and -PV)").build());
             run_options.addOption(Option.builder("T").required(false).hasArgs().argName("TOOL_UUID").longOpt("tool-uuid")
@@ -720,26 +719,26 @@ public class Cli {
         }
 
         args.remove(0);
-         
+
         HashMap<String, Object> cred_map = new HashMap<String, Object>();
 
         if (main_options.hasOption("R")) {
-            
+
             try {
                 CommandLine parsed_options = new DefaultParser().parse(run_options, main_options.getArgs());
             }catch (MissingOptionException e) {
                 for(String missing_opt : (List<String>)e.getMissingOptions())   {
                     if (missing_opt.equals("PK")) {
-                       List<String> arg_list = main_options.getArgList(); 
-                       if (arg_list.contains("-P")) {
-                           arg_list.add("-PK");
-                           arg_list.add(arg_list.get(arg_list.indexOf("-K") + 1));
-                       }else if (arg_list.contains("--pkg-uuid")) {
-                           arg_list.add("-PK");
-                           arg_list.add(arg_list.get(arg_list.indexOf("--pkg-uuid") + 1));
-                       }
+                        List<String> arg_list = main_options.getArgList(); 
+                        if (arg_list.contains("-P")) {
+                            arg_list.add("-PK");
+                            arg_list.add(arg_list.get(arg_list.indexOf("-K") + 1));
+                        }else if (arg_list.contains("--pkg-uuid")) {
+                            arg_list.add("-PK");
+                            arg_list.add(arg_list.get(arg_list.indexOf("--pkg-uuid") + 1));
+                        }
                     }
-                    
+
                     if (missing_opt.equals("TL")) {
                         List<String> arg_list = main_options.getArgList(); 
                         if (arg_list.contains("-T")) {
@@ -749,10 +748,10 @@ public class Cli {
                             arg_list.add("-TL");
                             arg_list.add(arg_list.get(arg_list.indexOf("--tool-uuid") + 1));
                         }
-                     }
+                    }
                 }
             }
-            
+
             CommandLine parsed_options = new DefaultParser().parse(run_options, main_options.getArgList().toArray(new String[0]));
             cred_map.put("sub-command", "run");
 
@@ -778,9 +777,9 @@ public class Cli {
 
             return cred_map;
         }
-            
+
         return cred_map;
-        
+
     }
 
     public HashMap<String, Object> processCliArgs(String command, ArrayList<String> cli_args) throws CommandLineOptionException, ParseException, FileNotFoundException, IOException{
@@ -1107,6 +1106,116 @@ public class Cli {
         }
     }
 
+    public Project getProject(String project_name)  {
+        List<Project> projects = new ArrayList<Project>();
+
+        if (project_name != null) {
+            if (Cli.isUuid(project_name)) {
+                for (Project proj : api_wrapper.getProjectsList()) {
+                    if (proj.getUUIDString().equals(project_name)) {
+                        projects.add(proj);
+                        break;
+                    }
+                }
+            }else {
+                for (Project proj : api_wrapper.getProjectsList()) {
+                    if (proj.getShortName().equals(project_name)) {
+                        projects.add(proj);
+                    }
+                } 
+            }
+        }
+
+        if (projects.size() == 0) {
+            if (project_name == null) {
+                throw new InvalidNameException("Project name/UUID cannot be " + project_name);
+            }else if (Cli.isUuid(project_name)) {
+                throw new InvalidIdentifierException("No Project found with UUID: " + project_name);
+            }else {
+                throw new InvalidNameException("No Project found with name: " + project_name);
+            }
+        }else if (projects.size() > 1) {
+            throw new ConflictingNamesException("More than one project has the same name, retrive using UUID");
+        }
+
+        return projects.get(0);
+    }
+
+    public PackageThing getPackage(String package_name, Project project) {
+
+        List<PackageThing> packages = new ArrayList<PackageThing>();
+
+        if (Cli.isUuid(package_name)) {
+            for (PackageThing pkg_thing : api_wrapper.getPackagesList(project.getIdentifierString())) {
+                if (pkg_thing.getUUIDString().equals(package_name)) {
+                    packages.add(pkg_thing);
+                    break;
+                }
+            }
+        }else {
+
+            for (PackageThing pkg_thing : api_wrapper.getPackagesList(project.getIdentifierString())) {
+                if (pkg_thing.getName().equals(package_name)) {
+                    packages.add(pkg_thing);
+                }
+            }
+        }
+
+        if (packages.size() == 0) {
+            if (package_name == null) {
+                throw new InvalidNameException("Package name/UUID cannot be " + package_name);
+            }else if (Cli.isUuid(package_name)) {
+                throw new InvalidIdentifierException("No Package found with UUID: " + package_name);
+            }else {
+                throw new InvalidNameException("No Package found with name: " + package_name);
+            }
+        }else if (packages.size() > 1) {
+            throw new ConflictingNamesException("More than one package has the same name, retrive using UUID");
+        }
+
+        return packages.get(0);
+    }
+
+    public PackageVersion getPackageVersion(String package_version, PackageThing package_thing, Project project) {
+        List<PackageVersion> target_pkg_vers = new ArrayList<PackageVersion>();
+
+        List<PackageVersion> all_pkg_vers = api_wrapper.getPackageVersions(package_thing);
+
+        if (package_version == null) {
+            //Return the latest version
+            Collections.sort(all_pkg_vers, new Comparator<PackageVersion>() {
+                public int compare(PackageVersion i1, PackageVersion i2) {
+                    return (i1.getVersionString().compareTo(i2.getVersionString()));
+                }
+            });
+            target_pkg_vers.add(all_pkg_vers.get(all_pkg_vers.size() - 1));
+        }else {
+            for (PackageVersion pkg_ver : all_pkg_vers) {
+                if (pkg_ver.getVersionString().equals(package_version)) {
+                    target_pkg_vers.add(pkg_ver);
+                }
+            }
+        }
+
+        if (target_pkg_vers.size() == 0) {
+            if (Cli.isUuid(package_version)) {
+                throw new InvalidIdentifierException("No Package Version found with UUID: " + package_version);
+            }else {
+                throw new InvalidNameException("No Package Version found with name: " + package_version);
+            }
+        }else if (target_pkg_vers.size() > 1) {
+            throw new ConflictingNamesException("More than one package versions has the same name, retrive using UUID");
+        }
+
+        return target_pkg_vers.get(0);
+    }
+
+    public PackageVersion getPackageVersion(String package_name, String package_version_name, String project_name) {
+        Project project = getProject(project_name);
+        PackageThing package_thing = getPackage(package_name, project);
+        return getPackageVersion(package_version_name, package_thing, project);   
+    }
+
     public void runAssessments(String pkg, String pkg_ver_num, List<String> tool_names,
             String tool_ver_num, List<String> platforms,
             boolean quiet) {
@@ -1114,7 +1223,7 @@ public class Cli {
         Project target_project = null;
         PackageVersion target_pkg = null;
         List<AssessmentRun> assessment_run = null;
-        
+
         for (Project project : api_wrapper.getProjectsList()) {
             if (!Cli.isUuid(pkg)) {
                 for (PackageThing pkg_thing : api_wrapper.getPackagesList(project.getIdentifierString())) {
@@ -1127,7 +1236,7 @@ public class Cli {
                                     return (i1.getVersionString().compareTo(i2.getVersionString()));
                                 }
                             });
-                            target_pkg = pkg_vers.get(pkg_vers.size()-1);
+                            target_pkg = pkg_vers.get(pkg_vers.size() - 1);
                         }else {
                             for (PackageVersion pkg_ver : pkg_vers) {
                                 if (pkg_ver.getVersionString().equals(pkg_ver_num)) {
@@ -1192,7 +1301,7 @@ public class Cli {
                 }
             }
         }
-        
+
         List<PlatformVersion> valid_platforms = new ArrayList<PlatformVersion>();
         if (platforms != null && target_pkg.getPackageThing().getType().equalsIgnoreCase("C/C++")) {
             for (PlatformVersion plat_ver: api_wrapper.getAllPlatformVersionsList()) {
@@ -1225,7 +1334,7 @@ public class Cli {
             assessment_run = api_wrapper.runAssessment(target_pkg, valid_tools, target_project, valid_platforms);
         }else {
             Tool tool = null;
-            
+
             if (Cli.isUuid(tool_names.get(0))) {
                 tool = api_wrapper.getTool(tool_names.get(0), target_project.getUUIDString());
             }else {
@@ -1233,7 +1342,7 @@ public class Cli {
             }
             List<ToolVersion> valid_tools = new ArrayList<ToolVersion>();
             List<ToolVersion> all_tool_versions = api_wrapper.getToolVersions(tool);
-            
+
             if (tool_ver_num != null) {
                 for (ToolVersion tool_version : all_tool_versions) {
                     if (tool_version.getVersion().equalsIgnoreCase(tool_ver_num)) {
@@ -1245,10 +1354,10 @@ public class Cli {
             }
             assessment_run = api_wrapper.runAssessment(target_pkg, valid_tools.get(0), target_project, valid_platforms);
         }
-        
+
         if (assessment_run != null) {
             if (!quiet) {
-               System.out.println("Assessment UUIDs"); 
+                System.out.println("Assessment UUIDs"); 
             }
             for (AssessmentRun arun : assessment_run) {
                 System.out.println(arun.getUUIDString()); 
@@ -1334,7 +1443,7 @@ public class Cli {
         }
 
     }
-    
+
     public void resultsHandler(HashMap<String, Object> opt_map) throws IOException{
         if (opt_map.get("sub-command").equals("download")) {
             downloadScarf((String)opt_map.get("project-uuid"), 
@@ -1354,14 +1463,14 @@ public class Cli {
         if (filepath == null) {
             filepath = "./" + asssess_result_uuid + ".xml";
         }
-        
+
         boolean status = false;
         if (project_uuid != null) {
             status =  api_wrapper.getAssessmentResults(project_uuid, asssess_result_uuid, filepath); 
         }else {
             status =  api_wrapper.getAssessmentResults(asssess_result_uuid, filepath);
         }
-        
+
         if (!quiet) {
             if (status) {
                 System.out.println("Downloaded SCARF into: " + filepath);
@@ -1373,16 +1482,16 @@ public class Cli {
 
     public String toCurrentTimeZone(Date date) {
         String converted_date = "";
-        
+
         try {
             Calendar calendar = Calendar.getInstance();
             calendar.setTime(date);
-            
+
             TimeZone this_time_zone = Calendar.getInstance().getTimeZone();
             if (!this_time_zone.inDaylightTime(date)) {
                 calendar.add(Calendar.MILLISECOND, this_time_zone.getDSTSavings());
             }
-            
+
             SimpleDateFormat date_format = new SimpleDateFormat("MM/dd/yyyy HH:mm");
             date_format.setTimeZone(Calendar.getInstance().getTimeZone());
             converted_date =  date_format.format(calendar.getTime());
@@ -1392,7 +1501,7 @@ public class Cli {
 
         return converted_date;
     }
-    
+
     public void listResults(String project_name, 
             String package_name, 
             String tool_name,
@@ -1408,13 +1517,13 @@ public class Cli {
                 all_results.addAll(api_wrapper.getAllAssessmentRecords(project.getIdentifierString()));
             }
         }
-        
+
         Collections.sort(all_results, new Comparator<AssessmentRecord>() {
             public int compare(AssessmentRecord i1, AssessmentRecord i2) {
                 return (i2.getConversionMap().getDate("create_date").compareTo(i1.getConversionMap().getDate("create_date")));
             }
         });
-                
+
         System.out.printf("%-37s %-35s %-25s %-25s %-30s %-20s %10s\n",
                 "Assessment Result UUID", "Package", "Tool","Platform", "Date", "Status", "Results");      
 
@@ -1432,19 +1541,19 @@ public class Cli {
             }
 
             //Date create_date = arun.getConversionMap().getDate("create_date");
-            
+
             System.out.printf("%-37s %-35s %-25s %-25s %-30s %-20s %10d\n",
                     arun.getAssessmentResultUUID(),
                     arun.getConversionMap().getString("package_name") + "-" +
                             arun.getConversionMap().getString("package_version"),
-                    arun.getConversionMap().getString("tool_name") + "-" +
-                            arun.getConversionMap().getString("tool_version"),
-                    arun.getConversionMap().getString("platform_name") + "-" +
-                            arun.getConversionMap().getString("platform_version"),
-                    toCurrentTimeZone(arun.getConversionMap().getDate("create_date")),
-                    arun.getConversionMap().getString("status"),
-                    arun.getWeaknessCount());
-            
+                            arun.getConversionMap().getString("tool_name") + "-" +
+                                    arun.getConversionMap().getString("tool_version"),
+                                    arun.getConversionMap().getString("platform_name") + "-" +
+                                            arun.getConversionMap().getString("platform_version"),
+                                            toCurrentTimeZone(arun.getConversionMap().getDate("create_date")),
+                                            arun.getConversionMap().getString("status"),
+                                            arun.getWeaknessCount());
+
         }
     }
 
@@ -1586,38 +1695,38 @@ public class Cli {
     }
 
     public void printAssessmentStatus(String project_uuid, String assessment_uuid) {
-       
-       AssessmentRecord assessment_record = null;
-       
-       if (project_uuid != null) {
-           assessment_record = api_wrapper.getAssessmentRecord(project_uuid, assessment_uuid);
-       }else {
-           for (Project project : api_wrapper.getProjectsList()) {
-               for (AssessmentRecord record : api_wrapper.getAllAssessmentRecords(project.getUUIDString())) {
-                   
-                   if (record.getAssessmentRunUUID().equals(assessment_uuid)) {
-                       assessment_record = record;
-                       break;
-                   }
-               }
-           }
-       }
-       
-       if (assessment_record != null) {
-           System.out.printf("%s, %d", 
-                   //AssessmentStatus.translateAssessmentStatus(assessment_record.getStatus()),
-                   assessment_record.getStatus(),
-                   assessment_record.getWeaknessCount());
 
-           if (assessment_record.getAssessmentResultUUID() == null){
-               System.out.printf("\n");
-           }else{
-               System.out.printf(", %-37s\n", assessment_record.getAssessmentResultUUID());
-           }
-       }else {
-           throw new InvalidIdentifierException("Invalid Assessment UUID: " + assessment_uuid);  
-       }
-   }
+        AssessmentRecord assessment_record = null;
+
+        if (project_uuid != null) {
+            assessment_record = api_wrapper.getAssessmentRecord(project_uuid, assessment_uuid);
+        }else {
+            for (Project project : api_wrapper.getProjectsList()) {
+                for (AssessmentRecord record : api_wrapper.getAllAssessmentRecords(project.getUUIDString())) {
+
+                    if (record.getAssessmentRunUUID().equals(assessment_uuid)) {
+                        assessment_record = record;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (assessment_record != null) {
+            System.out.printf("%s, %d", 
+                    //AssessmentStatus.translateAssessmentStatus(assessment_record.getStatus()),
+                    assessment_record.getStatus(),
+                    assessment_record.getWeaknessCount());
+
+            if (assessment_record.getAssessmentResultUUID() == null){
+                System.out.printf("\n");
+            }else{
+                System.out.printf(", %-37s\n", assessment_record.getAssessmentResultUUID());
+            }
+        }else {
+            throw new InvalidIdentifierException("Invalid Assessment UUID: " + assessment_uuid);  
+        }
+    }
 
     public static void main(String[] args) throws Exception {
 
