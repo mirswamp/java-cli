@@ -1113,6 +1113,12 @@ public class SwampApiWrapper {
 						toolMap.put(tool.getIdentifierString(), tool);
 					//}
 				}
+			}else {
+			    for (Tool tool : handlerFactory.getToolHandler().getAll()) {
+                    //if (tool.getPolicyCode() == null){    //FIXME: This is temporary
+                        toolMap.put(tool.getIdentifierString(), tool);
+                    //}
+                }
 			}
 		}
 		return toolMap;
