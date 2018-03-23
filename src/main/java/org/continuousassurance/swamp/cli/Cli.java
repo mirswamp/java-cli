@@ -171,9 +171,15 @@ public class Cli {
         options.addOption(Option.builder("Q").required(false).hasArg(false).longOpt("quiet")
                 .desc("Less verbose output").build());
 
-        String[] cmd_args = (String[]) args.toArray(new String[0]);
-        CommandLine parsed_options = new DefaultParser().parse(options, cmd_args);
-        if (args.size() == 0 || parsed_options.hasOption("H")) {
+        if (args.size() == 0) {
+            args.add("-H");
+        }else {
+            args = reformatArgs(options, args);
+        }
+        
+        CommandLine parsed_options = new DefaultParser().parse(options, args.toArray(new String[0]));
+        
+        if (parsed_options.hasOption("help")) {
             HelpFormatter formatter = new HelpFormatter();
             formatter.printHelp("Command Line Parameters", options);
             return null;
@@ -247,6 +253,8 @@ public class Cli {
 
             if (args.size() == 0 ) {
                 args.add("-H");
+            }else {
+                args = reformatArgs(options, args);
             }
 
             CommandLine main_options = new DefaultParser().parse(options, args.toArray(new String[0]), true);
@@ -318,18 +326,20 @@ public class Cli {
 
         if (args.size() == 0 ) {
             args.add("-H");
+        }else {
+            args = reformatArgs(options, args);
         }
 
         CommandLine main_options = null;
         try {
-            main_options = new DefaultParser().parse(options, main_options.getArgList().toArray(new String[0]));
+            main_options = new DefaultParser().parse(options, args.toArray(new String[0]), true);
         } catch (ParseException e) {
             //For backwards compatibility, adding option -D
             ArrayList<String> new_args = new ArrayList<String>();
             new_args.add("-D");
             new_args.addAll(args);
             args = new_args;
-            main_options = new DefaultParser().parse(options, main_options.getArgList().toArray(new String[0]));
+            main_options = new DefaultParser().parse(options, args.toArray(new String[0]), true);
         }
 
         if (main_options.hasOption("help") || args.contains("-H") || args.contains("--help")) {
@@ -344,12 +354,10 @@ public class Cli {
             return null;
         }
 
-        args.remove(0);
-
         HashMap<String, Object> cred_map = new HashMap<String, Object>();
 
         if (main_options.hasOption("D")) {
-            CommandLine parsed_options = new DefaultParser().parse(download_options, args.toArray(new String[0]));
+            CommandLine parsed_options = new DefaultParser().parse(download_options, main_options.getArgList().toArray(new String[0]));
             cred_map.put("sub-command", "download");
 
             cred_map.put("quiet", parsed_options.hasOption("Q"));
@@ -358,7 +366,7 @@ public class Cli {
             cred_map.put("filepath", parsed_options.getOptionValue("F"));
             return cred_map;
         }else if (main_options.hasOption("L")){
-            CommandLine parsed_options = new DefaultParser().parse(list_options, args.toArray(new String[0]));
+            CommandLine parsed_options = new DefaultParser().parse(list_options, main_options.getArgList().toArray(new String[0]));
             cred_map.put("sub-command", "list");
             cred_map.put("quiet", parsed_options.hasOption("Q"));
             cred_map.put("package", parsed_options.getOptionValue("PK"));
@@ -380,9 +388,15 @@ public class Cli {
         options.addOption(Option.builder("A").required(false).hasArg(true).argName("ASSESSMENT_UUID").longOpt("assess-uuid")
                 .desc("assessment UUID of an assessment run").build());
 
-        String[] cmd_args = (String[]) args.toArray(new String[0]);
-        CommandLine parsed_options = new DefaultParser().parse(options, cmd_args);
-        if (args.size() == 0 || parsed_options.hasOption("H")) {
+        if (args.size() == 0 ) {
+            args.add("-H");
+        }else {
+            args = reformatArgs(options, args);
+        }
+       
+        CommandLine parsed_options = new DefaultParser().parse(options, args.toArray(new String[0]));
+        
+         if (parsed_options.hasOption("help")) {
             HelpFormatter formatter = new HelpFormatter();
             formatter.printHelp("Command Line Parameters", options);
             return null;
@@ -467,6 +481,8 @@ public class Cli {
 
         if (args.size() == 0 ) {
             args.add("-H");
+        }else {
+            args = reformatArgs(options, args);
         }
 
         CommandLine main_options = new DefaultParser().parse(options, args.toArray(new String[0]), true);
@@ -557,9 +573,15 @@ public class Cli {
                 .desc("Displays info about the currently logged in user").build());
         options.addOptionGroup(opt_grp);
 
-        String[] cmd_args = (String[]) args.toArray(new String[0]);
-        CommandLine parsed_options = new DefaultParser().parse(options, cmd_args);
-        if (args.size() == 0 || parsed_options.hasOption("help")) {
+        if (args.size() == 0 ) {
+            args.add("-H");
+        }else {
+            args = reformatArgs(options, args);
+        }
+        
+        CommandLine parsed_options = new DefaultParser().parse(options, args.toArray(new String[0]));        
+
+        if (parsed_options.hasOption("H")) {
             HelpFormatter formatter = new HelpFormatter();
             formatter.printHelp("Command Line Parameters", options);
             return null;
@@ -572,6 +594,33 @@ public class Cli {
         }
     }
 
+    public ArrayList<String> reformatArgs(Options main_options, ArrayList<String> args) {
+        ArrayList<String> new_args = new ArrayList<String>();
+
+            for(Option opt : main_options.getOptions()) {
+                String short_opt_str = "-" + opt.getOpt();
+                String long_opt_str = "--" + opt.getLongOpt();
+                
+                if (args.contains(short_opt_str) || (opt.hasLongOpt() && args.contains(long_opt_str))) {
+                    String opt_str = short_opt_str;
+                    
+                    if (opt.hasLongOpt() && args.contains(long_opt_str)) {
+                        opt_str = long_opt_str;
+                    }
+                    
+                    if (args.indexOf(opt_str) > 0) {
+                        args.remove(opt_str);
+                        new_args.add(opt_str);
+                    }
+                    new_args.addAll(args);
+                    return new_args;
+                }
+            }
+
+            new_args.addAll(args);
+            return new_args;
+    }
+    
     public HashMap<String, Object> toolsOptionsHandler(String cmd_name, ArrayList<String> args) throws ParseException {
 
         Options options = new Options();
@@ -609,6 +658,8 @@ public class Cli {
 
         if (args.size() == 0 ) {
             args.add("-H");
+        }else {
+            args = reformatArgs(options, args);
         }
 
         CommandLine main_options = new DefaultParser().parse(options, args.toArray(new String[0]), true);
@@ -672,6 +723,8 @@ public class Cli {
 
         if (args.size() == 0 ) {
             args.add("-H");
+        }else {
+            args = reformatArgs(options, args);
         }
 
         CommandLine main_options = new DefaultParser().parse(options, args.toArray(new String[0]), true);
@@ -748,11 +801,11 @@ public class Cli {
             run_options.addOption(Option.builder("PV").required(false).hasArg().argName("PACKAGE_VERSION").longOpt("pkg-version")
                     .desc("Package version").build());
             run_options.addOption(Option.builder("TL").required(true).hasArgs().argName("TOOL").longOpt("tool")
-                    .desc("Tool name").build());
+                    .desc("Tool name or UUID").build());
             run_options.addOption(Option.builder("TV").required(false).hasArg().argName("TOOL_VERSION").longOpt("tool-version")
                     .desc("Tool version").build());
             run_options.addOption(Option.builder("PL").required(false).hasArgs().argName("PLATFORM").longOpt("platform")
-                    .desc("Platform name").build());
+                    .desc("Platform name or UUID").build());
 
             run_options.addOption(Option.builder("K").required(false).hasArg().argName("PACKAGE_VERSION_UUID").longOpt("pkg-uuid")
                     .desc("Package version UUID (this option is deprecated, use -PK and -PV)").build());
@@ -784,6 +837,8 @@ public class Cli {
 
         if (args.size() == 0 ) {
             args.add("-H");
+        }else {
+            args = reformatArgs(options, args);
         }
 
         CommandLine main_options = new DefaultParser().parse(options, args.toArray(new String[0]), true);
@@ -804,7 +859,7 @@ public class Cli {
         if (main_options.hasOption("R")) {
 
             try {
-                CommandLine parsed_options = new DefaultParser().parse(run_options, main_options.getArgs());
+                CommandLine parsed_options = new DefaultParser().parse(run_options, main_options.getArgList().toArray(new String[0]));
             }catch (MissingOptionException e) {
                 for(String missing_opt : (List<String>)e.getMissingOptions())   {
                     if (missing_opt.equals("PK")) {
@@ -839,13 +894,15 @@ public class Cli {
             cred_map.put("pkg-version", parsed_options.getOptionValue("PV"));
             cred_map.put("tool", Arrays.asList(parsed_options.getOptionValues("TL")));
             cred_map.put("tool-version", parsed_options.getOptionValue("TV"));			
-            if (main_options.hasOption("PL")){
+            if (parsed_options.hasOption("PL")){
                 cred_map.put("platform", Arrays.asList(parsed_options.getOptionValues("PL")));
+            }else if (parsed_options.hasOption("F")){
+                cred_map.put("platform", Arrays.asList(parsed_options.getOptionValues("F")));
             }
 
             return cred_map;
         }else if (main_options.hasOption("L")){
-            CommandLine parsed_options = new DefaultParser().parse(list_options, args.toArray(new String[0]));
+            CommandLine parsed_options = new DefaultParser().parse(list_options, main_options.getArgList().toArray(new String[0]));
             cred_map.put("sub-command", "list");
             cred_map.put("quiet", parsed_options.hasOption("Q"));
             cred_map.put("verbose", parsed_options.hasOption("V"));
@@ -1570,10 +1627,9 @@ public class Cli {
 
         for (ToolVersion tool_version : getToolVersions(tool_names, tool_version_num)) {
             assessment_run.addAll(api_wrapper.runAssessment(target_pkg, tool_version, target_project, valid_platforms));
-            
         }
           
-        if (assessment_run != null) {
+        if (assessment_run.size() > 0) {
             if (!quiet) {
                 System.out.println("Assessment UUIDs"); 
             }
@@ -1624,20 +1680,20 @@ public class Cli {
             }
 
             if (verbose) {
-                System.out.printf("%-37s %-25s %-25s %-25s %s-%s\n",
+                System.out.printf("%-37s %-25s %-25s %-25s %s\n",
                         arun.getIdentifierString(),
                         arun.getPackageName(),
                         arun.getPackageVersion(),
                         arun.getToolName(),
-                        arun.getPlatformName(),
-                        arun.getPlatformVersion());
+                        PlatformVersion.getDisplayString(arun.getPlatformName(),
+                                arun.getPlatformVersion()));
             }else {
-                System.out.printf("%-25s %-25s %-25s %s-%s\n",
+                System.out.printf("%-25s %-25s %-25s %s\n",
                         arun.getPackageName(),
                         arun.getPackageVersion(),
                         arun.getToolName(),
-                        arun.getPlatformName(),
-                        arun.getPlatformVersion());
+                        PlatformVersion.getDisplayString(arun.getPlatformName(),
+                                arun.getPlatformVersion()));
             }
         }
     }
@@ -1760,19 +1816,14 @@ public class Cli {
                 continue;
             }
 
-            //Date create_date = arun.getConversionMap().getDate("create_date");
-
             System.out.printf("%-37s %-35s %-25s %-25s %-30s %-20s %10d\n",
                     arun.getAssessmentResultUUID(),
-                    arun.getConversionMap().getString("package_name") + "-" +
-                            arun.getConversionMap().getString("package_version"),
-                            arun.getConversionMap().getString("tool_name") + "-" +
-                                    arun.getConversionMap().getString("tool_version"),
-                                    arun.getConversionMap().getString("platform_name") + "-" +
-                                            arun.getConversionMap().getString("platform_version"),
-                                            toCurrentTimeZone(arun.getConversionMap().getDate("create_date")),
-                                            arun.getConversionMap().getString("status"),
-                                            arun.getWeaknessCount());
+                    arun.getConversionMap().getString("package_name") + "-" + arun.getConversionMap().getString("package_version"),
+                    arun.getConversionMap().getString("tool_name") + "-" + arun.getConversionMap().getString("tool_version"),
+                    PlatformVersion.getDisplayString(arun.getConversionMap().getString("platform_name"), arun.getConversionMap().getString("platform_version")),
+                    toCurrentTimeZone(arun.getConversionMap().getDate("create_date")),
+                    arun.getConversionMap().getString("status"),
+                    arun.getWeaknessCount());
 
         }
     }
