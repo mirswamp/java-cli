@@ -1384,24 +1384,92 @@ public class Cli {
         return valid_tools;
     }
     
-    public List<ToolVersion> getToolVersions(List<String> tool_names, String tool_version_num, 
-            String project_name, String package_type) {
-        
+    public ToolVersion getToolVersionFromUUID(String tool_version_uuid) {
+
+        for (Tool tool : api_wrapper.getAllTools(null).values()) {
+            for (ToolVersion tool_version : api_wrapper.getToolVersions(tool)) {
+                if (tool_version.getUUIDString().equalsIgnoreCase(tool_version_uuid)) {
+                    return tool_version;
+                }
+            }
+        }
+        throw new InvalidIdentifierException("No Tool Version found with UUID: " + tool_version_uuid); 
+    }
+    
+    public ToolVersion getToolVersion(String tool_name, String tool_version_num) {
+
         if (tool_version_num != null) {
             
-            if (tool_names)
-            List<Tool> getTools()
+            if (Cli.isUuid(tool_name)) {
+                String tool_version_uuid = tool_name;
+                
+                for (Tool tool : api_wrapper.getAllTools(null).values()) {
+                    for (ToolVersion tool_version : api_wrapper.getToolVersions(tool)) {
+                        if (tool_version.getUUIDString().equalsIgnoreCase(tool_version_uuid)) {
+                            return tool_version;
+                        }
+                    }
+                }
+            }else {
+                for (Tool tool : api_wrapper.getAllTools(null).values()) {
+                    if (tool.getName().equalsIgnoreCase(tool_name)) {
+                        for (ToolVersion tool_version : api_wrapper.getToolVersions(tool)) {
+                            if (tool_version.getVersion().equalsIgnoreCase(tool_version_num)) {
+                                return tool_version;
+                            }
+                        }
+                    }
+                }
+            }
+        }else {
+            if (Cli.isUuid(tool_name)) {
+                String tool_version_uuid = tool_name;
+                
+                for (Tool tool : api_wrapper.getAllTools(null).values()) {
+                    for (ToolVersion tool_version : api_wrapper.getToolVersions(tool)) {
+                        if (tool_version.getUUIDString().equalsIgnoreCase(tool_version_uuid)) {
+                            return tool_version;
+                        }
+                    }
+                }
+            }else {
+                for (Tool tool : api_wrapper.getAllTools(null).values()) {
+                    if (tool.getName().equalsIgnoreCase(tool_name)) {
+                        return api_wrapper.getToolVersions(tool).get(0);
+                    }
+                }
+            }
+        }
+        
+        if (Cli.isUuid(tool_name)) {
+            throw new InvalidIdentifierException("No Tool Version found with UUID: " + tool_name); 
+        }else {
+            throw new InvalidNameException("No Tool Version found with name: " + tool_name + " version: " + tool_version_num); 
         }
     }
     
+    public List<ToolVersion> getToolVersions(List<String> tool_names, String tool_version_num) {
+          
+        List<ToolVersion> valid_tools = new ArrayList<ToolVersion>();
+        
+        if (tool_version_num != null) {
+            valid_tools.add(getToolVersion(tool_names.get(0), tool_version_num));
+        }else {
+            for (String tool_name : tool_names) {
+                valid_tools.add(getToolVersion(tool_name, tool_version_num));
+            }
+        }
+        
+        return valid_tools;
+    }
+    
     public void runAssessments(String pkg, String pkg_ver_num, List<String> tool_names,
-            String tool_ver_num, List<String> platforms,
+            String tool_version_num, List<String> platforms,
             boolean quiet) {
 
         Project target_project = null;
         PackageVersion target_pkg = null;
-        List<AssessmentRun> assessment_run = null;
-
+        
         for (Project project : api_wrapper.getProjectsList()) {
             if (!Cli.isUuid(pkg)) {
                 for (PackageThing pkg_thing : api_wrapper.getPackagesList(project.getIdentifierString())) {
@@ -1498,41 +1566,13 @@ public class Cli {
             valid_platforms.add(api_wrapper.getDefaultPlatformVersion(target_pkg.getPackageThing().getType()));
         }
 
-        if (tool_names.size() > 1) {
-            // tool_ver_num will be ignored
-            List<Tool> valid_tools = new ArrayList<Tool>();
-            for (String tool_name: tool_names) {
-                Tool tool = api_wrapper.getToolFromName(tool_name, target_project.getUUIDString());
-                if (tool != null && tool.getSupportedPkgTypes().contains(target_pkg.getPackageThing().getType())) {
-                    valid_tools.add(tool);
-                }else {
-                    //TODO: throw
-                }
-            }
-            assessment_run = api_wrapper.runAssessment(target_pkg, valid_tools, target_project, valid_platforms);
-        }else {
-            Tool tool = null;
+        List<AssessmentRun> assessment_run = new ArrayList<AssessmentRun>();
 
-            if (Cli.isUuid(tool_names.get(0))) {
-                tool = api_wrapper.getTool(tool_names.get(0), target_project.getUUIDString());
-            }else {
-                tool = api_wrapper.getToolFromName(tool_names.get(0), target_project.getUUIDString());  
-            }
-            List<ToolVersion> valid_tools = new ArrayList<ToolVersion>();
-            List<ToolVersion> all_tool_versions = api_wrapper.getToolVersions(tool);
-
-            if (tool_ver_num != null) {
-                for (ToolVersion tool_version : all_tool_versions) {
-                    if (tool_version.getVersion().equalsIgnoreCase(tool_ver_num)) {
-                        valid_tools.add(tool_version);
-                    }
-                }
-            }else {
-                valid_tools.addAll(all_tool_versions);
-            }
-            assessment_run = api_wrapper.runAssessment(target_pkg, valid_tools.get(0), target_project, valid_platforms);
+        for (ToolVersion tool_version : getToolVersions(tool_names, tool_version_num)) {
+            assessment_run.addAll(api_wrapper.runAssessment(target_pkg, tool_version, target_project, valid_platforms));
+            
         }
-
+          
         if (assessment_run != null) {
             if (!quiet) {
                 System.out.println("Assessment UUIDs"); 
@@ -1540,6 +1580,8 @@ public class Cli {
             for (AssessmentRun arun : assessment_run) {
                 System.out.println(arun.getUUIDString()); 
             }
+        }else {
+            throw new IncompatibleAssessmentTupleException("Could not create assessment run");
         }
     }
 
