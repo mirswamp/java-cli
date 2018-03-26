@@ -47,6 +47,10 @@ public class SwampApiWrapper {
 	private static final String SWAMP_DIR_NAME = ".SWAMP_SESSION";
 	public static final String SWAMP_DIR_PATH = USER_PATH + FILE_SEPARATOR_KEY + SWAMP_DIR_NAME + FILE_SEPARATOR_KEY;
 	public static final String SWAMP_HOST_NAME  = HandlerFactoryUtil.PD_ORIGIN_HEADER;
+	String csa_object  = SWAMP_DIR_PATH + "csa_session_object.ser";
+	String rws_object  = SWAMP_DIR_PATH + "rws_session_object.ser";
+	String csa_cookies = SWAMP_DIR_PATH + "csa_session_cookies.ser";
+	String rws_cookies = SWAMP_DIR_PATH + "rws_session_cookies.ser";
 
 	private String rwsAddress;
 	private String csaAddress;
@@ -255,7 +259,36 @@ public class SwampApiWrapper {
 		deleteSession();
 	}
 
+	/*
+	 * make sure saved credential files have safe permissions, to
+	 * prevent other users from hijacking SWAMP sessions.
+	 */
+	protected void set_credential_file_permissions(String filepath) throws IOException {
+		/*
+		 * Setup the file before credentials are written to it so
+		 * we can control the permission on the file
+		 */
+		File file = new File(filepath);
+		/* create it so we can control it */
+		if (!file.exists()) {
+			if (!file.createNewFile()) {
+				throw new IOException("Failed to create file: " + file);
+			}
+		}
+		/* others can not read */
+		if (!file.setReadable(false, false)) {
+			throw new IOException("Failed to set o-r perm on file: " + file);
+		}
+		/* owner can read */
+		if (!file.setReadable(true, true)) {
+			throw new IOException("Failed to set u+r perm on file: " + file);
+		}
+	}
+
 	protected void serialize(Object obj, String filepath) throws IOException{
+		/* make sure file is secure before outputstream gets to it */
+		set_credential_file_permissions(filepath);
+
 		FileOutputStream fileOut = new FileOutputStream(filepath);
 		ObjectOutputStream out = new ObjectOutputStream(fileOut);
 		out.writeObject(obj);
@@ -270,6 +303,13 @@ public class SwampApiWrapper {
 		obj = in.readObject();
 		in.close();
 		fileIn.close();
+
+		/*
+		 * Ensure existing permissions are fixed on the fly,
+		 * to eliminate extended window of vulnerability.
+		 * Wait for here to ensure existing creds are valid. 
+		 */
+		set_credential_file_permissions(filepath);
 
 		return obj;
 	}
@@ -287,12 +327,12 @@ public class SwampApiWrapper {
 				}
 			}
 
-			serialize(handlerFactory.getCSASession(), SWAMP_DIR_PATH + "csa_session_object.ser");
+			serialize(handlerFactory.getCSASession(), csa_object);
 			serialize(handlerFactory.getCSASession().getClient().getContext().getCookieStore(),
-					SWAMP_DIR_PATH + "csa_session_cookies.ser");
-			serialize(handlerFactory.getRWSSession(), SWAMP_DIR_PATH + "rws_session_object.ser");
+				csa_cookies);
+			serialize(handlerFactory.getRWSSession(),  rws_object);
 			serialize(handlerFactory.getRWSSession().getClient().getContext().getCookieStore(),
-					SWAMP_DIR_PATH + "rws_session_cookies.ser");
+				rws_cookies);
 		}catch(IOException e){
 			throw new SessionSaveException(e);
 		}
@@ -335,10 +375,6 @@ public class SwampApiWrapper {
 	 * @return true if valid, non-expired sessions instantiated 
 	 */
 	public boolean restoreSession() throws SessionExpiredException, SessionRestoreException {
-		String csa_object = SWAMP_DIR_PATH + "csa_session_object.ser";
-		String rws_object = SWAMP_DIR_PATH + "rws_session_object.ser";
-		String csa_cookies = SWAMP_DIR_PATH + "csa_session_cookies.ser";
-		String rws_cookies = SWAMP_DIR_PATH + "rws_session_cookies.ser";
 
 		if (!(SwampApiWrapper.fileExists(csa_object) && SwampApiWrapper.fileExists(rws_object) &&
 				SwampApiWrapper.fileExists(csa_cookies) && SwampApiWrapper.fileExists(rws_cookies))) {
