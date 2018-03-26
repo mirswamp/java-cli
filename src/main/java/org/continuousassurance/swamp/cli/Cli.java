@@ -343,24 +343,24 @@ public class Cli {
         Options download_options = new Options();
         {
             download_options.addOption(Option.builder("Q").required(false).hasArg(false).longOpt("quiet")
-                    .desc("Print only the Package UUID with no formatting").build());
+                    .desc("Do not print any messages").build());
             download_options.addOption(Option.builder("R").required(false).hasArg(true).longOpt("results-uuid").argName("RESULTS_UUID")
-                    .desc("Assessment Results UUID of a project").build());
+                    .desc("Assessment Results UUID").build());
             download_options.addOption(Option.builder("P").required(false).hasArg(true).longOpt("project-uuid").argName("PROJECT_UUID")
-                    .desc("Project UUID of a project").build());
+                    .desc("Project UUID of a project (this option is deprecated)").build());
             download_options.addOption(Option.builder("F").required(false).hasArg(true).longOpt("file-path").argName("SCARF_FILEPATH")
                     .desc("Filepath to write SCARF Results into, DEFAULT: ./<RESULTS_UUID>.xml").build());
             
             download_options.addOption(Option.builder("PK").required(false).hasArg().argName("PACKAGE").longOpt("package")
-                    .desc("Package name").build());
+                    .desc("Download results for this package name").build());
             download_options.addOption(Option.builder("PV").required(false).hasArg().argName("PACKAGE_VERSION").longOpt("package-version")
-                    .desc("Package name").build());
+                    .desc("Download results for this package version").build());
             download_options.addOption(Option.builder("TL").required(false).hasArg().argName("TOOL").longOpt("tool")
-                    .desc("Show results for this tool").build());
+                    .desc("Download results for this tool").build());
             download_options.addOption(Option.builder("TV").required(false).hasArg().argName("TOOL_VERSION").longOpt("tool-version")
-                    .desc("Show results for this tool").build());
+                    .desc("Download results for this tool version").build());
             download_options.addOption(Option.builder("PL").required(false).hasArg().argName("PLATFORM").longOpt("platform")
-                    .desc("Show results for this Platform").build());
+                    .desc("Download results for this platform").build());
         }
 
         if (args.size() == 0 ) {
@@ -500,7 +500,7 @@ public class Cli {
             upload_options.addOption(Option.builder("O").argName("property=value").numberOfArgs(2).valueSeparator('=').longOpt("os-deps")
                     .desc("use value for given property" ).build());
             upload_options.addOption(Option.builder("P").required(false).hasArg().argName("PROJECT_UUID").longOpt("project-uuid")
-                    .desc("UUID of the project that this package must be added to. (this option is deprecated, use -PJ)").build());
+                    .desc("UUID of the project that this package must be added to (this option is deprecated, use -PJ)").build());
         }
 
         Options delete_options = new Options();
@@ -514,7 +514,7 @@ public class Cli {
             delete_options.addOption(Option.builder("I").required(false).hasArgs().argName("PACKAGE_UUID").longOpt("pkg-uuid")
                     .desc("Package Version UUIDs (this option is deprecated, use -PK)").build());
             delete_options.addOption(Option.builder("P").required(false).hasArg().argName("PROJECT_UUID").longOpt("project-uuid")
-                    .desc("UUID of the project that this package must be added to. (this option is deprecated, use -PJ)").build());
+                    .desc("Delete packages in this project UUID (this option is deprecated, use -PJ)").build());
         }
 
         Options list_options = new Options();
@@ -529,7 +529,7 @@ public class Cli {
             list_options.addOption(Option.builder("KT").required(false).hasArgs().argName("PACKAGE_TYPE").longOpt("pkg-type")
                     .desc("Only show packages of this Type").build());
             list_options.addOption(Option.builder("P").required(false).hasArg().argName("PROJECT_UUID").longOpt("project-uuid")
-                    .desc("UUID of the project that this package must be added to.  (this option is deprecated, use -PJ)").build());
+                    .desc("Only show packages in this Project UUID (this option is deprecated, use -PJ)").build());
 
             list_options.addOptionGroup(list_opt_grps);
         }
