@@ -34,6 +34,12 @@ import org.continuousassurance.swamp.util.HandlerFactoryUtil;
 import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.attribute.FileAttribute;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.util.*;
 
 /**
@@ -264,6 +270,15 @@ public class SwampApiWrapper {
 	}
 
 	protected void serialize(Object obj, String filepath) throws IOException{
+	    Path path = Paths.get(filepath);
+        if (!Files.exists(path)) {
+            Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rw-------");
+            FileAttribute<Set<PosixFilePermission>> attr = PosixFilePermissions.asFileAttribute(perms);
+            Files.createFile(path, attr);
+        }
+
+        File file = new File(filepath);
+       
 		FileOutputStream fileOut = new FileOutputStream(filepath);
 		ObjectOutputStream out = new ObjectOutputStream(fileOut);
 		out.writeObject(obj);
@@ -288,13 +303,13 @@ public class SwampApiWrapper {
 	 */
 	public void saveSession() {
 		try {
-			File dir = new File(SWAMP_DIR_PATH);
-			if (!dir.exists()) {
-				if (!dir.mkdir()) {
-					throw new IOException("Failed to create directory " + dir);
-				}
-			}
-
+		    Path path = Paths.get(SWAMP_DIR_PATH);
+		    if (!Files.exists(path)) {
+		        Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rwx------");
+		        FileAttribute<Set<PosixFilePermission>> attr = PosixFilePermissions.asFileAttribute(perms);
+		        Files.createDirectory(path, attr);
+		    }
+		    
 			serialize(handlerFactory.getCSASession(), SWAMP_DIR_PATH + "csa_session_object.ser");
 			serialize(handlerFactory.getCSASession().getClient().getContext().getCookieStore(),
 					SWAMP_DIR_PATH + "csa_session_cookies.ser");
