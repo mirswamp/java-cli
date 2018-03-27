@@ -291,6 +291,24 @@ public class SwampApiWrapper {
 		if (!file.setReadable(true, true)) {
 			throw new IOException("Failed to set u+r perm on file: " + file);
 		}
+		/* XXX this breaks umask */
+		/* other can not write */
+		if (!file.setWritable(false, false)) {
+			throw new IOException("Failed to set o-w perm on file: " + file);
+		}
+		/* owner can write */
+		if (!file.setWritable(true, true)) {
+			throw new IOException("Failed to set u+w perm on file: " + file);
+		}
+		/* XXX this is excessive */
+		/* other can not execute */
+		if (!file.setExecutable(false, false)) {
+			throw new IOException("Failed to set o-x perm on file: " + file);
+		}
+		/* owner can not execute */
+		if (!file.setExecutable(false, true)) {
+			throw new IOException("Failed to set u-x perm on file: " + file);
+		}
 	}
 
 	protected void serialize(Object obj, String filepath) throws IOException{
