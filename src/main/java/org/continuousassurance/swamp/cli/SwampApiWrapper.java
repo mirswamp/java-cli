@@ -34,6 +34,11 @@ import org.continuousassurance.swamp.util.HandlerFactoryUtil;
 import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 
 /**
@@ -42,15 +47,12 @@ import java.util.*;
  */
 public class SwampApiWrapper {
 
-	private static final String USER_PATH = System.getProperty("user.home");
-	private static final String FILE_SEPARATOR_KEY = System.getProperty("file.separator");
-	private static final String SWAMP_DIR_NAME = ".SWAMP_SESSION";
-	public static final String SWAMP_DIR_PATH = USER_PATH + FILE_SEPARATOR_KEY + SWAMP_DIR_NAME + FILE_SEPARATOR_KEY;
 	public static final String SWAMP_HOST_NAME  = HandlerFactoryUtil.PD_ORIGIN_HEADER;
-	String csa_object  = SWAMP_DIR_PATH + "csa_session_object.ser";
-	String rws_object  = SWAMP_DIR_PATH + "rws_session_object.ser";
-	String csa_cookies = SWAMP_DIR_PATH + "csa_session_cookies.ser";
-	String rws_cookies = SWAMP_DIR_PATH + "rws_session_cookies.ser";
+	private final String SWAMP_DIR_PATH;
+	private final String CSA_SESSION_OBJECT;
+	private final String RWS_SESSION_OBJECT;
+	private final String CSA_COOKIES;
+	private final String RWS_COOKIES;
 
 	private String rwsAddress;
 	private String csaAddress;
@@ -126,6 +128,12 @@ public class SwampApiWrapper {
 	 *
 	 */
 	public SwampApiWrapper() {
+		SWAMP_DIR_PATH = getSwampDirPath();
+		CSA_SESSION_OBJECT  = SWAMP_DIR_PATH + File.separator + "csa_session_object.ser";
+		RWS_SESSION_OBJECT  = SWAMP_DIR_PATH + File.separator + "rws_session_object.ser";
+		CSA_COOKIES = SWAMP_DIR_PATH + File.separator + "csa_session_cookies.ser";
+		RWS_COOKIES = SWAMP_DIR_PATH + File.separator + "rws_session_cookies.ser";
+
 		cachedPkgProjectID = "";
 		cachedPkgVersionProjectID = "";
 		cachedToolProjectID = "";
@@ -134,6 +142,58 @@ public class SwampApiWrapper {
 		sslConfig.setTlsVersion("TLSv1.2");
 	}
 
+	private boolean onWindows() {
+		return System.getProperty("os.name").toLowerCase().startsWith("windows");
+	}
+	
+	private String getSwampDirPath() {
+		if (onWindows()) {
+			return System.getenv("LOCALAPPDATA") + File.separator + "Swamp";
+		}else {
+			return getPosixSwampDirPath();
+		}
+	}
+
+	private String getPosixSwampDirPath() {
+		return System.getProperty("user.home") + File.separator + ".SWAMP_SESSION";
+	}
+
+	private void moveCookies() {
+		
+		if (onWindows()) {
+			Path old_dir = Paths.get(getPosixSwampDirPath());
+			if (Files.isDirectory(old_dir)) {
+				Path csa_session = Paths.get(old_dir.toString(), "csa_session_object.ser");
+				Path rws_session = Paths.get(old_dir.toString(), "rws_session_object.ser");
+				Path csa_cookies = Paths.get(old_dir.toString(), "csa_session_cookies.ser");
+				Path rws_cookies = Paths.get(old_dir.toString(), "rws_session_cookies.ser");
+				
+				if (Files.exists(csa_session, LinkOption.NOFOLLOW_LINKS) && 
+						Files.exists(rws_session, LinkOption.NOFOLLOW_LINKS) &&
+						Files.exists(csa_cookies, LinkOption.NOFOLLOW_LINKS) && 
+						Files.exists(rws_cookies, LinkOption.NOFOLLOW_LINKS)) {
+					
+					try {
+						Files.move(csa_session, Paths.get(CSA_SESSION_OBJECT), StandardCopyOption.ATOMIC_MOVE);
+						Files.move(rws_session, Paths.get(RWS_SESSION_OBJECT), StandardCopyOption.ATOMIC_MOVE);
+						Files.move(csa_cookies, Paths.get(CSA_COOKIES), StandardCopyOption.ATOMIC_MOVE);
+						Files.move(rws_cookies, Paths.get(RWS_COOKIES), StandardCopyOption.ATOMIC_MOVE);
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
+				
+				try {
+					Files.delete(old_dir);
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		}
+	}
+	
 	protected final void setHost(String host_name, Proxy proxy) throws MalformedURLException {
 
         if (host_name == null) {
@@ -271,7 +331,7 @@ public class SwampApiWrapper {
 	 * make sure saved credential files have safe permissions, to
 	 * prevent other users from hijacking SWAMP sessions.
 	 */
-	protected void set_credential_file_permissions(String filepath) throws IOException {
+	protected void setCredentialFilePermissions(String filepath) throws IOException {
 		/*
 		 * Setup the file before credentials are written to it so
 		 * we can control the permission on the file
@@ -283,37 +343,40 @@ public class SwampApiWrapper {
 				throw new IOException("Failed to create file: " + file);
 			}
 		}
-		/* others can not read */
-		if (!file.setReadable(false, false)) {
-			throw new IOException("Failed to set o-r perm on file: " + file);
-		}
-		/* owner can read */
-		if (!file.setReadable(true, true)) {
-			throw new IOException("Failed to set u+r perm on file: " + file);
-		}
-		/* XXX this breaks umask */
-		/* other can not write */
-		if (!file.setWritable(false, false)) {
-			throw new IOException("Failed to set o-w perm on file: " + file);
-		}
-		/* owner can write */
-		if (!file.setWritable(true, true)) {
-			throw new IOException("Failed to set u+w perm on file: " + file);
-		}
-		/* XXX this is excessive */
-		/* other can not execute */
-		if (!file.setExecutable(false, false)) {
-			throw new IOException("Failed to set o-x perm on file: " + file);
-		}
-		/* owner can not execute */
-		if (!file.setExecutable(false, true)) {
-			throw new IOException("Failed to set u-x perm on file: " + file);
+		
+		if (!onWindows()) {
+			/* others can not read */
+			if (!file.setReadable(false, false)) {
+				throw new IOException("Failed to set o-r perm on file: " + file);
+			}
+			/* owner can read */
+			if (!file.setReadable(true, true)) {
+				throw new IOException("Failed to set u+r perm on file: " + file);
+			}
+			/* XXX this breaks umask */
+			/* other can not write */
+			if (!file.setWritable(false, false)) {
+				throw new IOException("Failed to set o-w perm on file: " + file);
+			}
+			/* owner can write */
+			if (!file.setWritable(true, true)) {
+				throw new IOException("Failed to set u+w perm on file: " + file);
+			}
+			/* XXX this is excessive */
+			/* other can not execute */
+			if (!file.setExecutable(false, false)) {
+				throw new IOException("Failed to set o-x perm on file: " + file);
+			}
+			/* owner can not execute */
+			if (!file.setExecutable(false, true)) {
+				throw new IOException("Failed to set u-x perm on file: " + file);
+			}
 		}
 	}
 
 	protected void serialize(Object obj, String filepath) throws IOException{
 		/* make sure file is secure before outputstream gets to it */
-		set_credential_file_permissions(filepath);
+		setCredentialFilePermissions(filepath);
 
 		FileOutputStream fileOut = new FileOutputStream(filepath);
 		ObjectOutputStream out = new ObjectOutputStream(fileOut);
@@ -335,7 +398,7 @@ public class SwampApiWrapper {
 		 * to eliminate extended window of vulnerability.
 		 * Wait for here to ensure existing creds are valid. 
 		 */
-		set_credential_file_permissions(filepath);
+		setCredentialFilePermissions(filepath);
 
 		return obj;
 	}
@@ -353,12 +416,12 @@ public class SwampApiWrapper {
 				}
 			}
 
-			serialize(handlerFactory.getCSASession(), csa_object);
+			serialize(handlerFactory.getCSASession(), CSA_SESSION_OBJECT);
 			serialize(handlerFactory.getCSASession().getClient().getContext().getCookieStore(),
-				csa_cookies);
-			serialize(handlerFactory.getRWSSession(),  rws_object);
+				CSA_COOKIES);
+			serialize(handlerFactory.getRWSSession(),  RWS_SESSION_OBJECT);
 			serialize(handlerFactory.getRWSSession().getClient().getContext().getCookieStore(),
-				rws_cookies);
+				RWS_COOKIES);
 		}catch(IOException e){
 			throw new SessionSaveException(e);
 		}
@@ -391,7 +454,7 @@ public class SwampApiWrapper {
 			for (File f : fileList) {
 				f.delete();
 			}
-			file.delete();
+			//file.delete();
 		}
 	}
 
@@ -402,18 +465,20 @@ public class SwampApiWrapper {
 	 */
 	public boolean restoreSession() throws SessionExpiredException, SessionRestoreException {
 
-		if (!(SwampApiWrapper.fileExists(csa_object) && SwampApiWrapper.fileExists(rws_object) &&
-				SwampApiWrapper.fileExists(csa_cookies) && SwampApiWrapper.fileExists(rws_cookies))) {
+		moveCookies();
+		
+		if (!(SwampApiWrapper.fileExists(CSA_SESSION_OBJECT) && SwampApiWrapper.fileExists(RWS_SESSION_OBJECT) &&
+				SwampApiWrapper.fileExists(CSA_COOKIES) && SwampApiWrapper.fileExists(RWS_COOKIES))) {
 			throw new SessionRestoreException("Could not locate session objects and cookies to recover the session");
 		}
 
 		try {
-			Session csa_session = (Session)deserialize(csa_object);
-			Session rws_session = (Session)deserialize(rws_object);
+			Session csa_session = (Session)deserialize(CSA_SESSION_OBJECT);
+			Session rws_session = (Session)deserialize(RWS_SESSION_OBJECT);
 			handlerFactory = new HandlerFactory(rws_session, csa_session);
 
-			CookieStore csa_cookie_store = (CookieStore)deserialize(csa_cookies);
-			CookieStore rws_cookie_store = (CookieStore)deserialize(rws_cookies);
+			CookieStore csa_cookie_store = (CookieStore)deserialize(CSA_COOKIES);
+			CookieStore rws_cookie_store = (CookieStore)deserialize(RWS_COOKIES);
 
 			Date current_date = new Date();
 			if (csa_cookie_store.clearExpired(current_date) || rws_cookie_store.clearExpired(current_date)){
