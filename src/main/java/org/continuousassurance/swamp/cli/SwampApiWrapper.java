@@ -123,30 +123,11 @@ public class SwampApiWrapper {
 		this.hostHeader = hostHeader;
 	}
 
-	/**
-	 * Main constructor
-	 *
-	 */
-	public SwampApiWrapper() {
-		SWAMP_DIR_PATH = getSwampDirPath();
-		CSA_SESSION_OBJECT  = SWAMP_DIR_PATH + File.separator + "csa_session_object.ser";
-		RWS_SESSION_OBJECT  = SWAMP_DIR_PATH + File.separator + "rws_session_object.ser";
-		CSA_COOKIES = SWAMP_DIR_PATH + File.separator + "csa_session_cookies.ser";
-		RWS_COOKIES = SWAMP_DIR_PATH + File.separator + "rws_session_cookies.ser";
-
-		cachedPkgProjectID = "";
-		cachedPkgVersionProjectID = "";
-		cachedToolProjectID = "";
-
-		sslConfig = new SSLConfiguration();
-		sslConfig.setTlsVersion("TLSv1.2");
-	}
-
-	private boolean onWindows() {
+	private static boolean onWindows() {
 		return System.getProperty("os.name").toLowerCase().startsWith("windows");
 	}
 	
-	private String getSwampDirPath() {
+	public static String getSwampDirPath() {
 		if (onWindows()) {
 			return System.getenv("LOCALAPPDATA") + File.separator + "Swamp";
 		}else {
@@ -154,9 +135,29 @@ public class SwampApiWrapper {
 		}
 	}
 
-	private String getPosixSwampDirPath() {
+	public static  String getPosixSwampDirPath() {
 		return System.getProperty("user.home") + File.separator + ".SWAMP_SESSION";
 	}
+
+	/**
+     * Main constructor
+     *
+     */
+    public SwampApiWrapper() {
+        SWAMP_DIR_PATH = getSwampDirPath();
+        CSA_SESSION_OBJECT  = SWAMP_DIR_PATH + File.separator + "csa_session_object.ser";
+        RWS_SESSION_OBJECT  = SWAMP_DIR_PATH + File.separator + "rws_session_object.ser";
+        CSA_COOKIES = SWAMP_DIR_PATH + File.separator + "csa_session_cookies.ser";
+        RWS_COOKIES = SWAMP_DIR_PATH + File.separator + "rws_session_cookies.ser";
+
+        cachedPkgProjectID = "";
+        cachedPkgVersionProjectID = "";
+        cachedToolProjectID = "";
+
+        sslConfig = new SSLConfiguration();
+        sslConfig.setTlsVersion("TLSv1.2");
+    }
+
 
 	private void moveCookies() {
 		
