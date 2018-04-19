@@ -213,6 +213,37 @@ public class SwampApiWrapper {
 		setHostHeader(web_server);
 	}
 
+	public static Proxy getProxy(String scheme, 
+	        String host, 
+	        String port,
+	        String username, 
+	        String password) throws MalformedURLException {
+	    Proxy proxy = null;
+	    
+	    if (host == null) {
+	       return new Proxy();
+	    }
+	    
+	    if (scheme == null || scheme.isEmpty()) {
+	        scheme = "https";
+	    }
+	    
+	    if (!scheme.equalsIgnoreCase("https") && !scheme.equalsIgnoreCase("http")) {
+	        return new Proxy();
+	    }
+	    
+	    if (port == null ) {
+	        port = scheme.equals("https") ? "443" : "80";
+	    }
+	    
+	    proxy = new Proxy(Integer.parseInt(port), host, scheme, true);
+	    
+	    if (username != null && !username.isEmpty() && password != null && !password.isEmpty()) {
+	        proxy.setUsername(username);
+	        proxy.setPassword(password);
+	    }
+	    return proxy;
+	}
 
 	public static Proxy getProxy() throws MalformedURLException {
 		
@@ -280,7 +311,7 @@ public class SwampApiWrapper {
      */
     public String login(String user_name, String password, String host_name) throws MalformedURLException {
         Proxy proxy = getProxy();
-        return login(user_name, password, host_name, proxy); 
+        return login(user_name, password, host_name, proxy, null); 
     }
     
 
@@ -294,9 +325,18 @@ public class SwampApiWrapper {
      * @return SWAMP user-id
      * @throws MalformedURLException 
      */
-    public String login(String user_name, String password, String host_name, Proxy proxy) throws MalformedURLException {
-        setHost(host_name, proxy);   
+    public String login(String user_name, 
+            String password, 
+            String host_name, 
+            Proxy proxy, 
+            String keystore) throws MalformedURLException {
 		
+        if (keystore != null) {
+            sslConfig.setKeystore(keystore);
+        }
+        
+        setHost(host_name, proxy);   
+        
 		handlerFactory = HandlerFactoryUtil.createHandlerFactory(getRwsAddress(),
 				getCsaAddress(),
 				getOriginHeader(),

@@ -30,6 +30,7 @@ import org.continuousassurance.swamp.api.Tool;
 import org.continuousassurance.swamp.api.ToolVersion;
 import org.continuousassurance.swamp.api.User;
 import org.continuousassurance.swamp.session.HTTPException;
+import org.continuousassurance.swamp.session.util.Proxy;
 import org.apache.commons.cli.*;
 import org.apache.log4j.varia.NullAppender;
 import org.continuousassurance.swamp.cli.exceptions.*;
@@ -39,6 +40,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.MalformedURLException;
+import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -185,9 +187,33 @@ public class Cli {
             new_args.addAll(args);
             return new_args;
     }
-    
 
-    public HashMap<String, Object> loginOptionsHandler(ArrayList<String> args) throws ParseException, CommandLineOptionException, FileNotFoundException, IOException {
+    public static Map<String, String> getProxyMap(String proxy_str) throws MalformedURLException {
+        Map<String, String> hash_map = new HashMap<String, String>();
+       
+        if (proxy_str != null) {
+            URL url = new URL(proxy_str);
+
+            hash_map.put("proxy-host", url.getHost());
+            hash_map.put("proxy-scheme", url.getProtocol());
+
+            if (url.getPort() == -1) {
+                hash_map.put("proxy-port", url.getProtocol().equals("https") ? "443" : "80");
+            }
+
+            if(url.getUserInfo() != null) {
+                String userinfo = url.getUserInfo();
+
+                hash_map.put("proxy-user", userinfo.substring(0, userinfo.indexOf(':')));
+                hash_map.put("proxy-password", userinfo.substring(userinfo.indexOf(':') + 1));
+            }
+        }
+        
+        return hash_map;
+    }
+
+ 
+     public HashMap<String, Object> loginOptionsHandler(String cmd_name, ArrayList<String> args) throws ParseException, CommandLineOptionException, FileNotFoundException, IOException {
 
         Options options = new Options();
         OptionGroup opt_grp = new OptionGroup();
@@ -195,15 +221,22 @@ public class Cli {
 
         opt_grp.addOption(Option.builder("H").required(false).longOpt("help").desc("Shows Help").build());
         opt_grp.addOption(Option.builder("F").required(false).hasArg().longOpt("filepath").argName("CREDENTIALS_FILEPATH")
-                .desc("Properties file containing username and password").build());
+                .desc("Properties file containing username, password, proxy settings, keystore file path").build());
         opt_grp.addOption(Option.builder("C").required(false).hasArg(false).longOpt("console")
                 .desc("Accepts username and password from the terminal").build());
         options.addOptionGroup(opt_grp);
 
+        options.addOption(Option.builder("X").required(false).hasArg().longOpt("proxy").argName("PROXY")
+                .desc("URL for http proxy, format: http[s]://<username>:<passoword>@<proxy_host>:<proxy_port>").build());
+        
+        options.addOption(Option.builder("K").required(false).hasArg().longOpt("keystore").argName("KEYSTORE")
+                .desc("Custom keystore file path").build());
+        
         options.addOption(Option.builder("S").required(false).hasArg().longOpt("swamp-host").argName("SWAMP_HOST")
                 .desc("URL for SWAMP host: default is " + SwampApiWrapper.SWAMP_HOST_NAME).build());
+        
         options.addOption(Option.builder("Q").required(false).hasArg(false).longOpt("quiet")
-                .desc("Less verbose output").build());
+                .desc("Does not show login status message").build());
 
         if (args.size() == 0) {
             args.add("-H");
@@ -215,10 +248,13 @@ public class Cli {
         
         if (parsed_options.hasOption("help")) {
             HelpFormatter formatter = new HelpFormatter();
-            formatter.printHelp("Command Line Parameters", options);
+            formatter.printHelp(new PrintWriter(System.out, true), 120, 
+                    cmd_name + "", 
+                    "", options, 4, 4, "", true);
             return null;
         }else if (parsed_options.hasOption("F") || parsed_options.hasOption("C") ) {
             HashMap<String, Object> cred_map = new HashMap<String, Object>();
+            
             if (parsed_options.hasOption("Q")){
                 cred_map.put("quiet", true);
             }else {
@@ -233,7 +269,10 @@ public class Cli {
                 prop.load(new FileInputStream(parsed_options.getOptionValue("F")));
                 cred_map.put("username", prop.getProperty("username"));
                 cred_map.put("password", prop.getProperty("password"));
-            }else {
+                cred_map.putAll(getProxyMap(prop.getProperty("proxy")));
+                cred_map.put("keystore", prop.getProperty("keyStore"));
+                
+            }else if (parsed_options.hasOption("C")) {
                 System.out.print("swamp-username: ");
                 String username = System.console().readLine();
                 System.out.print("swamp-password: ");
@@ -243,12 +282,19 @@ public class Cli {
                 cred_map.put("password", password);
 
             }
-            if ((cred_map.get("username") != null ) && (cred_map.get("password") != null)){
-                return cred_map;
-            }else {
+            
+            if ((cred_map.get("username") == null ) || (cred_map.get("password") == null)){
                 throw new CommandLineOptionException(String.format("No username or password in the file: %s\n",
                         parsed_options.getOptionValue("F")));
             }
+            
+            if (parsed_options.hasOption("X")) {
+                cred_map.putAll(getProxyMap(parsed_options.getOptionValue("X")));
+            }
+            
+            cred_map.put("keystore", parsed_options.getOptionValue("K"));
+            
+            return cred_map;
         }
         else {
             throw new CommandLineOptionException("Unknown / Incompatible options");
@@ -429,7 +475,7 @@ public class Cli {
         return cred_map;
     }
 
-    public HashMap<String, Object> statusOptionsHandler(ArrayList<String> args) throws ParseException, CommandLineOptionException {
+    public HashMap<String, Object> statusOptionsHandler(String cmd_name, ArrayList<String> args) throws ParseException, CommandLineOptionException {
 
         Options options = new Options();
         options.addOption(Option.builder("H").required(false).longOpt("help").desc("Shows Help").build());
@@ -448,7 +494,9 @@ public class Cli {
         
          if (parsed_options.hasOption("help")) {
             HelpFormatter formatter = new HelpFormatter();
-            formatter.printHelp("Command Line Parameters", options);
+            formatter.printHelp(new PrintWriter(System.out, true), 120, 
+                    cmd_name + "", 
+                    "", options, 4, 4, "", true);
             return null;
         }else {
 
@@ -612,7 +660,7 @@ public class Cli {
         return cred_map;
     }
 
-    public HashMap<String, Object> userOptionsHandler(ArrayList<String> args) throws ParseException{
+    public HashMap<String, Object> userOptionsHandler(String cmd_name, ArrayList<String> args) throws ParseException{
 
         Options options = new Options();
         OptionGroup opt_grp = new OptionGroup();
@@ -633,7 +681,9 @@ public class Cli {
 
         if (parsed_options.hasOption("H")) {
             HelpFormatter formatter = new HelpFormatter();
-            formatter.printHelp("Command Line Parameters", options);
+            formatter.printHelp(new PrintWriter(System.out, true), 120, 
+                    cmd_name + "", 
+                    "", options, 4, 4, "", true);
             return null;
         }else {
             HashMap<String, Object> cred_map = new HashMap<String, Object>();
@@ -778,7 +828,7 @@ public class Cli {
         return cred_map;
     }
 
-    public HashMap<String, Object> logoutOptionsHandler(ArrayList<String> args) throws ParseException{
+    public HashMap<String, Object> logoutOptionsHandler(String cmd_name, ArrayList<String> args) throws ParseException{
 
         Options options = new Options();
         options.addOption(Option.builder("H").required(false).longOpt("help").desc("Shows Help").build());
@@ -789,7 +839,9 @@ public class Cli {
         CommandLine parsed_options = new DefaultParser().parse(options, cmd_args);
         if (parsed_options.hasOption("help")) {
             HelpFormatter formatter = new HelpFormatter();
-            formatter.printHelp("Command Line Parameters", options);
+            formatter.printHelp(new PrintWriter(System.out, true), 120, 
+                    cmd_name + "", 
+                    "", options, 4, 4, "", true);
             return null;
         }else {
             HashMap<String, Object> cred_map = new HashMap<String, Object>();
@@ -947,7 +999,7 @@ public class Cli {
 
         switch (command) {
         case "login":
-            opt_map = loginOptionsHandler(cli_args);
+            opt_map = loginOptionsHandler(command, cli_args);
             break;
         case "package":
         case "packages":
@@ -973,13 +1025,13 @@ public class Cli {
             opt_map = resultsOptionsHandler(command, cli_args);
             break;
         case "status":
-            opt_map = statusOptionsHandler(cli_args);
+            opt_map = statusOptionsHandler(command, cli_args);
             break;
         case "user":
-            opt_map = userOptionsHandler(cli_args);
+            opt_map = userOptionsHandler(command, cli_args);
             break;
         case "logout":
-            opt_map = logoutOptionsHandler(cli_args);
+            opt_map = logoutOptionsHandler(command, cli_args);
             break;
         default:
             break;
@@ -990,9 +1042,17 @@ public class Cli {
     public void loginHandler(HashMap<String, Object> opt_map) throws MalformedURLException {
         String host_name = (String)opt_map.get("swamp-host");
 
+        Proxy proxy = SwampApiWrapper.getProxy((String)opt_map.get("proxy-scheme"),
+                (String)opt_map.get("proxy-host"),
+                (String)opt_map.get("proxy-port"),
+                (String)opt_map.get("proxy-user"),
+                (String)opt_map.get("proxy-password"));
+        
         String user_uuid = api_wrapper.login((String)opt_map.get("username"), 
                 (String)opt_map.get("password"),
-                host_name);
+                host_name,
+                proxy,
+                (String)opt_map.get("keystore"));
 
         if (user_uuid != null){
 
@@ -1001,6 +1061,10 @@ public class Cli {
             }
             //System.out.printf("User UUID: %s", user_uuid + "\n");
             api_wrapper.saveSession();
+        }else {
+            if ((boolean)opt_map.get("quiet") == false) {
+                System.out.println("Login failed");
+            }
         }
     }
 
