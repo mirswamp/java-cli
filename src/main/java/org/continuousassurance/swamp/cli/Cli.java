@@ -60,10 +60,11 @@ import java.util.regex.Pattern;
 
 public class Cli {
 
-    public static final String VERSION = "1.5.0";
+    protected static final String VERSION = "1.5.0";
+    protected static final String VERSION_SEPERATOR = "::";
     
     //for backwards compatibility
-    public static final ArrayList<String> DISPLAY_COMMANDS = new ArrayList<String>(Arrays.asList(
+    protected static final ArrayList<String> DISPLAY_COMMANDS = new ArrayList<String>(Arrays.asList(
             "login", 
             "logout", 
             "package OR packages",
@@ -76,7 +77,7 @@ public class Cli {
             "status",
             "user"));
 
-    public static final ArrayList<String> COMMANDS = new ArrayList<String>(Arrays.asList(
+    protected static final ArrayList<String> COMMANDS = new ArrayList<String>(Arrays.asList(
             "login", 
             "logout",
             "package",
@@ -96,8 +97,8 @@ public class Cli {
 
 
     public static final String DEFAULT_PROJECT = "MyProject";
-    
-    SwampApiWrapper api_wrapper;
+
+    SwampApiWrapper apiWrapper;
 
     public static void printHelp() {
         System.out.println("------------------------------------------------------------------------");
@@ -120,7 +121,7 @@ public class Cli {
     private static void printVersion() {
         System.out.printf("%s\n", VERSION);
     }
-    
+
     public static boolean isUuid(String str) {
 
         return (str.length() == 36 && 
@@ -128,7 +129,7 @@ public class Cli {
     }
 
     public Cli() throws Exception {
-        api_wrapper = new SwampApiWrapper();
+        apiWrapper = new SwampApiWrapper();
     }
 
     protected HashMap<String, Object> getUserCredentials(String filename) {
@@ -162,38 +163,39 @@ public class Cli {
         }
     }
 
-    public ArrayList<String> reformatArgs(Options main_options, ArrayList<String> args) {
+    public ArrayList<String> reformatArgs(Options mainOptions, ArrayList<String> args) {
         ArrayList<String> new_args = new ArrayList<String>();
 
-            for(Option opt : main_options.getOptions()) {
-                String short_opt_str = "-" + opt.getOpt();
-                String long_opt_str = "--" + opt.getLongOpt();
-                
-                if (args.contains(short_opt_str) || (opt.hasLongOpt() && args.contains(long_opt_str))) {
-                    String opt_str = short_opt_str;
-                    
-                    if (opt.hasLongOpt() && args.contains(long_opt_str)) {
-                        opt_str = long_opt_str;
-                    }
-                    
-                    if (args.indexOf(opt_str) > 0) {
-                        args.remove(opt_str);
-                        new_args.add(opt_str);
-                    }
-                    new_args.addAll(args);
-                    return new_args;
-                }
-            }
+        for(Option opt : mainOptions.getOptions()) {
+            String short_opt_str = "-" + opt.getOpt();
+            String long_opt_str = "--" + opt.getLongOpt();
 
-            new_args.addAll(args);
-            return new_args;
+            if (args.contains(short_opt_str) || (opt.hasLongOpt() && args.contains(long_opt_str))) {
+                String opt_str = short_opt_str;
+
+                if (opt.hasLongOpt() && args.contains(long_opt_str)) {
+                    opt_str = long_opt_str;
+                }
+
+                if (args.indexOf(opt_str) > 0) {
+                    args.remove(opt_str);
+                    new_args.add(opt_str);
+                }
+                new_args.addAll(args);
+                return new_args;
+            }
+        }
+
+        new_args.addAll(args);
+        return new_args;
     }
 
-    public static Map<String, String> getProxyMap(String proxy_str) throws MalformedURLException {
+    
+    public static Map<String, String> getProxyMap(String proxyStr) throws MalformedURLException {
         Map<String, String> hash_map = new HashMap<String, String>();
-       
-        if (proxy_str != null) {
-            URL url = new URL(proxy_str);
+
+        if (proxyStr != null) {
+            URL url = new URL(proxyStr);
 
             hash_map.put("proxy-host", url.getHost());
             hash_map.put("proxy-scheme", url.getProtocol());
@@ -209,12 +211,28 @@ public class Cli {
                 hash_map.put("proxy-password", userinfo.substring(userinfo.indexOf(':') + 1));
             }
         }
-        
+
         return hash_map;
     }
 
- 
-     public HashMap<String, Object> loginOptionsHandler(String cmd_name, ArrayList<String> args) throws ParseException, CommandLineOptionException, FileNotFoundException, IOException {
+    protected static String[] getNameAndVersion(String name) {
+        String[] name_version = new String[2];
+        
+        if (name.contains(VERSION_SEPERATOR)) {
+            int sep_index = name.indexOf(VERSION_SEPERATOR);
+            name_version[0] = name.substring(0, sep_index);
+            name_version[1] = name.substring(sep_index + VERSION_SEPERATOR.length());
+            
+        }else {
+            name_version[0] = name;
+            name_version[1] = null;
+        }
+        
+        return name_version;
+    }
+
+    public HashMap<String, Object> loginOptionsHandler(String cmdName, 
+            ArrayList<String> args) throws ParseException, CommandLineOptionException, FileNotFoundException, IOException {
 
         Options options = new Options();
         OptionGroup opt_grp = new OptionGroup();
@@ -226,36 +244,36 @@ public class Cli {
         opt_grp.addOption(Option.builder("C").required(false).hasArg(false).longOpt("console")
                 .desc("Accepts username and password from the terminal").build());
         options.addOptionGroup(opt_grp);
-  
+
         options.addOption(Option.builder("S").required(false).hasArg().longOpt("swamp-host").argName("SWAMP_HOST")
                 .desc("URL for SWAMP host: default is " + SwampApiWrapper.SWAMP_HOST_NAME).build());
- 
+
         options.addOption(Option.builder("X").required(false).hasArg().longOpt("proxy").argName("PROXY")
                 .desc("URL for http proxy, format: http[s]://[<username>:<passoword>]@<proxy_host>[:<proxy_port>]").build());
-        
+
         options.addOption(Option.builder("K").required(false).hasArg().longOpt("keystore").argName("KEYSTORE")
                 .desc("Custom keystore (that has SSL/TLS certificate for SiB) file path").build());
-        
-         options.addOption(Option.builder("Q").required(false).hasArg(false).longOpt("quiet")
+
+        options.addOption(Option.builder("Q").required(false).hasArg(false).longOpt("quiet")
                 .desc("Does not show login status message").build());
 
-        if (args.size() == 0) {
+        if (args.isEmpty()) {
             args.add("-H");
         }else {
             args = reformatArgs(options, args);
         }
-        
+
         CommandLine parsed_options = new DefaultParser().parse(options, args.toArray(new String[0]));
-        
+
         if (parsed_options.hasOption("help")) {
             HelpFormatter formatter = new HelpFormatter();
             formatter.printHelp(new PrintWriter(System.out, true), 120, 
-                    cmd_name + "", 
+                    cmdName + "", 
                     "", options, 4, 4, "", true);
             return null;
         }else if (parsed_options.hasOption("F") || parsed_options.hasOption("C") ) {
             HashMap<String, Object> cred_map = new HashMap<String, Object>();
-            
+
             if (parsed_options.hasOption("Q")){
                 cred_map.put("quiet", true);
             }else {
@@ -272,7 +290,7 @@ public class Cli {
                 cred_map.put("password", prop.getProperty("password"));
                 cred_map.putAll(getProxyMap(prop.getProperty("proxy")));
                 cred_map.put("keystore", prop.getProperty("keyStore"));
-                
+
             }else if (parsed_options.hasOption("C")) {
                 System.out.print("swamp-username: ");
                 String username = System.console().readLine();
@@ -283,18 +301,18 @@ public class Cli {
                 cred_map.put("password", password);
 
             }
-            
+
             if ((cred_map.get("username") == null ) || (cred_map.get("password") == null)){
                 throw new CommandLineOptionException(String.format("No username or password in the file: %s\n",
                         parsed_options.getOptionValue("F")));
             }
-            
+
             if (parsed_options.hasOption("X")) {
                 cred_map.putAll(getProxyMap(parsed_options.getOptionValue("X")));
             }
-            
+
             cred_map.put("keystore", parsed_options.getOptionValue("K"));
-            
+
             return cred_map;
         }
         else {
@@ -303,70 +321,72 @@ public class Cli {
 
     }
 
-    public HashMap<String, Object> projectOptionsHandler(String cmd_name, ArrayList<String> args) throws ParseException {
+    public HashMap<String, Object> projectOptionsHandler(String cmdName, 
+            ArrayList<String> args) throws ParseException {
 
-            Options options = new Options();
-            OptionGroup opt_grp = new OptionGroup();
-            opt_grp.setRequired(true);
+        Options options = new Options();
+        OptionGroup opt_grp = new OptionGroup();
+        opt_grp.setRequired(true);
 
-            opt_grp.addOption(Option.builder("H").required(false).longOpt("help").desc("Shows Help").build());
-            opt_grp.addOption(Option.builder("L").required(false).hasArg(false).longOpt("list")
-                    .desc("list all projects").build());
-            opt_grp.addOption(Option.builder("U").required(false).hasArg(false).longOpt("uuid")
-                    .desc("list uuid for a project").build());
-            options.addOptionGroup(opt_grp);
+        opt_grp.addOption(Option.builder("H").required(false).longOpt("help").desc("Shows Help").build());
+        opt_grp.addOption(Option.builder("L").required(false).hasArg(false).longOpt("list")
+                .desc("list all projects").build());
+        opt_grp.addOption(Option.builder("U").required(false).hasArg(false).longOpt("uuid")
+                .desc("list uuid for a project").build());
+        options.addOptionGroup(opt_grp);
 
-            Options uuid_options = new Options();
-            {
-                uuid_options.addOption(Option.builder("N").required(true).hasArg().argName("PROJECT_NAME").longOpt("name")
-                        .desc("Name of the project").build());
-            }
-
-            Options list_options = new Options();
-            {
-                OptionGroup list_opt_grps = new OptionGroup();
-                list_opt_grps.addOption(Option.builder("Q").required(false).hasArg(false).longOpt("quiet")
-                        .desc("Do not print Headers, Description, Type ").build());
-                list_opt_grps.addOption(Option.builder("V").required(false).hasArg(false).longOpt("verbose")
-                        .desc("Print UUIDs also").build());
-                list_options.addOptionGroup(list_opt_grps);
-            }
-
-            if (args.size() == 0 ) {
-                args.add("-H");
-            }else {
-                args = reformatArgs(options, args);
-            }
-
-            CommandLine main_options = new DefaultParser().parse(options, args.toArray(new String[0]), true);
-            if (main_options.hasOption("help") || args.contains("-H") || args.contains("--help")) {
-                HelpFormatter formatter = new HelpFormatter();
-                formatter.printHelp("sub-commands", options, true);
-                formatter.printHelp(new PrintWriter(System.out, true), 120, 
-                        cmd_name + " --" + options.getOption("-L").getLongOpt(), 
-                        "", list_options, 4, 4, "", true);
-                formatter.printHelp(new PrintWriter(System.out, true), 120,
-                        cmd_name + " --" + options.getOption("-U").getLongOpt(), 
-                        "", uuid_options, 4, 4, "", true);
-                return null;
-            }
-
-            HashMap<String, Object> cred_map = new HashMap<String, Object>();
-
-            if (main_options.hasOption("L")){
-                CommandLine parsed_options = new DefaultParser().parse(list_options, main_options.getArgList().toArray(new String[0]));
-                cred_map.put("sub-command", "list");
-                cred_map.put("quiet", parsed_options.hasOption("Q"));
-                cred_map.put("verbose", parsed_options.hasOption("V"));
-             }else if (main_options.hasOption("U")) {
-                CommandLine parsed_options = new DefaultParser().parse(uuid_options, main_options.getArgList().toArray(new String[0]));
-                cred_map.put("sub-command", "uuid");
-                cred_map.put("project", parsed_options.getOptionValue("N", DEFAULT_PROJECT));
-            }
-            return cred_map;
+        Options uuid_options = new Options();
+        {
+            uuid_options.addOption(Option.builder("N").required(true).hasArg().argName("PROJECT_NAME").longOpt("name")
+                    .desc("Name of the project").build());
         }
 
-    public HashMap<String, Object> resultsOptionsHandler(String cmd_name, ArrayList<String> args) throws ParseException, CommandLineOptionException {
+        Options list_options = new Options();
+        {
+            OptionGroup list_opt_grps = new OptionGroup();
+            list_opt_grps.addOption(Option.builder("Q").required(false).hasArg(false).longOpt("quiet")
+                    .desc("Do not print Headers, Description, Type ").build());
+            list_opt_grps.addOption(Option.builder("V").required(false).hasArg(false).longOpt("verbose")
+                    .desc("Print UUIDs also").build());
+            list_options.addOptionGroup(list_opt_grps);
+        }
+
+        if (args.isEmpty() ) {
+            args.add("-H");
+        }else {
+            args = reformatArgs(options, args);
+        }
+
+        CommandLine main_options = new DefaultParser().parse(options, args.toArray(new String[0]), true);
+        if (main_options.hasOption("help") || args.contains("-H") || args.contains("--help")) {
+            HelpFormatter formatter = new HelpFormatter();
+            formatter.printHelp("sub-commands", options, true);
+            formatter.printHelp(new PrintWriter(System.out, true), 120, 
+                    cmdName + " --" + options.getOption("-L").getLongOpt(), 
+                    "", list_options, 4, 4, "", true);
+            formatter.printHelp(new PrintWriter(System.out, true), 120,
+                    cmdName + " --" + options.getOption("-U").getLongOpt(), 
+                    "", uuid_options, 4, 4, "", true);
+            return null;
+        }
+
+        HashMap<String, Object> cred_map = new HashMap<String, Object>();
+
+        if (main_options.hasOption("L")){
+            CommandLine parsed_options = new DefaultParser().parse(list_options, main_options.getArgList().toArray(new String[0]));
+            cred_map.put("sub-command", "list");
+            cred_map.put("quiet", parsed_options.hasOption("Q"));
+            cred_map.put("verbose", parsed_options.hasOption("V"));
+        }else if (main_options.hasOption("U")) {
+            CommandLine parsed_options = new DefaultParser().parse(uuid_options, main_options.getArgList().toArray(new String[0]));
+            cred_map.put("sub-command", "uuid");
+            cred_map.put("project", parsed_options.getOptionValue("N", DEFAULT_PROJECT));
+        }
+        return cred_map;
+    }
+
+    public HashMap<String, Object> resultsOptionsHandler(String cmdName, 
+            ArrayList<String> args) throws ParseException, CommandLineOptionException {
 
         Options options = new Options();
         OptionGroup opt_grp = new OptionGroup();
@@ -403,7 +423,7 @@ public class Cli {
                     .desc("Project UUID of a project (this option is deprecated)").build());
             download_options.addOption(Option.builder("F").required(false).hasArg(true).longOpt("file-path").argName("SCARF_FILEPATH")
                     .desc("Filepath to write SCARF Results into, DEFAULT: ./<RESULTS_UUID>.xml").build());
-            
+
             download_options.addOption(Option.builder("PK").required(false).hasArg().argName("PACKAGE").longOpt("package")
                     .desc("Download results for this package name").build());
             download_options.addOption(Option.builder("TL").required(false).hasArg().argName("TOOL").longOpt("tool")
@@ -412,7 +432,7 @@ public class Cli {
                     .desc("Download results for this platform").build());
         }
 
-        if (args.size() == 0 ) {
+        if (args.isEmpty() ) {
             args.add("-H");
         }else {
             args = reformatArgs(options, args);
@@ -434,10 +454,10 @@ public class Cli {
             HelpFormatter formatter = new HelpFormatter();
             formatter.printHelp("sub-commands", options, true);
             formatter.printHelp(new PrintWriter(System.out, true), 120, 
-                    cmd_name + " --" + options.getOption("-L").getLongOpt(), 
+                    cmdName + " --" + options.getOption("-L").getLongOpt(), 
                     "", list_options, 4, 4, "", true);
             formatter.printHelp(new PrintWriter(System.out, true), 120, 
-                    cmd_name + " --" + options.getOption("-D").getLongOpt(), 
+                    cmdName + " --" + options.getOption("-D").getLongOpt(), 
                     "", download_options, 4, 4, "", true);
             return null;
         }
@@ -460,7 +480,7 @@ public class Cli {
                     (cred_map.get("package") == null || cred_map.get("tool") == null)) {
                 throw new CommandLineOptionException("Specify options (--package <package> AND --tool <tool>) OR --results-uuid");
             }
-            
+
             return cred_map;
         }else if (main_options.hasOption("L")){
             CommandLine parsed_options = new DefaultParser().parse(list_options, main_options.getArgList().toArray(new String[0]));
@@ -476,7 +496,8 @@ public class Cli {
         return cred_map;
     }
 
-    public HashMap<String, Object> statusOptionsHandler(String cmd_name, ArrayList<String> args) throws ParseException, CommandLineOptionException {
+    public HashMap<String, Object> statusOptionsHandler(String cmdName, 
+            ArrayList<String> args) throws ParseException, CommandLineOptionException {
 
         Options options = new Options();
         OptionGroup opt_grp = new OptionGroup();
@@ -487,19 +508,19 @@ public class Cli {
         options.addOption(Option.builder("P").required(false).hasArg(true).argName("PROJECT_UUID").longOpt("project-uuid")
                 .desc("Project UUID of the project. This option is deprecated").build());
         options.addOptionGroup(opt_grp);
-        
-        if (args.size() == 0 ) {
+
+        if (args.isEmpty() ) {
             args.add("-H");
         }else {
             args = reformatArgs(options, args);
         }
-       
+
         CommandLine parsed_options = new DefaultParser().parse(options, args.toArray(new String[0]));
-        
-         if (parsed_options.hasOption("help")) {
+
+        if (parsed_options.hasOption("help")) {
             HelpFormatter formatter = new HelpFormatter();
             formatter.printHelp(new PrintWriter(System.out, true), 120, 
-                    cmd_name + "", 
+                    cmdName + "", 
                     "", options, 4, 4, "", true);
             return null;
         }else {
@@ -514,7 +535,8 @@ public class Cli {
         }
     }
 
-    public HashMap<String, Object> packageOptionsHandler(String cmd_name, ArrayList<String> args) throws ParseException, CommandLineOptionException {
+    public HashMap<String, Object> packageOptionsHandler(String cmdName, 
+            ArrayList<String> args) throws ParseException, CommandLineOptionException {
 
         Options options = new Options();
         OptionGroup opt_grp = new OptionGroup();
@@ -555,9 +577,15 @@ public class Cli {
             delete_options.addOption(Option.builder("Q").required(false).hasArg(false).longOpt("quiet")
                     .desc("Do not print anything").build());
             delete_options.addOption(Option.builder("PJ").required(false).hasArg().argName("PROJECT").longOpt("project")
-                    .desc("Delete packages in this project. if --packages option is not specified, delete all").build());
-            delete_options.addOption(Option.builder("PK").required(false).hasArgs().argName("PACKAGES").longOpt("packages")
-                    .desc("Delete packages with these names or UUIDs. Accepts multiple names or UUIDs").build());
+                    .desc("Delete packages in this project only." + 
+            " if --packages option is not specified, and --all-pkgs is specified then deletes all package").build());
+            delete_options.addOption(Option.builder("PK").required(false).hasArgs().argName("PACKAGE").longOpt("package")
+                    .desc("Delete packages with these names or UUIDs. Accepts multiple names or UUIDs." + 
+            " To delete a particular version of a package, the option value must be <package_name>::<package_version>." + 
+                            " If no version is specified, deletes all versions of the package").build());
+            delete_options.addOption(Option.builder("A").required(false).hasArg(false).longOpt("all-pkgs")
+                    .desc("Delete all packages in the project. This option must be used in conjunction with --project option").build());           
+
             delete_options.addOption(Option.builder("I").required(false).hasArgs().argName("PACKAGE_UUID").longOpt("pkg-uuid")
                     .desc("Package Version UUIDs (this option is deprecated, use -PK)").build());
             delete_options.addOption(Option.builder("P").required(false).hasArg().argName("PROJECT_UUID").longOpt("project-uuid")
@@ -581,7 +609,7 @@ public class Cli {
             list_options.addOptionGroup(list_opt_grps);
         }
 
-        if (args.size() == 0 ) {
+        if (args.isEmpty()) {
             args.add("-H");
         }else {
             args = reformatArgs(options, args);
@@ -592,16 +620,16 @@ public class Cli {
             HelpFormatter formatter = new HelpFormatter();
             formatter.printHelp("sub-commands", options, true);
             formatter.printHelp(new PrintWriter(System.out, true), 120, 
-                    cmd_name + " --" + options.getOption("-D").getLongOpt(), 
+                    cmdName + " --" + options.getOption("-D").getLongOpt(), 
                     "", delete_options, 4, 4, "", true);
             formatter.printHelp(new PrintWriter(System.out, true), 120, 
-                    cmd_name + " --" + options.getOption("-L").getLongOpt(), 
+                    cmdName + " --" + options.getOption("-L").getLongOpt(), 
                     "", list_options, 4, 4, "", true);
             formatter.printHelp(new PrintWriter(System.out, true), 120, 
-                    cmd_name + " --" + options.getOption("-T").getLongOpt(), 
+                    cmdName + " --" + options.getOption("-T").getLongOpt(), 
                     "", new Options(), 4, 4, "", true);
             formatter.printHelp(new PrintWriter(System.out, true), 120,
-                    cmd_name + " --" + options.getOption("-U").getLongOpt(), 
+                    cmdName + " --" + options.getOption("-U").getLongOpt(), 
                     "", upload_options, 4, 4, "", true);
             return null;
         }
@@ -648,23 +676,30 @@ public class Cli {
                 cred_map.put("project", parsed_options.getOptionValue("P"));
             }
             if (parsed_options.getOptionValues("PK") != null) {
-                cred_map.put("packages", Arrays.asList(parsed_options.getOptionValues("PK")));
+                cred_map.put("package", Arrays.asList(parsed_options.getOptionValues("PK")));
             }else if (parsed_options.getOptionValues("I") != null) {
                 //Use the deprecated option
-                cred_map.put("packages", Arrays.asList(parsed_options.getOptionValues("I")));
+                cred_map.put("package", Arrays.asList(parsed_options.getOptionValues("I")));
             } else {
-                cred_map.put("packages", null);
+                cred_map.put("package", null);
             }
 
-            if (cred_map.get("project") == null && cred_map.get("packages") == null) {
+            cred_map.put("delete-all", parsed_options.hasOption("A"));
+
+            if (cred_map.get("project") == null && cred_map.get("package") == null) {
                 throw new CommandLineOptionException(optionMissingStr(delete_options.getOption("PJ")) + 
                         " or|and " + optionMissingStr(delete_options.getOption("PK")));
+            }
+            
+            if (cred_map.get("project") != null && (boolean)cred_map.get("delete-all") == false) {
+                throw new CommandLineOptionException(optionMissingStr(delete_options.getOption("A")));
             }
         }
         return cred_map;
     }
 
-    public HashMap<String, Object> userOptionsHandler(String cmd_name, ArrayList<String> args) throws ParseException{
+    public HashMap<String, Object> userOptionsHandler(String cmdName, 
+            ArrayList<String> args) throws ParseException{
 
         Options options = new Options();
         OptionGroup opt_grp = new OptionGroup();
@@ -675,18 +710,18 @@ public class Cli {
                 .desc("Displays info about the currently logged in user").build());
         options.addOptionGroup(opt_grp);
 
-        if (args.size() == 0 ) {
+        if (args.isEmpty()) {
             args.add("-H");
         }else {
             args = reformatArgs(options, args);
         }
-        
+
         CommandLine parsed_options = new DefaultParser().parse(options, args.toArray(new String[0]));        
 
         if (parsed_options.hasOption("H")) {
             HelpFormatter formatter = new HelpFormatter();
             formatter.printHelp(new PrintWriter(System.out, true), 120, 
-                    cmd_name + "", 
+                    cmdName + "", 
                     "", options, 4, 4, "", true);
             return null;
         }else {
@@ -698,7 +733,8 @@ public class Cli {
         }
     }
 
-    public HashMap<String, Object> toolsOptionsHandler(String cmd_name, ArrayList<String> args) throws ParseException {
+    public HashMap<String, Object> toolsOptionsHandler(String cmdName, 
+            ArrayList<String> args) throws ParseException {
 
         Options options = new Options();
         OptionGroup opt_grp = new OptionGroup();
@@ -727,13 +763,13 @@ public class Cli {
             list_opt_grps.addOption(Option.builder("V").required(false).hasArg(false).longOpt("verbose")
                     .desc("Print UUIDs also").build());
             list_options.addOptionGroup(list_opt_grps);
-            
+
             list_options.addOption(Option.builder("P").required(false).hasArg().argName("PROJECT").longOpt("project")
                     .desc("Project Name or UUID. This option is deprecated.").build());
-            
+
         }
 
-        if (args.size() == 0 ) {
+        if (args.isEmpty()) {
             args.add("-H");
         }else {
             args = reformatArgs(options, args);
@@ -744,23 +780,23 @@ public class Cli {
             HelpFormatter formatter = new HelpFormatter();
             formatter.printHelp("sub-commands", options, true);
             formatter.printHelp(new PrintWriter(System.out, true), 120, 
-                    cmd_name + " --" + options.getOption("-L").getLongOpt(), 
+                    cmdName + " --" + options.getOption("-L").getLongOpt(), 
                     "", list_options, 4, 4, "", true);
             formatter.printHelp(new PrintWriter(System.out, true), 120,
-                    cmd_name + " --" + options.getOption("-U").getLongOpt(), 
+                    cmdName + " --" + options.getOption("-U").getLongOpt(), 
                     "", uuid_options, 4, 4, "", true);
             return null;
         }
 
         HashMap<String, Object> cred_map = new HashMap<String, Object>();
-        
+
         if (main_options.hasOption("L")){
             CommandLine parsed_options = new DefaultParser().parse(list_options, main_options.getArgList().toArray(new String[0]));
             cred_map.put("sub-command", "list");
             cred_map.put("quiet", parsed_options.hasOption("Q"));
             cred_map.put("verbose", parsed_options.hasOption("V"));
             cred_map.put("project", parsed_options.getOptionValue("P", DEFAULT_PROJECT));
-         }else if (main_options.hasOption("U")) {
+        }else if (main_options.hasOption("U")) {
             CommandLine parsed_options = new DefaultParser().parse(uuid_options, main_options.getArgList().toArray(new String[0]));
             cred_map.put("sub-command", "uuid");
             cred_map.put("tool", parsed_options.getOptionValue("N"));
@@ -769,7 +805,8 @@ public class Cli {
         return cred_map;
     }
 
-    public HashMap<String, Object> platformOptionsHandler(String cmd_name, ArrayList<String> args) throws ParseException {
+    public HashMap<String, Object> platformOptionsHandler(String cmdName, 
+            ArrayList<String> args) throws ParseException {
 
         Options options = new Options();
         OptionGroup opt_grp = new OptionGroup();
@@ -798,7 +835,7 @@ public class Cli {
             list_options.addOptionGroup(list_opt_grps);
         }
 
-        if (args.size() == 0 ) {
+        if (args.isEmpty() ) {
             args.add("-H");
         }else {
             args = reformatArgs(options, args);
@@ -809,10 +846,10 @@ public class Cli {
             HelpFormatter formatter = new HelpFormatter();
             formatter.printHelp("sub-commands", options, true);
             formatter.printHelp(new PrintWriter(System.out, true), 120, 
-                    cmd_name + " --" + options.getOption("-L").getLongOpt(), 
+                    cmdName + " --" + options.getOption("-L").getLongOpt(), 
                     "", list_options, 4, 4, "", true);
             formatter.printHelp(new PrintWriter(System.out, true), 120,
-                    cmd_name + " --" + options.getOption("-U").getLongOpt(), 
+                    cmdName + " --" + options.getOption("-U").getLongOpt(), 
                     "", uuid_options, 4, 4, "", true);
             return null;
         }
@@ -824,7 +861,7 @@ public class Cli {
             cred_map.put("sub-command", "list");
             cred_map.put("quiet", parsed_options.hasOption("Q"));
             cred_map.put("verbose", parsed_options.hasOption("V"));
-         }else if (main_options.hasOption("U")) {
+        }else if (main_options.hasOption("U")) {
             CommandLine parsed_options = new DefaultParser().parse(uuid_options, main_options.getArgList().toArray(new String[0]));
             cred_map.put("sub-command", "uuid");
             cred_map.put("platform", parsed_options.getOptionValue("N"));
@@ -832,7 +869,8 @@ public class Cli {
         return cred_map;
     }
 
-    public HashMap<String, Object> logoutOptionsHandler(String cmd_name, ArrayList<String> args) throws ParseException{
+    public HashMap<String, Object> logoutOptionsHandler(String cmdName, 
+            ArrayList<String> args) throws ParseException{
 
         Options options = new Options();
         options.addOption(Option.builder("H").required(false).longOpt("help").desc("Shows Help").build());
@@ -844,7 +882,7 @@ public class Cli {
         if (parsed_options.hasOption("help")) {
             HelpFormatter formatter = new HelpFormatter();
             formatter.printHelp(new PrintWriter(System.out, true), 120, 
-                    cmd_name + "", 
+                    cmdName + "", 
                     "", options, 4, 4, "", true);
             return null;
         }else {
@@ -860,7 +898,8 @@ public class Cli {
 
     }
 
-    public HashMap<String, Object> assessmentOptionsHandler(String cmd_name, ArrayList<String> args) throws ParseException, CommandLineOptionException{
+    public HashMap<String, Object> assessmentOptionsHandler(String cmdName, 
+            ArrayList<String> args) throws ParseException, CommandLineOptionException{
 
         Options options = new Options();
         OptionGroup opt_grp = new OptionGroup();
@@ -910,7 +949,7 @@ public class Cli {
                     .desc("Platform name").build());
         }
 
-        if (args.size() == 0 ) {
+        if (args.isEmpty()) {
             args.add("-H");
         }else {
             args = reformatArgs(options, args);
@@ -921,10 +960,10 @@ public class Cli {
             HelpFormatter formatter = new HelpFormatter();
             formatter.printHelp("sub-commands", options, true);
             formatter.printHelp(new PrintWriter(System.out, true), 120, 
-                    cmd_name + " --" + options.getOption("-L").getLongOpt(), 
+                    cmdName + " --" + options.getOption("-L").getLongOpt(), 
                     "", list_options, 4, 4, "", true);
             formatter.printHelp(new PrintWriter(System.out, true), 120, 
-                    cmd_name + " --" + options.getOption("-R").getLongOpt(), 
+                    cmdName + " --" + options.getOption("-R").getLongOpt(), 
                     "", run_options, 4, 4, "", true);
             return null;
         }
@@ -993,45 +1032,46 @@ public class Cli {
 
     }
 
-    public HashMap<String, Object> processCliArgs(String command, ArrayList<String> cli_args) throws CommandLineOptionException, ParseException, FileNotFoundException, IOException{
+    public HashMap<String, Object> processCliArgs(String command, 
+            ArrayList<String> cliArgs) throws CommandLineOptionException, ParseException, FileNotFoundException, IOException{
 
         HashMap<String, Object> opt_map = null;
 
         switch (command) {
         case "login":
-            opt_map = loginOptionsHandler(command, cli_args);
+            opt_map = loginOptionsHandler(command, cliArgs);
             break;
         case "package":
         case "packages":
-            opt_map = packageOptionsHandler(command, cli_args);
+            opt_map = packageOptionsHandler(command, cliArgs);
             break;
         case "project":
         case "projects":
-            opt_map = projectOptionsHandler(command, cli_args);
+            opt_map = projectOptionsHandler(command, cliArgs);
             break;
         case "tool":    
         case "tools":
-            opt_map = toolsOptionsHandler(command, cli_args);
+            opt_map = toolsOptionsHandler(command, cliArgs);
             break;
         case "assess":
         case "assessments":
-            opt_map = assessmentOptionsHandler(command, cli_args);
+            opt_map = assessmentOptionsHandler(command, cliArgs);
             break;
         case "platform":
         case "platforms":
-            opt_map = platformOptionsHandler(command, cli_args);
+            opt_map = platformOptionsHandler(command, cliArgs);
             break;
         case "results":
-            opt_map = resultsOptionsHandler(command, cli_args);
+            opt_map = resultsOptionsHandler(command, cliArgs);
             break;
         case "status":
-            opt_map = statusOptionsHandler(command, cli_args);
+            opt_map = statusOptionsHandler(command, cliArgs);
             break;
         case "user":
-            opt_map = userOptionsHandler(command, cli_args);
+            opt_map = userOptionsHandler(command, cliArgs);
             break;
         case "logout":
-            opt_map = logoutOptionsHandler(command, cli_args);
+            opt_map = logoutOptionsHandler(command, cliArgs);
             break;
         default:
             break;
@@ -1039,30 +1079,30 @@ public class Cli {
         return opt_map;
     }
 
-    public void loginHandler(HashMap<String, Object> opt_map) throws MalformedURLException {
-        String host_name = (String)opt_map.get("swamp-host");
+    public void loginHandler(HashMap<String, Object> optMap) throws MalformedURLException {
+        String host_name = (String)optMap.get("swamp-host");
 
-        Proxy proxy = SwampApiWrapper.getProxy((String)opt_map.get("proxy-scheme"),
-                (String)opt_map.get("proxy-host"),
-                (String)opt_map.get("proxy-port"),
-                (String)opt_map.get("proxy-user"),
-                (String)opt_map.get("proxy-password"));
-        
-        String user_uuid = api_wrapper.login((String)opt_map.get("username"), 
-                (String)opt_map.get("password"),
+        Proxy proxy = SwampApiWrapper.getProxy((String)optMap.get("proxy-scheme"),
+                (String)optMap.get("proxy-host"),
+                (String)optMap.get("proxy-port"),
+                (String)optMap.get("proxy-user"),
+                (String)optMap.get("proxy-password"));
+
+        String user_uuid = apiWrapper.login((String)optMap.get("username"), 
+                (String)optMap.get("password"),
                 host_name,
                 proxy,
-                (String)opt_map.get("keystore"));
+                (String)optMap.get("keystore"));
 
         if (user_uuid != null){
 
-            if ((boolean)opt_map.get("quiet") == false) {
+            if ((boolean)optMap.get("quiet") == false) {
                 System.out.println("Login successful");
             }
             //System.out.printf("User UUID: %s", user_uuid + "\n");
-            api_wrapper.saveSession();
+            apiWrapper.saveSession();
         }else {
-            if ((boolean)opt_map.get("quiet") == false) {
+            if ((boolean)optMap.get("quiet") == false) {
                 System.out.println("Login failed");
             }
         }
@@ -1076,7 +1116,7 @@ public class Cli {
                     "Description",
                     "Date Added");
 
-            for(Project proj : api_wrapper.getProjectsList()) {
+            for(Project proj : apiWrapper.getProjectsList()) {
                 System.out.printf("%-37s %-25s %-40s %-15s\n", 
                         proj.getUUIDString(), 
                         proj.getFullName(),
@@ -1084,7 +1124,7 @@ public class Cli {
                         toCurrentTimeZone(proj.getCreateDate()));
             }
         }else if (quiet) {
-            for(Project proj : api_wrapper.getProjectsList()) {
+            for(Project proj : apiWrapper.getProjectsList()) {
                 System.out.printf("%-25s\n",
                         proj.getFullName());
             }
@@ -1094,7 +1134,7 @@ public class Cli {
                     "Description",
                     "Date Added");
 
-            for(Project proj : api_wrapper.getProjectsList()) {
+            for(Project proj : apiWrapper.getProjectsList()) {
                 System.out.printf("%-25s %-40s %-15s\n", 
                         proj.getFullName(),
                         proj.getDescription(),
@@ -1103,118 +1143,130 @@ public class Cli {
         }
     }
 
-    public void projectHandler(HashMap<String, Object> opt_map) {
-        
-        if (opt_map.get("sub-command").equals("list")) {
-            printAllProjects((boolean)opt_map.get("quiet"), (boolean)opt_map.get("verbose"));
+    public void projectHandler(HashMap<String, Object> optMap) {
+
+        if (optMap.get("sub-command").equals("list")) {
+            printAllProjects((boolean)optMap.get("quiet"), (boolean)optMap.get("verbose"));
         }else {
-            Project my_proj = getProject((String)opt_map.get("project"));
+            Project my_proj = getProject((String)optMap.get("project"));
             System.out.println(my_proj.getUUIDString());
         }
     }
 
-    public void platformHandler(HashMap<String, Object> opt_map) {
-        
-        if (opt_map.get("sub-command").equals("list")) {
-            if ((boolean)opt_map.get("verbose")) {
+    public void platformHandler(HashMap<String, Object> optMap) {
+
+        if (optMap.get("sub-command").equals("list")) {
+            if ((boolean)optMap.get("verbose")) {
                 System.out.printf("%-37s %-30s\n", "UUID", "Platform");
 
-                for (PlatformVersion platform_version : api_wrapper.getAllPlatformVersionsList()){
+                for (PlatformVersion platform_version : apiWrapper.getAllPlatformVersionsList()){
                     System.out.printf("%-37s %-30s\n",
                             platform_version.getIdentifierString(),
                             platform_version.getDisplayString());
                 }
             }else {
-                if (!(boolean)opt_map.get("quiet")) {
+                if (!(boolean)optMap.get("quiet")) {
                     System.out.printf("Platform\n");
                 }
-                for (PlatformVersion platform_version : api_wrapper.getAllPlatformVersionsList()){
+                for (PlatformVersion platform_version : apiWrapper.getAllPlatformVersionsList()){
                     System.out.printf("%-30s\n", platform_version.getDisplayString());
                 }
             }
         }else {
-            
+
             List<String> platform_names = new ArrayList<String>();
-            platform_names.add((String)opt_map.get("platform"));
+            platform_names.add((String)optMap.get("platform"));
             List<PlatformVersion> platform_versions = getPlatformVersions(platform_names, null);
             System.out.println(platform_versions.get(0).getUUIDString());
         }
     }
 
-    public void toolHandler(HashMap<String, Object> opt_map) {
-        
-        if (opt_map.get("sub-command").equals("list")) {
-            printTools((String)opt_map.get("project"), 
-                    (boolean)opt_map.get("quiet"),
-                    (boolean)opt_map.get("verbose"));
+    public void toolHandler(HashMap<String, Object> optMap) {
+
+        if (optMap.get("sub-command").equals("list")) {
+            printTools((String)optMap.get("project"), 
+                    (boolean)optMap.get("quiet"),
+                    (boolean)optMap.get("verbose"));
         }else {
             List<String> tool_names = new ArrayList<String>();
-            tool_names.add((String)opt_map.get("tool"));
-            List<Tool> tools = getTools(tool_names, (String)opt_map.get("project"), null);
-            List<ToolVersion> tool_versions = api_wrapper.getToolVersions(tools.get(0));
+            tool_names.add((String)optMap.get("tool"));
+            List<Tool> tools = getTools(tool_names, (String)optMap.get("project"), null);
+            List<ToolVersion> tool_versions = apiWrapper.getToolVersions(tools.get(0));
             System.out.println(tool_versions.get(0).getUUIDString());
         }
     }
 
-    protected void deletePackages(String project, List<String> packages, boolean quiet) {
+    protected void deletePackages(String project, List<String> packages, boolean deleteAll, boolean quiet) {
 
         if (project != null && !Cli.isUuid(project)) {
-            project = api_wrapper.getProjectFromName(project).getUUIDString();
+            project = apiWrapper.getProjectFromName(project).getUUIDString();
         }
 
-        if (packages == null) {
+        if (packages == null && deleteAll) {
             //delete all packages
-            for (PackageVersion pkg_ver : api_wrapper.getPackageVersionsList(project)) {
-                if (api_wrapper.deletePackageVersion(pkg_ver) && !quiet) {
+            for (PackageVersion pkg_ver : apiWrapper.getPackageVersionsList(project)) {
+                if (apiWrapper.deletePackageVersion(pkg_ver) && !quiet) {
                     System.out.println(String.format("Deleted 'Name: %s, Version: %s'", 
                             pkg_ver.getPackageThing().getName(), 
                             pkg_ver.getVersionString()));
                 }
             }
         }else {
-            List<PackageVersion>all_packages = api_wrapper.getPackageVersionsList(project);
+            List<PackageVersion>all_packages = apiWrapper.getPackageVersionsList(project);
 
-            Set<String> pkg_uuids = new HashSet<String>();
+            Set<PackageVersion>for_deletion = new HashSet<PackageVersion>();
 
             for (String pkg : packages) {
 
                 if (Cli.isUuid(pkg)) {
                     for (PackageVersion pkg_ver : all_packages) {
-                        if (pkg_ver.getPackageThing().getIdentifierString().equals(pkg)) {
-                            pkg_uuids.add(pkg_ver.getIdentifierString());
+                        if (pkg_ver.getIdentifierString().equals(pkg)) {
+                            for_deletion.add(pkg_ver);
+                            break;
                         }
                     }
-                    pkg_uuids.add(pkg);
                 }else {
-
-                    for (PackageVersion pkg_ver : all_packages) {
-                        if (pkg_ver.getPackageThing().getName().equals(pkg)) {
-                            pkg_uuids.add(pkg_ver.getIdentifierString());
+                    
+                    //delete all versions
+                    if (!pkg.contains(VERSION_SEPERATOR)) {
+                        String pkg_thing = pkg;
+                        for (PackageVersion pkg_ver : all_packages) {
+                            if (pkg_ver.getPackageThing().getName().equals(pkg)) {
+                                for_deletion.add(pkg_ver);
+                            }
+                        }
+                    }else {
+                        String[] name_version = getNameAndVersion(pkg);
+                        for (PackageVersion pkg_ver : all_packages) {
+                            if (pkg_ver.getPackageThing().getName().equals(name_version[0]) &&
+                                    pkg_ver.getVersionString().equals(name_version[1])) {
+                                for_deletion.add(pkg_ver);
+                            }
                         }
                     }
                 }			
             }
 
-            for (PackageVersion pkg_ver : all_packages) {
-                if (pkg_uuids.contains(pkg_ver.getIdentifierString())) {
-                    if (api_wrapper.deletePackageVersion(pkg_ver) && !quiet) {
-                        System.out.println(String.format("Deleted 'Name: %s, Version: %s'", 
-                                pkg_ver.getPackageThing().getName(), 
-                                pkg_ver.getVersionString()));
-                    }
+            for (PackageVersion pkg_ver : for_deletion) {
+
+                if (apiWrapper.deletePackageVersion(pkg_ver) && !quiet) {
+                    System.out.println(String.format("Deleted 'Name: %s, Version: %s'", 
+                            pkg_ver.getPackageThing().getName(), 
+                            pkg_ver.getVersionString()));
+
                 }
             }
         }
     }
 
-    protected void uploadPackage(String pkg_conf, String pkg_archive,
-            String project, Map<String, String> os_deps, boolean new_pkg, boolean quiet) {
+    protected void uploadPackage(String pkgConf, String pkgArchive,
+            String project, Map<String, String> osDeps, boolean newPkg, boolean quiet) {
         String package_uuid = null;
 
-        if (os_deps != null) {
-            Set<String> unknown_platforms = os_deps.keySet();
-            for (String platform: os_deps.keySet()) {
-                for (PlatformVersion platform_version : api_wrapper.getAllPlatformVersionsList()) {
+        if (osDeps != null) {
+            Set<String> unknown_platforms = osDeps.keySet();
+            for (String platform: osDeps.keySet()) {
+                for (PlatformVersion platform_version : apiWrapper.getAllPlatformVersionsList()) {
                     if (platform_version.getDisplayString().equalsIgnoreCase(platform)) {
                         unknown_platforms.remove(platform);
                     }
@@ -1229,13 +1281,13 @@ public class Cli {
         String project_uuid = null;
         if (project != null) {
             if (!Cli.isUuid(project)) {
-                project = api_wrapper.getProjectFromName(project).getUUIDString();
+                project = apiWrapper.getProjectFromName(project).getUUIDString();
             }
         }else {
-            project = (String)api_wrapper.getProjectFromName("MyProject").getUUIDString();
+            project = (String)apiWrapper.getProjectFromName("MyProject").getUUIDString();
         }
 
-        package_uuid = api_wrapper.uploadPackage(pkg_conf, pkg_archive, project, os_deps, new_pkg);
+        package_uuid = apiWrapper.uploadPackage(pkgConf, pkgArchive, project, osDeps, newPkg);
 
         if (!quiet){
             System.out.println("Package Version UUID");
@@ -1244,37 +1296,38 @@ public class Cli {
         System.out.println(package_uuid);
     }
 
-    public void packageHandler(HashMap<String, Object> opt_map) {
+    public void packageHandler(HashMap<String, Object> optMap) {
 
-        String sub_command = (String)opt_map.get("sub-command");
+        String sub_command = (String)optMap.get("sub-command");
 
         if (sub_command.equalsIgnoreCase("list")) {
 
-            printAllPackages((String)opt_map.get("project"),
-                    (String)opt_map.get("pkg-type"),
-                    (boolean)opt_map.get("quiet"),
-                    (boolean)opt_map.get("verbose"));
+            printAllPackages((String)optMap.get("project"),
+                    (String)optMap.get("pkg-type"),
+                    (boolean)optMap.get("quiet"),
+                    (boolean)optMap.get("verbose"));
 
         }else if (sub_command.equalsIgnoreCase("types")) {
             for (String pkg_type : getPackageTypes()) {
                 System.out.println(pkg_type);
             }
         }else if (sub_command.equalsIgnoreCase("delete")) {
-            deletePackages((String)opt_map.get("project"),
-                    (List<String>)opt_map.get("packages"),
-                    (boolean)opt_map.get("quiet"));
+            deletePackages((String)optMap.get("project"),
+                    (List<String>)optMap.get("package"),
+                    (boolean)optMap.get("delete-all"),
+                    (boolean)optMap.get("quiet"));
         }else {
-            uploadPackage((String)opt_map.get("pkg-conf"),
-                    (String)opt_map.get("pkg-archive"),
-                    (String)opt_map.get("project"),
-                    (Map<String, String>)opt_map.get("os-deps-map"),
-                    (boolean)opt_map.get("new-pkg"),
-                    (boolean)opt_map.get("quiet"));
+            uploadPackage((String)optMap.get("pkg-conf"),
+                    (String)optMap.get("pkg-archive"),
+                    (String)optMap.get("project"),
+                    (Map<String, String>)optMap.get("os-deps-map"),
+                    (boolean)optMap.get("new-pkg"),
+                    (boolean)optMap.get("quiet"));
         }
     }
 
     public List<String> getPackageTypes() {
-        List<String> pkg_types = api_wrapper.getPackageTypesList();
+        List<String> pkg_types = apiWrapper.getPackageTypesList();
 
         Collections.sort(pkg_types, new Comparator<String>() {
             public int compare(String i1, String i2) {
@@ -1285,26 +1338,26 @@ public class Cli {
         return pkg_types;
     }
 
-    public void printAllPackages(String project, String pkg_type, boolean quiet, boolean verbose) {
+    public void printAllPackages(String project, String pkgType, boolean quiet, boolean verbose) {
 
-        if (pkg_type != null) {
-            if (!getPackageTypes().contains(pkg_type)) {
-                throw new InvalidNameException("Package type '" + pkg_type + "' not valid");
+        if (pkgType != null) {
+            if (!getPackageTypes().contains(pkgType)) {
+                throw new InvalidNameException("Package type '" + pkgType + "' not valid");
             }
         }
 
         if (project != null) {
             if (!Cli.isUuid(project)) {
-                project = api_wrapper.getProjectFromName(project).getUUIDString();	
+                project = apiWrapper.getProjectFromName(project).getUUIDString();	
             }
         }
 
         if(quiet){
-            for(PackageThing pkg : api_wrapper.getPackagesList(project)) {
-                if (pkg_type == null ||
-                        pkg.getType().equalsIgnoreCase(pkg_type)) {
+            for(PackageThing pkg : apiWrapper.getPackagesList(project)) {
+                if (pkgType == null ||
+                        pkg.getType().equalsIgnoreCase(pkgType)) {
 
-                    for(PackageVersion pkg_ver : api_wrapper.getPackageVersions(pkg)) {
+                    for(PackageVersion pkg_ver : apiWrapper.getPackageVersions(pkg)) {
                         System.out.printf("%-25s %-25s\n",
                                 pkg_ver.getPackageThing().getName(),
                                 pkg_ver.getVersionString());
@@ -1315,11 +1368,11 @@ public class Cli {
             System.out.printf("%-37s %-25s %-40s %-25s %-25s\n",
                     "UUID", "Package", "Description","Type", "Version");
 
-            for(PackageThing pkg : api_wrapper.getPackagesList(project)) {
-                if (pkg_type == null ||
-                        pkg.getType().equalsIgnoreCase(pkg_type)) {
+            for(PackageThing pkg : apiWrapper.getPackagesList(project)) {
+                if (pkgType == null ||
+                        pkg.getType().equalsIgnoreCase(pkgType)) {
 
-                    for(PackageVersion pkg_ver : api_wrapper.getPackageVersions(pkg)) {
+                    for(PackageVersion pkg_ver : apiWrapper.getPackageVersions(pkg)) {
                         System.out.printf("%-37s %-25s %-40s %-25s %-25s\n", 
                                 pkg_ver.getUUIDString(),
                                 pkg_ver.getPackageThing().getName(),
@@ -1333,11 +1386,11 @@ public class Cli {
             System.out.printf("%-25s %-40s %-25s %-25s\n",
                     "Package", "Description","Type", "Version");
 
-            for(PackageThing pkg : api_wrapper.getPackagesList(project)) {
-                if (pkg_type == null ||
-                        pkg.getType().equalsIgnoreCase(pkg_type)) {
+            for(PackageThing pkg : apiWrapper.getPackagesList(project)) {
+                if (pkgType == null ||
+                        pkg.getType().equalsIgnoreCase(pkgType)) {
 
-                    for(PackageVersion pkg_ver : api_wrapper.getPackageVersions(pkg)) {
+                    for(PackageVersion pkg_ver : apiWrapper.getPackageVersions(pkg)) {
                         System.out.printf("%-25s %-40s %-25s %-25s\n",
                                 pkg_ver.getPackageThing().getName(),
                                 pkg_ver.getPackageThing().getDescription(),
@@ -1358,33 +1411,33 @@ public class Cli {
         }
     }
 
-    public Project getProject(String project_name)  {
+    public Project getProject(String projectName)  {
         List<Project> projects = new ArrayList<Project>();
 
-        if (project_name != null) {
-            if (Cli.isUuid(project_name)) {
-                for (Project proj : api_wrapper.getProjectsList()) {
-                    if (proj.getUUIDString().equals(project_name)) {
+        if (projectName != null) {
+            if (Cli.isUuid(projectName)) {
+                for (Project proj : apiWrapper.getProjectsList()) {
+                    if (proj.getUUIDString().equals(projectName)) {
                         projects.add(proj);
                         break;
                     }
                 }
             }else {
-                for (Project proj : api_wrapper.getProjectsList()) {
-                    if (proj.getFullName().equals(project_name)) {
+                for (Project proj : apiWrapper.getProjectsList()) {
+                    if (proj.getFullName().equals(projectName)) {
                         projects.add(proj);
                     }
                 } 
             }
         }
 
-        if (projects.size() == 0) {
-            if (project_name == null) {
-                throw new InvalidNameException("Project name/UUID cannot be " + project_name);
-            }else if (Cli.isUuid(project_name)) {
-                throw new InvalidIdentifierException("No Project found with UUID: " + project_name);
+        if (projects.isEmpty()) {
+            if (projectName == null) {
+                throw new InvalidNameException("Project name/UUID cannot be " + projectName);
+            }else if (Cli.isUuid(projectName)) {
+                throw new InvalidIdentifierException("No Project found with UUID: " + projectName);
             }else {
-                throw new InvalidNameException("No Project found with name: " + project_name);
+                throw new InvalidNameException("No Project found with name: " + projectName);
             }
         }else if (projects.size() > 1) {
             throw new ConflictingNamesException("More than one project has the same name, retrive using UUID");
@@ -1393,33 +1446,33 @@ public class Cli {
         return projects.get(0);
     }
 
-    public PackageThing getPackage(String package_name, Project project) {
+    public PackageThing getPackage(String packageName, Project project) {
 
         List<PackageThing> packages = new ArrayList<PackageThing>();
 
-        if (Cli.isUuid(package_name)) {
-            for (PackageThing pkg_thing : api_wrapper.getPackagesList(project.getIdentifierString())) {
-                if (pkg_thing.getUUIDString().equals(package_name)) {
+        if (Cli.isUuid(packageName)) {
+            for (PackageThing pkg_thing : apiWrapper.getPackagesList(project.getIdentifierString())) {
+                if (pkg_thing.getUUIDString().equals(packageName)) {
                     packages.add(pkg_thing);
                     break;
                 }
             }
         }else {
 
-            for (PackageThing pkg_thing : api_wrapper.getPackagesList(project.getIdentifierString())) {
-                if (pkg_thing.getName().equals(package_name)) {
+            for (PackageThing pkg_thing : apiWrapper.getPackagesList(project.getIdentifierString())) {
+                if (pkg_thing.getName().equals(packageName)) {
                     packages.add(pkg_thing);
                 }
             }
         }
 
-        if (packages.size() == 0) {
-            if (package_name == null) {
-                throw new InvalidNameException("Package name/UUID cannot be " + package_name);
-            }else if (Cli.isUuid(package_name)) {
-                throw new InvalidIdentifierException("No Package found with UUID: " + package_name);
+        if (packages.isEmpty()) {
+            if (packageName == null) {
+                throw new InvalidNameException("Package name/UUID cannot be " + packageName);
+            }else if (Cli.isUuid(packageName)) {
+                throw new InvalidIdentifierException("No Package found with UUID: " + packageName);
             }else {
-                throw new InvalidNameException("No Package found with name: " + package_name);
+                throw new InvalidNameException("No Package found with name: " + packageName);
             }
         }else if (packages.size() > 1) {
             throw new ConflictingNamesException("More than one package has the same name, retrive using UUID");
@@ -1428,12 +1481,13 @@ public class Cli {
         return packages.get(0);
     }
 
-    public PackageVersion getPackageVersion(String package_version, PackageThing package_thing, Project project) {
+    public PackageVersion getPackageVersion(String packageVersion, 
+            PackageThing packageThing, Project project) {
         List<PackageVersion> target_pkg_vers = new ArrayList<PackageVersion>();
 
-        List<PackageVersion> all_pkg_vers = api_wrapper.getPackageVersions(package_thing);
+        List<PackageVersion> all_pkg_vers = apiWrapper.getPackageVersions(packageThing);
 
-        if (package_version == null) {
+        if (packageVersion == null) {
             //Return the latest version
             Collections.sort(all_pkg_vers, new Comparator<PackageVersion>() {
                 public int compare(PackageVersion i1, PackageVersion i2) {
@@ -1443,17 +1497,17 @@ public class Cli {
             target_pkg_vers.add(all_pkg_vers.get(all_pkg_vers.size() - 1));
         }else {
             for (PackageVersion pkg_ver : all_pkg_vers) {
-                if (pkg_ver.getVersionString().equals(package_version)) {
+                if (pkg_ver.getVersionString().equals(packageVersion)) {
                     target_pkg_vers.add(pkg_ver);
                 }
             }
         }
 
-        if (target_pkg_vers.size() == 0) {
-            if (Cli.isUuid(package_version)) {
-                throw new InvalidIdentifierException("No Package Version found with UUID: " + package_version);
+        if (target_pkg_vers.isEmpty()) {
+            if (Cli.isUuid(packageVersion)) {
+                throw new InvalidIdentifierException("No Package Version found with UUID: " + packageVersion);
             }else {
-                throw new InvalidNameException("No Package Version found with name: " + package_version);
+                throw new InvalidNameException("No Package Version found with name: " + packageVersion);
             }
         }else if (target_pkg_vers.size() > 1) {
             throw new ConflictingNamesException("More than one package versions has the same name, retrive using UUID");
@@ -1462,30 +1516,31 @@ public class Cli {
         return target_pkg_vers.get(0);
     }
 
-    public PackageVersion getPackageVersion(String package_name, String package_version_name, String project_name) {
-        Project project = getProject(project_name);
-        PackageThing package_thing = getPackage(package_name, project);
-        return getPackageVersion(package_version_name, package_thing, project);   
+    public PackageVersion getPackageVersion(String packageName, 
+            String packageVersionName, String projectName) {
+        Project project = getProject(projectName);
+        PackageThing package_thing = getPackage(packageName, project);
+        return getPackageVersion(packageVersionName, package_thing, project);   
     }
-    
-    public List<PlatformVersion> getPlatformVersions(List<String> platform_version_names, 
-            String package_type) {
-        
+
+    public List<PlatformVersion> getPlatformVersions(List<String> platformVersionNames, 
+            String packageType) {
+
         List<PlatformVersion> valid_platforms = new ArrayList<PlatformVersion>();
-        
-        for (PlatformVersion plat_ver: api_wrapper.getAllPlatformVersionsList()) {
-            for (String plat_name : platform_version_names) {
+
+        for (PlatformVersion plat_ver: apiWrapper.getAllPlatformVersionsList()) {
+            for (String plat_name : platformVersionNames) {
                 if (Cli.isUuid(plat_name) && plat_name.equals(plat_ver.getUUIDString())) {
-                    if (package_type != null) {
-                        if (package_type.equalsIgnoreCase("C/C++")) {
+                    if (packageType != null) {
+                        if (packageType.equalsIgnoreCase("C/C++")) {
                             valid_platforms.add(plat_ver);
                         }
                     }else {
                         valid_platforms.add(plat_ver);
                     }
                 }else if (plat_name.equals(plat_ver.getDisplayString())) {
-                    if (package_type != null) {
-                        if (package_type.equalsIgnoreCase("C/C++")) {
+                    if (packageType != null) {
+                        if (packageType.equalsIgnoreCase("C/C++")) {
                             valid_platforms.add(plat_ver);
                         }
                     }else {
@@ -1494,29 +1549,29 @@ public class Cli {
                 }
             }
         }
-        
+
         //Use default platform
-        if (valid_platforms.size() == 0) {
-            valid_platforms.add(api_wrapper.getDefaultPlatformVersion(package_type));
+        if (valid_platforms.isEmpty()) {
+            valid_platforms.add(apiWrapper.getDefaultPlatformVersion(packageType));
         }
-        
+
         return valid_platforms;
     }
 
-    public List<Tool> getTools(List<String> tool_names, String project_name, String package_type) {
-      
+    public List<Tool> getTools(List<String> toolNames, String projectName, String packageType) {
+
         List<Tool> valid_tools = new ArrayList<Tool>();
         String project_uuid = null;
-        if (project_name != null) {
-            project_uuid = getProject(project_name).getUUIDString();
+        if (projectName != null) {
+            project_uuid = getProject(projectName).getUUIDString();
         }
-        
-        for (Tool tool : api_wrapper.getAllTools(project_uuid).values()) {
-            for (String tool_name: tool_names) {
+
+        for (Tool tool : apiWrapper.getAllTools(project_uuid).values()) {
+            for (String tool_name: toolNames) {
                 if (tool.getName().equalsIgnoreCase(tool_name)) {
 
-                    if (package_type != null) {
-                        if(tool.getSupportedPkgTypes().contains(package_type)) {
+                    if (packageType != null) {
+                        if(tool.getSupportedPkgTypes().contains(packageType)) {
                             valid_tools.add(tool);
                         }
                     }else {
@@ -1528,11 +1583,11 @@ public class Cli {
 
         return valid_tools;
     }
-    
+
     public ToolVersion getToolVersionFromUUID(String tool_version_uuid) {
 
-        for (Tool tool : api_wrapper.getAllTools(null).values()) {
-            for (ToolVersion tool_version : api_wrapper.getToolVersions(tool)) {
+        for (Tool tool : apiWrapper.getAllTools(null).values()) {
+            for (ToolVersion tool_version : apiWrapper.getToolVersions(tool)) {
                 if (tool_version.getUUIDString().equalsIgnoreCase(tool_version_uuid)) {
                     return tool_version;
                 }
@@ -1540,26 +1595,26 @@ public class Cli {
         }
         throw new InvalidIdentifierException("No Tool Version found with UUID: " + tool_version_uuid); 
     }
-    
-    public ToolVersion getToolVersion(String tool_name, String tool_version_num) {
 
-        if (tool_version_num != null) {
-            
-            if (Cli.isUuid(tool_name)) {
-                String tool_version_uuid = tool_name;
-                
-                for (Tool tool : api_wrapper.getAllTools(null).values()) {
-                    for (ToolVersion tool_version : api_wrapper.getToolVersions(tool)) {
+    public ToolVersion getToolVersion(String toolName, String toolVersionNum) {
+
+        if (toolVersionNum != null) {
+
+            if (Cli.isUuid(toolName)) {
+                String tool_version_uuid = toolName;
+
+                for (Tool tool : apiWrapper.getAllTools(null).values()) {
+                    for (ToolVersion tool_version : apiWrapper.getToolVersions(tool)) {
                         if (tool_version.getUUIDString().equalsIgnoreCase(tool_version_uuid)) {
                             return tool_version;
                         }
                     }
                 }
             }else {
-                for (Tool tool : api_wrapper.getAllTools(null).values()) {
-                    if (tool.getName().equalsIgnoreCase(tool_name)) {
-                        for (ToolVersion tool_version : api_wrapper.getToolVersions(tool)) {
-                            if (tool_version.getVersion().equalsIgnoreCase(tool_version_num)) {
+                for (Tool tool : apiWrapper.getAllTools(null).values()) {
+                    if (tool.getName().equalsIgnoreCase(toolName)) {
+                        for (ToolVersion tool_version : apiWrapper.getToolVersions(tool)) {
+                            if (tool_version.getVersion().equalsIgnoreCase(toolVersionNum)) {
                                 return tool_version;
                             }
                         }
@@ -1567,72 +1622,74 @@ public class Cli {
                 }
             }
         }else {
-            if (Cli.isUuid(tool_name)) {
-                String tool_version_uuid = tool_name;
-                
-                for (Tool tool : api_wrapper.getAllTools(null).values()) {
-                    for (ToolVersion tool_version : api_wrapper.getToolVersions(tool)) {
+            if (Cli.isUuid(toolName)) {
+                String tool_version_uuid = toolName;
+
+                for (Tool tool : apiWrapper.getAllTools(null).values()) {
+                    for (ToolVersion tool_version : apiWrapper.getToolVersions(tool)) {
                         if (tool_version.getUUIDString().equalsIgnoreCase(tool_version_uuid)) {
                             return tool_version;
                         }
                     }
                 }
             }else {
-                for (Tool tool : api_wrapper.getAllTools(null).values()) {
-                    if (tool.getName().equalsIgnoreCase(tool_name)) {
-                        return api_wrapper.getToolVersions(tool).get(0);
+                for (Tool tool : apiWrapper.getAllTools(null).values()) {
+                    if (tool.getName().equalsIgnoreCase(toolName)) {
+                        return apiWrapper.getToolVersions(tool).get(0);
                     }
                 }
             }
         }
-        
-        if (Cli.isUuid(tool_name)) {
-            throw new InvalidIdentifierException("No Tool Version found with UUID: " + tool_name); 
+
+        if (Cli.isUuid(toolName)) {
+            throw new InvalidIdentifierException("No Tool Version found with UUID: " + toolName); 
         }else {
-            throw new InvalidNameException("No Tool Version found with name: " + tool_name + " version: " + tool_version_num); 
+            throw new InvalidNameException("No Tool Version found with name: " + toolName + " version: " + toolVersionNum); 
         }
     }
-    
-    public List<ToolVersion> getToolVersions(List<String> tool_names) {
-          
+
+    public List<ToolVersion> getToolVersions(List<String> toolNames) {
+
         List<ToolVersion> valid_tools = new ArrayList<ToolVersion>();
-        
-        for (String tool_name : tool_names) {
-            String tool_version_num = null;
-            
-            if (tool_name.contains(":")) {
-                tool_version_num = tool_name.substring(tool_name.indexOf(':') + 1, tool_name.length());
-                tool_name = tool_name.substring(0, tool_name.indexOf(':'));
+
+        for (String tool_name : toolNames) {
+            String tool_version = null;
+
+            if (tool_name.contains(VERSION_SEPERATOR)) {
+                String name_version[] = getNameAndVersion(tool_name);
+                tool_name = name_version[0];
+                tool_version =  name_version[1];
             }
 
-            valid_tools.add(getToolVersion(tool_name, tool_version_num));
+            valid_tools.add(getToolVersion(tool_name, tool_version));
         }
-        
-        
+
+
         return valid_tools;
     }
-    
-    public void runAssessments(String package_name,
-            List<String> tool_names,
+
+    public void runAssessments(String packageName,
+            List<String> toolNames,
             List<String> platforms,
             boolean quiet) {
 
         Project target_project = null;
         PackageVersion target_pkg = null;
-        String pkg_ver_num = null;
-        
-        if (package_name.contains(":")) {
-            pkg_ver_num = package_name.substring(package_name.indexOf(':') + 1, package_name.length());
-            package_name = package_name.substring(0, package_name.indexOf(':'));
-        }
-        
-        for (Project project : api_wrapper.getProjectsList()) {
-            if (!Cli.isUuid(package_name)) {
-                for (PackageThing pkg_thing : api_wrapper.getPackagesList(project.getIdentifierString())) {
-                    if (pkg_thing.getName().equals(package_name)) {
-                        List<PackageVersion> pkg_vers = api_wrapper.getPackageVersions(pkg_thing);
+        String package_version = null;
 
-                        if (pkg_ver_num == null) {
+        if (packageName.contains(VERSION_SEPERATOR)) {
+            String name_version[] = getNameAndVersion(packageName);
+            packageName = name_version[0];
+            package_version = name_version[1];
+        }
+
+        for (Project project : apiWrapper.getProjectsList()) {
+            if (!Cli.isUuid(packageName)) {
+                for (PackageThing pkg_thing : apiWrapper.getPackagesList(project.getIdentifierString())) {
+                    if (pkg_thing.getName().equals(packageName)) {
+                        List<PackageVersion> pkg_vers = apiWrapper.getPackageVersions(pkg_thing);
+
+                        if (package_version == null) {
                             Collections.sort(pkg_vers, new Comparator<PackageVersion>() {
                                 public int compare(PackageVersion i1, PackageVersion i2) {
                                     return (i1.getVersionString().compareTo(i2.getVersionString()));
@@ -1641,7 +1698,7 @@ public class Cli {
                             target_pkg = pkg_vers.get(pkg_vers.size() - 1);
                         }else {
                             for (PackageVersion pkg_ver : pkg_vers) {
-                                if (pkg_ver.getVersionString().equals(pkg_ver_num)) {
+                                if (pkg_ver.getVersionString().equals(package_version)) {
                                     target_pkg = pkg_ver;
                                     break;
                                 }
@@ -1651,8 +1708,8 @@ public class Cli {
                     }
                 }
             }else {
-                for (PackageVersion pkg_ver : api_wrapper.getPackageVersionsList(project.getIdentifierString())) {
-                    if (pkg_ver.getIdentifierString().equals(package_name)) {
+                for (PackageVersion pkg_ver : apiWrapper.getPackageVersionsList(project.getIdentifierString())) {
+                    if (pkg_ver.getIdentifierString().equals(packageName)) {
                         target_pkg = pkg_ver;
                         target_project = project;
                         break;
@@ -1660,22 +1717,22 @@ public class Cli {
                 }
 
                 if (target_pkg  == null) {
-                    for (PackageThing pkg_thing : api_wrapper.getPackagesList(project.getIdentifierString())) {
-                        if (pkg_thing.getIdentifierString().equals(package_name)) {
-                            List<PackageVersion> pkg_vers = api_wrapper.getPackageVersions(pkg_thing);
+                    for (PackageThing pkg_thing : apiWrapper.getPackagesList(project.getIdentifierString())) {
+                        if (pkg_thing.getIdentifierString().equals(packageName)) {
+                            List<PackageVersion> pkg_vers = apiWrapper.getPackageVersions(pkg_thing);
                             Collections.sort(pkg_vers, new Comparator<PackageVersion>() {
                                 public int compare(PackageVersion i1, PackageVersion i2) {
                                     return (i1.getVersionString().compareTo(i2.getVersionString()));
                                 }
                             });
 
-                            if (pkg_ver_num == null) {
+                            if (package_version == null) {
                                 target_pkg = pkg_vers.get(pkg_vers.size()-1);
                                 target_project = project;
                                 break;
                             }else {
                                 for (PackageVersion pkg_ver : pkg_vers) {
-                                    if (pkg_ver.getVersionString().equals(pkg_ver_num)) {
+                                    if (pkg_ver.getVersionString().equals(package_version)) {
                                         target_pkg = pkg_ver;
                                         target_project = project;
                                         break;										
@@ -1693,20 +1750,20 @@ public class Cli {
         }
 
         if (target_pkg == null) {
-            if (Cli.isUuid(package_name)) {
-                throw new InvalidIdentifierException("Invalid Package UUID: " + package_name);
+            if (Cli.isUuid(packageName)) {
+                throw new InvalidIdentifierException("Invalid Package UUID: " + packageName);
             }else {
-                if (pkg_ver_num != null) {
-                    throw new InvalidNameException(String.format("package: %s-%s not found\n", package_name, pkg_ver_num));
+                if (package_version != null) {
+                    throw new InvalidNameException(String.format("package: %s-%s not found\n", packageName, package_version));
                 }else {
-                    throw new InvalidNameException(String.format("package: %s not found\n", package_name));
+                    throw new InvalidNameException(String.format("package: %s not found\n", packageName));
                 }
             }
         }
 
         List<PlatformVersion> valid_platforms = new ArrayList<PlatformVersion>();
         if (platforms != null && target_pkg.getPackageThing().getType().equalsIgnoreCase("C/C++")) {
-            for (PlatformVersion plat_ver: api_wrapper.getAllPlatformVersionsList()) {
+            for (PlatformVersion plat_ver: apiWrapper.getAllPlatformVersionsList()) {
                 for (String plat_name : platforms) {
                     if (Cli.isUuid(plat_name) && plat_name.equals(plat_ver.getUUIDString())) {
                         valid_platforms.add(plat_ver);
@@ -1718,16 +1775,16 @@ public class Cli {
         }
 
         //Use default platform
-        if (valid_platforms.size() == 0) {
-            valid_platforms.add(api_wrapper.getDefaultPlatformVersion(target_pkg.getPackageThing().getType()));
+        if (valid_platforms.isEmpty()) {
+            valid_platforms.add(apiWrapper.getDefaultPlatformVersion(target_pkg.getPackageThing().getType()));
         }
 
         List<AssessmentRun> assessment_run = new ArrayList<AssessmentRun>();
 
-        for (ToolVersion tool_version : getToolVersions(tool_names)) {
-            assessment_run.addAll(api_wrapper.runAssessment(target_pkg, tool_version, target_project, valid_platforms));
+        for (ToolVersion tool_version : getToolVersions(toolNames)) {
+            assessment_run.addAll(apiWrapper.runAssessment(target_pkg, tool_version, target_project, valid_platforms));
         }
-          
+
         if (assessment_run.size() > 0) {
             if (!quiet) {
                 System.out.println("Assessment UUIDs"); 
@@ -1740,20 +1797,20 @@ public class Cli {
         }
     }
 
-    public void listAssessments(String project_name, 
-            String package_name, 
-            String tool_name,
-            String plat_name,
+    public void listAssessments(String projectName, 
+            String packageName, 
+            String toolName,
+            String platName,
             boolean quiet, 
             boolean verbose) {
 
         List<AssessmentRun> all_assessments = new ArrayList<AssessmentRun>();
 
-        if (project_name != null) {
-            all_assessments.addAll(api_wrapper.getAllAssessments(api_wrapper.getProjectFromName(project_name).getIdentifierString()));
+        if (projectName != null) {
+            all_assessments.addAll(apiWrapper.getAllAssessments(apiWrapper.getProjectFromName(projectName).getIdentifierString()));
         }else {
-            for (Project project : api_wrapper.getProjectsList()) {
-                all_assessments.addAll(api_wrapper.getAllAssessments(project.getIdentifierString()));
+            for (Project project : apiWrapper.getProjectsList()) {
+                all_assessments.addAll(apiWrapper.getAllAssessments(project.getIdentifierString()));
             }
         }
 
@@ -1766,15 +1823,15 @@ public class Cli {
         }		
 
         for (AssessmentRun arun : all_assessments) {
-            if (package_name != null && !arun.getPackageName().equals(package_name)) {
+            if (packageName != null && !arun.getPackageName().equals(packageName)) {
                 continue;
             }
 
-            if (tool_name != null && !arun.getToolName().equals(tool_name)) {
+            if (toolName != null && !arun.getToolName().equals(toolName)) {
                 continue;
             }
 
-            if (plat_name != null && !arun.getPlatformName().equals(plat_name)) {
+            if (platName != null && !arun.getPlatformName().equals(platName)) {
                 continue;
             }
 
@@ -1795,142 +1852,143 @@ public class Cli {
         }
     }
 
-    public void assessmentHandler(HashMap<String, Object> opt_map) {
+    public void assessmentHandler(HashMap<String, Object> optMap) {
 
-        if (((String)opt_map.get("sub-command")).equalsIgnoreCase("run")) {
+        if (((String)optMap.get("sub-command")).equalsIgnoreCase("run")) {
 
-            runAssessments((String)opt_map.get("package"),
-                    (List<String>)opt_map.get("tool"), 
-                    (List<String>)opt_map.get("platform"),
-                    (boolean)opt_map.get("quiet"));
+            runAssessments((String)optMap.get("package"),
+                    (List<String>)optMap.get("tool"), 
+                    (List<String>)optMap.get("platform"),
+                    (boolean)optMap.get("quiet"));
 
-        }else if (((String)opt_map.get("sub-command")).equalsIgnoreCase("list")) {
-            listAssessments((String)opt_map.get("project"), 
-                    (String)opt_map.get("package"), 
-                    (String)opt_map.get("tool"),
-                    (String)opt_map.get("platform"),
-                    (boolean)opt_map.get("quiet"),
-                    (boolean)opt_map.get("verbose"));
+        }else if (((String)optMap.get("sub-command")).equalsIgnoreCase("list")) {
+            listAssessments((String)optMap.get("project"), 
+                    (String)optMap.get("package"), 
+                    (String)optMap.get("tool"),
+                    (String)optMap.get("platform"),
+                    (boolean)optMap.get("quiet"),
+                    (boolean)optMap.get("verbose"));
         }
 
     }
 
-    public void resultsHandler(HashMap<String, Object> opt_map) throws IOException{
-        if (opt_map.get("sub-command").equals("download")) {
-            if ((String)opt_map.get("results-uuid") != null) {
-                downloadScarf((String)opt_map.get("project-uuid"), 
-                        (String)opt_map.get("results-uuid"),
-                        (String)opt_map.get("filepath"),
-                        (boolean)opt_map.get("quiet"));
+    public void resultsHandler(HashMap<String, Object> optMap) throws IOException{
+        if (optMap.get("sub-command").equals("download")) {
+            if ((String)optMap.get("results-uuid") != null) {
+                downloadScarf((String)optMap.get("project-uuid"), 
+                        (String)optMap.get("results-uuid"),
+                        (String)optMap.get("filepath"),
+                        (boolean)optMap.get("quiet"));
             }else {
-                downloadScarf((String)opt_map.get("package"), 
-                        (String)opt_map.get("tool"),
-                        (String)opt_map.get("platform"),
-                        (String)opt_map.get("filepath"),
-                        (boolean)opt_map.get("quiet"));
+                downloadScarf((String)optMap.get("package"), 
+                        (String)optMap.get("tool"),
+                        (String)optMap.get("platform"),
+                        (String)optMap.get("filepath"),
+                        (boolean)optMap.get("quiet"));
             }
         }else {
-            listResults((String)opt_map.get("project"), 
-                    (String)opt_map.get("package"), 
-                    (String)opt_map.get("tool"),
-                    (String)opt_map.get("platform"),
-                    (boolean)opt_map.get("verbose"));
+            listResults((String)optMap.get("project"), 
+                    (String)optMap.get("package"), 
+                    (String)optMap.get("tool"),
+                    (String)optMap.get("platform"),
+                    (boolean)optMap.get("verbose"));
         }
     }
 
-    public void downloadScarf(String project_uuid, 
-            String asssess_result_uuid, 
+    public void downloadScarf(String projectUuid, 
+            String asssessResultUuid, 
             String filepath, 
             boolean quiet) throws IOException {
-        
+
         if (filepath == null) {
-            filepath = "./" + asssess_result_uuid + ".xml";
+            filepath = "./" + asssessResultUuid + ".xml";
         }
 
         boolean status = false;
-        if (project_uuid != null) {
-            status =  api_wrapper.getAssessmentResults(project_uuid, asssess_result_uuid, filepath); 
+        if (projectUuid != null) {
+            status =  apiWrapper.getAssessmentResults(projectUuid, asssessResultUuid, filepath); 
         }else {
-            status =  api_wrapper.getAssessmentResults(asssess_result_uuid, filepath);
+            status =  apiWrapper.getAssessmentResults(asssessResultUuid, filepath);
         }
 
         if (!quiet) {
             if (status) {
                 System.out.println("Downloaded SCARF into: " + filepath);
             }else {
-                System.out.println("Downloaded SCARF for " + asssess_result_uuid + " failed" );
+                System.out.println("Downloaded SCARF for " + asssessResultUuid + " failed" );
             }
         }
     }
 
-    public void downloadScarf(String package_name, 
-            String tool_name,
+    public void downloadScarf(String packageName, 
+            String toolName,
             String platform, 
             String filepath, 
             boolean verbose) throws IOException {
-        
+
         List<AssessmentRecord> results = new ArrayList<AssessmentRecord>();
 
         String package_version = null;
-        if (package_name.contains(":")) {
-            package_version = package_name.substring(package_name.indexOf(':') + 1, package_name.length());
-            package_name = package_name.substring(0, package_name.indexOf(':'));
+        
+        if (packageName.contains(VERSION_SEPERATOR)) {
+            String name_version[] = getNameAndVersion(packageName);
+            packageName = name_version[0];
+            package_version = name_version[1];
         }
         
         String tool_version = null;
-        if (tool_name.contains(":")) {
-            tool_version = tool_name.substring(tool_name.indexOf(':') + 1, tool_name.length());
-            tool_name = tool_name.substring(0, tool_name.indexOf(':'));
+        if (toolName.contains(VERSION_SEPERATOR)) {
+            String name_version[] = getNameAndVersion(toolName);
+            toolName = name_version[0];
+            tool_version =  name_version[1];
         }
-                
-        for (Project project : api_wrapper.getProjectsList()) {
-            for (AssessmentRecord arecord : api_wrapper.getAllAssessmentRecords(project.getUUIDString())) {                
-                
-                if (package_name != null && !package_name.equalsIgnoreCase(arecord.getConversionMap().getString("package_name"))) {
+
+        for (Project project : apiWrapper.getProjectsList()) {
+            for (AssessmentRecord arecord : apiWrapper.getAllAssessmentRecords(project.getUUIDString())) {                
+
+                if (packageName != null && !packageName.equalsIgnoreCase(arecord.getConversionMap().getString("package_name"))) {
                     continue;
                 }
-                
+
                 if (package_version != null && !package_version.equalsIgnoreCase(arecord.getConversionMap().getString("package_version"))) {
                     continue;
                 }
-                 
-                if (tool_name != null &&  !tool_name.equalsIgnoreCase(arecord.getConversionMap().getString("tool_name"))) {
+
+                if (toolName != null &&  !toolName.equalsIgnoreCase(arecord.getConversionMap().getString("tool_name"))) {
                     continue;
                 }
-                
+
                 if(tool_version != null && !tool_version.equalsIgnoreCase(arecord.getConversionMap().getString("tool_version"))) {
                     continue;
                 }
-                 
+
                 if(platform != null && !platform.equalsIgnoreCase(PlatformVersion.getDisplayString(arecord.getConversionMap().getString("platform_name"),
-                                arecord.getConversionMap().getString("platform_version")))) {
+                        arecord.getConversionMap().getString("platform_version")))) {
                     continue;
                 }
                 results.add(arecord);
             }
         }
-        
-        if (results.size() > 1) {
+
+        if (results.isEmpty()) {
+            throw new ConflictingNamesException(String.format("No assessment records found with " +
+                    "package_name: %s, package_version: %s , tool_name: %s, tool_version: %s, platform: %s\n", 
+                    packageName, package_version,
+                    toolName, tool_version,
+                    platform));           
+        }else if (results.size() > 1) {
             throw new ConflictingNamesException("More than one assessment records have same " +
                     "package_name, package_version, tool_name, tool_version, platform\n, Use Assessment result UUID to download results");
         }
-        
-        if (results.size() == 0) {
-            throw new ConflictingNamesException(String.format("No assessment records found with " +
-                    "package_name: %s, package_version: %s , tool_name: %s, tool_version: %s, platform: %s\n", 
-                    package_name, package_version,
-                    tool_name, tool_version,
-                    platform));           
-        }
-        
+
         if (filepath == null) {
             filepath = "./" + results.get(0).getAssessmentResultUUID() + ".xml";
         }
 
-        boolean status = api_wrapper.getAssessmentResults(results.get(0).getProjectUUID(), 
+        boolean status = apiWrapper.getAssessmentResults(results.get(0).getProjectUUID(), 
                 results.get(0).getAssessmentResultUUID(), 
                 filepath); 
-        
+
 
         if (!verbose) {
             if (status) {
@@ -1940,7 +1998,7 @@ public class Cli {
             }
         }
     }
-    
+
     public String toCurrentTimeZone(Date date) {
         String converted_date = "";
 
@@ -1953,7 +2011,8 @@ public class Cli {
                 calendar.add(Calendar.MILLISECOND, this_time_zone.getDSTSavings());
             }
 
-            SimpleDateFormat date_format = new SimpleDateFormat("MM/dd/yyyy HH:mm");
+            //SimpleDateFormat date_format = new SimpleDateFormat("MM/dd/yyyy HH:mm");
+            SimpleDateFormat date_format = new SimpleDateFormat("yyyy/MM/dd'T'HH:mm");
             date_format.setTimeZone(Calendar.getInstance().getTimeZone());
             converted_date =  date_format.format(calendar.getTime());
         }catch (Exception e){ 
@@ -1963,19 +2022,19 @@ public class Cli {
         return converted_date;
     }
 
-    public void listResults(String project_name, 
-            String package_name, 
-            String tool_name,
-            String plat_name,
+    public void listResults(String projectName, 
+            String packageName, 
+            String toolName,
+            String platName,
             boolean verbose) {
 
         List<AssessmentRecord> all_results = new ArrayList<AssessmentRecord>();
 
-        if (project_name != null) {
-            all_results.addAll(api_wrapper.getAllAssessmentRecords(getProject(project_name).getUUIDString()));
+        if (projectName != null) {
+            all_results.addAll(apiWrapper.getAllAssessmentRecords(getProject(projectName).getUUIDString()));
         }else {
-            for (Project project : api_wrapper.getProjectsList()) {
-                all_results.addAll(api_wrapper.getAllAssessmentRecords(project.getUUIDString()));
+            for (Project project : apiWrapper.getProjectsList()) {
+                all_results.addAll(apiWrapper.getAllAssessmentRecords(project.getUUIDString()));
             }
         }
 
@@ -1994,15 +2053,15 @@ public class Cli {
         }
 
         for (AssessmentRecord arun : all_results) {
-            if (package_name != null && !arun.getPkg().getName().equals(package_name)) {
+            if (packageName != null && !arun.getPkg().getName().equals(packageName)) {
                 continue;
             }
 
-            if (tool_name != null && !arun.getTool().getName().equals(tool_name)) {
+            if (toolName != null && !arun.getTool().getName().equals(toolName)) {
                 continue;
             }
 
-            if (plat_name != null && !arun.getPlatform().getName().equals(plat_name)) {
+            if (platName != null && !arun.getPlatform().getName().equals(platName)) {
                 continue;
             }
 
@@ -2028,62 +2087,62 @@ public class Cli {
         }
     }
 
-    public void statusHandler(HashMap<String, Object> opt_map) {
-        printAssessmentStatus((String)opt_map.get("project-uuid"), (String)opt_map.get("assess-uuid"));
+    public void statusHandler(HashMap<String, Object> optMap) {
+        printAssessmentStatus((String)optMap.get("project-uuid"), (String)optMap.get("assess-uuid"));
     }
 
-    public void printUserInfo(HashMap<String, Object> opt_map) {
-        User user = api_wrapper.getUserInfo();
+    public void printUserInfo(HashMap<String, Object> optMap) {
+        User user = apiWrapper.getUserInfo();
         System.out.printf("%s\n", "User:\t" + user.getFirstName() + " " + user.getLastName());
         System.out.printf("%s\n", "Email:\t" + user.getEmail());
         System.out.printf("%s\n", "UUID:\t" + user.getUUIDString());
     }
 
-    public void logoutHandler(HashMap<String, Object> opt_map) {
-        api_wrapper.logout();
-        if ((boolean)opt_map.get("quiet") == false) {
+    public void logoutHandler(HashMap<String, Object> optMap) {
+        apiWrapper.logout();
+        if ((boolean)optMap.get("quiet") == false) {
             System.out.println("Logout successful");
         }
     }
 
-    public int executeCommands(String command, HashMap<String, Object> opt_map) throws IOException, SessionExpiredException, InvalidIdentifierException, IncompatibleAssessmentTupleException {
+    public int executeCommands(String command, HashMap<String, Object> optMap) throws IOException, SessionExpiredException, InvalidIdentifierException, IncompatibleAssessmentTupleException {
 
         if (command.equals("login")) {
-            loginHandler(opt_map);
+            loginHandler(optMap);
         }else {
-            api_wrapper.restoreSession();
+            apiWrapper.restoreSession();
             switch (command) {
             case "project":
             case "projects":
-                projectHandler(opt_map);
+                projectHandler(optMap);
                 break;
             case "platform":
             case "platforms":
-                platformHandler(opt_map);
+                platformHandler(optMap);
                 break;
             case "tool":    
             case "tools":
-                toolHandler(opt_map);
+                toolHandler(optMap);
                 break;
             case "package":    
             case "packages":
-                packageHandler(opt_map);
+                packageHandler(optMap);
                 break;
             case "assess":
             case "assessments":
-                assessmentHandler(opt_map);
+                assessmentHandler(optMap);
                 break;
             case "results":
-                resultsHandler(opt_map);
+                resultsHandler(optMap);
                 break;
             case "status":
-                statusHandler(opt_map);
+                statusHandler(optMap);
                 break;
             case "user":
-                printUserInfo(opt_map);
+                printUserInfo(optMap);
                 break;
             case "logout":
-                logoutHandler(opt_map);
+                logoutHandler(optMap);
                 break;
             default:
                 break;
@@ -2093,12 +2152,12 @@ public class Cli {
     }
 
 
-    public void printTools(String project_name, boolean quiet, boolean verbose) throws InvalidIdentifierException {
-        
-        Project project = getProject(project_name);
-        
+    public void printTools(String projectName, boolean quiet, boolean verbose) throws InvalidIdentifierException {
+
+        Project project = getProject(projectName);
+
         if(quiet){
-            for(Tool tool : api_wrapper.getAllTools(project.getUUIDString()).values()){			
+            for(Tool tool : apiWrapper.getAllTools(project.getUUIDString()).values()){			
                 System.out.printf("%-21s\n", tool.getName());
             }
         }else if(verbose){
@@ -2108,8 +2167,8 @@ public class Cli {
                     "Version",
                     "Supported Package Types");
 
-            for(Tool tool : api_wrapper.getAllTools(project.getUUIDString()).values()) {
-                for (ToolVersion tool_version : api_wrapper.getToolVersions(tool)) {
+            for(Tool tool : apiWrapper.getAllTools(project.getUUIDString()).values()) {
+                for (ToolVersion tool_version : apiWrapper.getToolVersions(tool)) {
                     System.out.printf("%-37s %-21s %15s %-40s\n",
                             tool_version.getUUIDString(),
                             tool_version.getTool().getName(),
@@ -2123,8 +2182,8 @@ public class Cli {
                     "Version",
                     "Supported Package Types");
 
-            for(Tool tool : api_wrapper.getAllTools(project.getUUIDString()).values()) {
-                for (ToolVersion tool_version : api_wrapper.getToolVersions(tool)) {
+            for(Tool tool : apiWrapper.getAllTools(project.getUUIDString()).values()) {
+                for (ToolVersion tool_version : apiWrapper.getToolVersions(tool)) {
                     System.out.printf("%-21s %15s %-40s\n",
                             tool_version.getTool().getName(),
                             tool_version.getVersion(),
@@ -2134,7 +2193,7 @@ public class Cli {
         }
     }
 
-    public void printAssessments(String project_uuid, boolean quiet) {
+    public void printAssessments(String projectUuid, boolean quiet) {
 
         if (!quiet){
             System.out.printf("%-37s %-15s %-15s %-15s %-15s %-15s %-15s\n", 
@@ -2142,7 +2201,7 @@ public class Cli {
                     "Package Name", "Package Version",
                     "Tool Name", "Tool Version",
                     "Platform Name", "Platform Version");
-            for (AssessmentRun arun : api_wrapper.getAllAssessments(project_uuid)){
+            for (AssessmentRun arun : apiWrapper.getAllAssessments(projectUuid)){
 
                 System.out.printf("%-37s %-15s %-15s %-15s %-15s %-15s %-15s\n", 
                         arun.getUUIDString(), 
@@ -2154,16 +2213,16 @@ public class Cli {
                         arun.getPlatformVersion());
             }
         }else{
-            for (AssessmentRun arun : api_wrapper.getAllAssessments(project_uuid)){
+            for (AssessmentRun arun : apiWrapper.getAllAssessments(projectUuid)){
                 System.out.println(arun.getUUIDString());
             }
         }
     }
 
-    public void printAssessment(String assessment_uuid, String project_uuid) {
-        AssessmentRun arun = api_wrapper.getAssessment(assessment_uuid, project_uuid);
+    public void printAssessment(String assessmentUuid, String projectUuid) {
+        AssessmentRun arun = apiWrapper.getAssessment(assessmentUuid, projectUuid);
         if (arun == null){
-            System.out.println("Assessment " + assessment_uuid + " not found. Please verify the UUID");
+            System.out.println("Assessment " + assessmentUuid + " not found. Please verify the UUID");
         }else{
             System.out.println("Assessment Results on " + arun.getIdentifierString());
             System.out.println("Package: \t" + (arun.getPkg() == null ? "N/A" : arun.getPkg().getName()));
@@ -2174,17 +2233,17 @@ public class Cli {
         }
     }
 
-    public void printAssessmentStatus(String project_uuid, String assessment_uuid) {
+    public void printAssessmentStatus(String projectUuid, String assessmentUuid) {
 
         AssessmentRecord assessment_record = null;
 
-        if (project_uuid != null) {
-            assessment_record = api_wrapper.getAssessmentRecord(project_uuid, assessment_uuid);
+        if (projectUuid != null) {
+            assessment_record = apiWrapper.getAssessmentRecord(projectUuid, assessmentUuid);
         }else {
-            for (Project project : api_wrapper.getProjectsList()) {
-                for (AssessmentRecord record : api_wrapper.getAllAssessmentRecords(project.getUUIDString())) {
+            for (Project project : apiWrapper.getProjectsList()) {
+                for (AssessmentRecord record : apiWrapper.getAllAssessmentRecords(project.getUUIDString())) {
 
-                    if (record.getAssessmentRunUUID().equals(assessment_uuid)) {
+                    if (record.getAssessmentRunUUID().equals(assessmentUuid)) {
                         assessment_record = record;
                         break;
                     }
@@ -2204,7 +2263,7 @@ public class Cli {
                 System.out.printf(", %-37s\n", assessment_record.getAssessmentResultUUID());
             }
         }else {
-            throw new InvalidIdentifierException("Invalid Assessment UUID: " + assessment_uuid);  
+            throw new InvalidIdentifierException("Invalid Assessment UUID: " + assessmentUuid);  
         }
     }
 
@@ -2217,10 +2276,7 @@ public class Cli {
             Cli.printVersion();
             return;
         }else if (args.length == 0 || args[0].equals("-H") || args[0].equals("-h") ||
-                args[0].equals("--help")) {
-            printHelp();
-            return;
-        } else if (!Cli.COMMANDS.contains(args[0]) ){
+                args[0].equals("--help") || !Cli.COMMANDS.contains(args[0])) {
             printHelp();
             return;
         }
@@ -2255,6 +2311,6 @@ public class Cli {
         System.exit(SwampApiWrapperExitCodes.NO_ERRORS.getExitCode());
     }
 
-    
+
 
 }

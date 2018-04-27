@@ -8,25 +8,25 @@ Vamshi Basupalli <vamshi@cs.wisc.edu>; v1.5.0; {docdatetime}
 
 The SWAMP Java CLI is a Java library and a command line interface that provides many common operation on a SWAMP instance.  These operations include getting the list of projects, packages, versions of packages, assessments, tools and platforms.  Creating packages, uploading new versions of a package, configuring and start an assessment, checking the status of an assessment, and downloading SCARF results.
 
-== Installation
+== Installation and Network Settings
 
 From https://github.com/mirswamp/java-cli/releases page, download the latest java-cli-X.Y.Z-with-dependencies.jar archive, where X.Y.Z stands for the latest release version number.
 
-Pre-requisites for running the Java CLI is Java-7 or above. For the rest of this document we will use `java-cli-1.4.0-with-dependencies.jar` as the reference file.
+Pre-requisites for running the Java CLI is Java-7 or above. For the rest of this document we will use `java-cli-1.5.0-with-dependencies.jar` as the reference file.
 
 
 To check if the `jar` file works run the following command on the terminal:
 ```
 
-java -jar java-cli-1.4.0-with-dependencies.jar
+java -jar java-cli-1.5.0-with-dependencies.jar
 ```
 
 If the above command is successful, the program display `sub-commands` available:
 ```
 ------------------------------------------------------------------------
-Usage: <program> <command> <options>
+Usage: <program> <sub-command> <options>
 ------------------------------------------------------------------------
-<command> must be one of the following:
+<sub-command> must be one of the following:
 	login
 	logout
 	packages OR package
@@ -38,17 +38,17 @@ Usage: <program> <command> <options>
 	status
 	user
 ------------------------------------------------------------------------
-For information on the <options> for a <command> execute:
-	<program> <command> --help or <program> <command> -H
+For information on the <options> for a <sub-command> execute:
+	<program> <sub-command> --help or <program> <sub-command> -H
 ------------------------------------------------------------------------
 For version: <program> --version or <program> -V
 For help: <program> --help or <program> -H
 ------------------------------------------------------------------------
 ```
 
-=== CLI with Swamp-In-The-Box (SiB) instances
+=== Using CLI with Self-signed SSL/TLS Certificates
 
-SiB instances may have self signed SSL/TLS certificates. Java's security model by default does not allow communicating with a web-service that has a self-signed SSL/TLS certificate. To overcome this restriction, the web-service's self-signed SSL/TLS certificate has to be added a java `keystore` on the machine that is running the CLI. The following are the instructions on how to do it:
+SiB instances may have self-signed SSL/TLS certificates. Java's security model by default does not allow communicating with a web-service that has a self-signed SSL/TLS certificate. To overcome this restriction, the web-service's self-signed SSL/TLS certificate has to be added a java `keystore` on the machine that is running the CLI. The following are the instructions on how to do it:
 
 . Go to SiB from the web-browser and download the SiB self-signed certificate by following these instruction here:
 https://www.thesslstore.com/blog/how-to-view-ssl-certificate-details-in-chrome-56/
@@ -68,34 +68,37 @@ b. Add the certificate to the `keystore` (_Assuming here that the self-signed ce
 .................
 --
 
-To check if CLI works with SiB, run `login` sub-command, see section <<login>>
+To check if CLI works with your SiB instance, run `login` sub-command, see section <<login>>
 
-=== Using CLI via a HTTP Proxy
+=== Using CLI with an HTTP Proxy
 
 Connecting to SWAMP via a http proxy server is supported via standard environment variables, java system properties or options to `login` sub-command.
 
-==== Setup the environment variables `http_proxy` or `https_proxy`
+==== Using environment variables `http_proxy` or `https_proxy`
+In your environment, setup the environment variables `http_proxy` or `https_proxy` in the format `http[s]_proxy=http[s]://[<username>:<passoword>]@<proxy_host>[:<proxy_port>]`
 --
-Example-1:
-.................
+.Example 1:
+```
 % export http_proxy=http://squid.cs.wisc.edu:3128
-% java -jar target/java-cli-1.5.0-jar-with-dependencies.jar login -F ./scripts/resources/userinfo.properties
-.................
+% java -jar target/java-cli-1.5.0-jar-with-dependencies.jar login --filepath ./scripts/resources/userinfo.properties
+```
 
-Example-2:
-.................
+.Example 2:
+```
 % export http_proxy=http://user1:password1@squid.cs.wisc.edu:3128
-% java -jar target/java-cli-1.5.0-jar-with-dependencies.jar login -F ./scripts/resources/userinfo.properties
-.................
+% java -jar target/java-cli-1.5.0-jar-with-dependencies.jar login --filepath ./scripts/resources/userinfo.properties
+```
 
-Example-3:
-.................
+.Example 3:
+```
 % export https_proxy=https://user1:password1@squid.cs.wisc.edu:3128
-% java -jar target/java-cli-1.5.0-jar-with-dependencies.jar login -F ./scripts/resources/userinfo.properties
-.................
+% java -jar target/java-cli-1.5.0-jar-with-dependencies.jar login --filepath ./scripts/resources/userinfo.properties
+```
 --
 
-==== Using CLI via a HTTP proxy with java system properties:
+==== Using CLI with an HTTP proxy with java system properties:
+
+Pass the following java properties to the java-cli's `login` sub-command:
 
 . `http.proxyHost`
 . `http.proxyPort`
@@ -103,33 +106,34 @@ Example-3:
 . `http.proxyPassword`
 
 --
-Example-1:
+.Example 1:
 .................
-% java -Dhttp.proxyHost=squid.cs.wisc.edu -Dhttp.proxyPort=3128 -jar target/java-cli-1.5.0-jar-with-dependencies.jar login -F ./scripts/resources/userinfo.properties
+% java -Dhttp.proxyHost=squid.cs.wisc.edu -Dhttp.proxyPort=3128 -jar target/java-cli-1.5.0-jar-with-dependencies.jar login --filepath ./scripts/resources/userinfo.properties
 .................
 
-Example-2:
+.Example 2:
 .................
-% java -Dhttp.proxyHost=squid.cs.wisc.edu -Dhttp.proxyPort=3128 -Dhttp.proxyUser=user1 -Dhttp.proxyPassword=password1 -jar target/java-cli-1.5.0-jar-with-dependencies.jar login -F ./scripts/resources/userinfo.properties
+% java -Dhttp.proxyHost=squid.cs.wisc.edu -Dhttp.proxyPort=3128 -Dhttp.proxyUser=user1 -Dhttp.proxyPassword=password1 -jar target/java-cli-1.5.0-jar-with-dependencies.jar login --filepath ./scripts/resources/userinfo.properties
 .................
 --
 
-==== Using CLI via a HTTP proxy with java system properties:
+==== Using CLI via a HTTPs proxy with java system properties:
 
+Pass the following java properties to the java-cli's `login` sub-command:
 . `https.proxyHost`
 . `https.proxyPort`
 . `https.proxyUser`
 . `https.proxyPassword`
 
 --
-Example-1:
+.Example 1:
 .................
-% java -Dhttps.proxyHost=squid.cs.wisc.edu -Dhttps.proxyPort=3128 -jar target/java-cli-1.5.0-jar-with-dependencies.jar login -F ./scripts/resources/userinfo.properties
+% java -Dhttps.proxyHost=squid.cs.wisc.edu -Dhttps.proxyPort=3128 -jar target/java-cli-1.5.0-jar-with-dependencies.jar login --filepath ./scripts/resources/userinfo.properties
 .................
 
-Example-2:
+.Example 2:
 .................
-% java -Dhttps.proxyHost=squid.cs.wisc.edu -Dhttps.proxyPort=3128 -Dhttps.proxyUser=user1 -Dhttps.proxyPassword=password1 -jar target/java-cli-1.5.0-jar-with-dependencies.jar login -F ./scripts/resources/userinfo.properties
+% java -Dhttps.proxyHost=squid.cs.wisc.edu -Dhttps.proxyPort=3128 -Dhttps.proxyUser=user1 -Dhttps.proxyPassword=password1 -jar target/java-cli-1.5.0-jar-with-dependencies.jar login --filepath ./scripts/resources/userinfo.properties
 .................
 --
 
@@ -152,12 +156,12 @@ SWAMP Java CLI provides *sub-commands* to perform various operations on SWAMP. A
 | user | Information about the current user
 |=======================================================================
 
-To get help on each sub-command run `java -jar java-cli-1.4.0-with-dependencies.jar <sub-command> --help` or `java -jar java-cli-1.4.0-with-dependencies.jar <sub-command> --H`.
+To get help on each of the sub-command in the above list run `java -jar java-cli-1.5.0-with-dependencies.jar <sub-command> --help` or `java -jar java-cli-1.5.0-with-dependencies.jar <sub-command> --H`.
 
 [[login]]
-=== Login
+=== Login Sub-Command
 
-`login` sub-command is used to login into SWAMP. The `login` sub-command takes the following options:
+`login` sub-command is used to login into SWAMP. The `login` sub-command supports the following options:
 
 [cols="<40%,<60%",options="header",]
 |=======================================================================
@@ -176,9 +180,12 @@ username=<swamp-username>
 password=<swamp-password>
 ```
 
+[NOTE]
+To login to SWAMP via java-cli or any other SWAMP plugins, we recommend using SWAMP _application passwords_ instead of your SWAMP `username` and `password`. Please see <<application-passwords>> section.
+
 The properties file provided to the option `--filepath` can also have the following additional key value pairs:
 ```
-proxy=<http-proxy> #Format: http[s]://[<username>:<passoword>]@<proxy_host>[:<proxy_port>]
+proxy=http[s]://[<username>:<passoword>]@<proxy_host>[:<proxy_port>]
 keystore=<keystore-filepath>
 ```
 
@@ -189,12 +196,21 @@ Login successful
 
 Once logged in, a SWAMP session is valid for *48* hours.
 
+[[application-passwords]]
 ==== Application Passwords
-If you have signed up with SWAMP using *github* or any other third party identity provider then you may not have SWAMP _username_ and _password_. To get _username_ and _password_ to login with the CLI, go to https://www.mir-swamp.org/#my-account and then to *Application Passwords* tab. Create a new _password_ by pressing *Add New Password* button. The *username* can be seen on the *My Profile* tab.
+We recommend using SWAMP _application passwords_ (instead of your SWAMP `username` and `password`) to access SWAMP via java-cli or other SWAMP plugins. If you use a *github* or any other third party identity provider to access SWAMP then you may not have SWAMP _username_ and _password_.
 
-=== Logout
+To get an _username_ and an _application password_, do the following:
 
-`logout` sub-command is used to logout of SWAMP. The `logout` sub-command takes the following options:
+ . Login to SWAMP via web interface and go to *My Account* page (https://www.mir-swamp.org/#my-account).
+ . Select *My Profile* tab
+ .. Copy the value with *Username* label in the *My Profile* tab. This is the _username_ that you must use to login via java-cli or other SWAMP plugins.
+ . Select *Application Passwords* tab.
+ .. Create a new _password_ by clicking on the *Add New Password* button. This is the _password_ that you must use to login via java-cli or other SWAMP plugins.
+
+=== Logout Sub-Command
+
+`logout` sub-command is used to logout of SWAMP. The `logout` sub-command supports the following additional options:
 
 [cols="<40%,<60%",options="header",]
 |=======================================================================
@@ -206,35 +222,35 @@ If the logout is successful, the following output is displayed on the console, w
 ```
 Logout successful
 ```
-=== Packages in SWAMP
+=== Packages Sub-Command
 
-`package` sub-command is used for the following:
+`packages` sub-command can be used for the following:
 
 1. Upload a package to SWAMP
 2. List supported package types
-3. List all the packages in a project
-4. Delete packages from a project
+3. List user packages
+4. Delete user packages
 
 ==== Upload a package to SWAMP
 
-To *upload* a package, use `--upload` option with the `package` sub-command.
-The following additional options are required to upload a package:
+To *upload* a package, use `--upload` option with the `packages` sub-command.
+The `packages` sub-command with `--upload` option supports the following additional options:
 
 [cols="<40%,<60%",options="header",]
 |=======================================================================
 |Option | Value
-| `--pkg-archive <PACKAGE_ARCHIVE_FILEPATH>` | Path to the archive of the package.
-| `--pkg-conf <PACKAGE_CONF_FILEPATH>` | Path to https://github.com/mirswamp/java-cli/blob/master/package.conf.adoc[package.conf] file for the package.
-| `--new-pkg` | Flag/Option to specify if this should be a new package instead of a package version. If a package with the same name already exist, CLI adds this package as a package version. `--new-pkg` flag overrides it and stores it as a new package. This is optional.
-| `--os-deps '<platform=dependency1 dependency2 ...>'` | OS package dependencies specified as `key=value` format. Use this option multiple times to specify dependency for multiple SWAMP platforms. This is optional.
-| `--project-uuid <PROJECT_UUID>` | UUID of the project that this package must be added to. This is optional. This option is deprecated, use `--project` if needed.
-| `--project <PROJECT>` | Name or UUID of the project that this package must be added to. This is optional, default is MyProject
-| --quiet | With this flag, the sub-command prints only the Package UUID with no formatting. This is optional.
+| `--pkg-archive <PACKAGE_ARCHIVE_FILEPATH>` | Path to the archive of the package. _This option is required_
+| `--pkg-conf <PACKAGE_CONF_FILEPATH>` | Path to https://github.com/mirswamp/java-cli/blob/master/package.conf.adoc[package.conf] file for the package. _This option is required_
+| `--new-pkg` | Flag/Option to specify if this should be a new package instead of a package version. If a package with the same name already exist, CLI adds this package as a package version. `--new-pkg` flag overrides it and stores it as a new package.
+| `--os-deps '<platform=dependency1 dependency2 ...>'` | OS package dependencies specified as `key=value` format. Use this option multiple times to specify dependency for multiple SWAMP platforms.
+| `--project <PROJECT>` | Name or UUID of the project that this package must be added to. default is *MyProject*
+| `--project-uuid <PROJECT_UUID>` | UUID of the project that this package must be added to. This option is _deprecated_, use `--project` if needed.
+| --quiet | With this flag, the sub-command prints only the Package UUID with no formatting.
 |=======================================================================
 
 Example:
 ```
-java -jar java-cli-1.4.0-with-dependencies.jar package --upload --pkg-archive /home//swamp/api-dev/java-cli/scripts/resources/test_packages/railsgoat-9052b4fcf0/railsgoat-9052b4fcf0.zip -pkg-conf /home//swamp/api-dev/java-cli/scripts/resources/test_packages/railsgoat-9052b4fcf0/package.conf --os-deps 'ubuntu-16.04-64=libsqlite3-dev libmysqlclient-dev' --new-pkg
+java -jar java-cli-1.5.0-with-dependencies.jar package --upload --pkg-archive /home//swamp/api-dev/java-cli/scripts/resources/test_packages/railsgoat-9052b4fcf0/railsgoat-9052b4fcf0.zip -pkg-conf /home//swamp/api-dev/java-cli/scripts/resources/test_packages/railsgoat-9052b4fcf0/package.conf --os-deps 'ubuntu-16.04-64=libsqlite3-dev libmysqlclient-dev' --new-pkg
 ```
 
 If the above command is successful, the output will be:
@@ -242,17 +258,19 @@ If the above command is successful, the output will be:
 Package Version UUID
 d5821bf0-5719-4e33-a49c-f31a912eaa15
 ```
+
 ==== Show Supported Package Types
 
 To display the *types of software packages* supported by SWAMP, `--types` option is used with the `package` sub-command.
 
 Example:
 ```
-java -jar java-cli-1.4.0-with-dependencies.jar package --types
+java -jar java-cli-1.5.0-with-dependencies.jar package --types
 ```
 
 Example output from the above command:
 ```
+Type
 Android .apk
 Android Java Source Code
 C/C++
@@ -269,7 +287,7 @@ Ruby on Rails
 Web Scripting
 ```
 
-==== Show User Packages
+==== List User Packages
 
 To *list* packages uploaded by a user, use `--list` option with the `package` sub-command.
 
@@ -277,35 +295,35 @@ The package sub-command with the `--list` option accepts the following additiona
 [cols="<40%,<60%",options="header",]
 |=======================================================================
 |Option | Value
-| `--project-uuid <PROJECT_UUID>` | Show packages that are part of the project with this UUID only. This is optional. This option is deprecated, use `--project` if needed.
 | `--pkg-type <PACKAGE_TYPE>` | Only show packages of this package type
 | `--project <PROJECT>` | Only show packages in this Project (Name or UUID)
+| `--project-uuid <PROJECT_UUID>` | Show packages that are part of the project with this UUID only. This option is _deprecated_, use `--project` if needed.
 | `--quiet` | Do not print Headers, Description, Type
 | `--verbose` | Print UUIDs also
 |=======================================================================
 
 Example:
 ```
-java -jar java-cli-1.4.0-with-dependencies.jar packages --list -PJ MyProject
+java -jar java-cli-1.5.0-with-dependencies.jar packages --list --project MyProject
 ```
 
 Example output from the above command:
 
 ```
 Package                   Description                              Type                      Version
-webgoat-lessons           null                                     Java 8 Source Code        7.1
+webgoat-lessons           No Description Available                                     Java 8 Source Code        7.1
 swamp-java-api                                                     Java 8 Source Code        dc2c04b
 swamp-gradle-example      No Description Available                 Java 7 Source Code        1.0
-shapes                    null                                     Java 7 Source Code        1.0
-scarf-io                  null                                     Java 8 Source Code        1.0
+shapes                    No Description Available                                     Java 7 Source Code        1.0
+scarf-io                  No Description Available                                     Java 8 Source Code        1.0
 lighttpd                  No Description Available                 C/C++                     1.4.45
-lighttpd                  null                                     C/C++                     1.4.45
-lighttpd                  null                                     C/C++                     1.4.45-2018032210
-lighttpd                  null                                     C/C++                     1.4.45-2018032311
-lighttpd                  null                                     C/C++                     1.4.45-2018032201
-lighttpd                  null                                     C/C++                     1.4.45-2018032203
-airavata883c3f4           null                                     Java 8 Source Code        1.0
-WebGoat-Lessons           null                                     Java 8 Source Code        1.0
+lighttpd                  No Description Available                                     C/C++                     1.4.45
+lighttpd                  No Description Available                                     C/C++                     1.4.45-2018032210
+lighttpd                  No Description Available                                     C/C++                     1.4.45-2018032311
+lighttpd                  No Description Available                                     C/C++                     1.4.45-2018032201
+lighttpd                  No Description Available                                     C/C++                     1.4.45-2018032203
+airavata883c3f4           No Description Available                                     Java 8 Source Code        1.0
+WebGoat-Lessons           No Description Available                                     Java 8 Source Code        1.0
 ```
 
 ==== Delete User Packages
@@ -316,20 +334,20 @@ To *delete* one or more packages, use `--delete` option with the `package` sub-c
 [cols="<40%,<60%",options="header",]
 |=======================================================================
 |Option | Value
-| `--pkg-uuid <PKG_UUID1> <PKG_UUID2> ...` | UUIDs of packages that must be deleted. This is optional.
-| `--project-uuid <PROJECT_UUID>` | Project UUID for the packages. This is optional. This option is deprecated, use `--project` if needed.
-| `--packages <PACKAGES>`   | Delete packages with these names or UUIDs. Accepts multiple names or UUIDs
+| `--package <PACKAGE1> <PACKAGE2> ...`   | Delete packages with these names or UUIDs. Accepts multiple names or UUIDs
 | `--project <PROJECT>` | Delete packages in this project. if --packages option is not specified, deletes all the packages in the project
+| `--pkg-uuid <PKG_UUID1> <PKG_UUID2> ...` | UUIDs of packages that must be deleted. This option is _deprecated_, use `--package` if needed.
+| `--project-uuid <PROJECT_UUID>` | Project UUID for the packages. _This is optional_. This option is _deprecated_, use `--project` if needed.
 | '--quiet' | Do not print anything
 |=======================================================================
 
 Example:
 ```
-% java -jar java-cli-1.4.0-with-dependencies.jar packages --delete -PJ MyProject -PK webgoat-lessons
+% java -jar java-cli-1.5.0-with-dependencies.jar packages --delete -project MyProject --package webgoat-lessons
 Deleted 'Name: webgoat-lessons, Version: 7.1'
 ```
 
-=== Tools
+=== Tools Sub-Command
 
 `tools` sub-command is used for the following:
 
@@ -337,9 +355,9 @@ Deleted 'Name: webgoat-lessons, Version: 7.1'
 2. Given a tool name, get the platform UUID
 
 ==== Get Tool List
-To get a list of all the `tools` that the user has access to in SWAMP, use `--list` option with the `tools` sub-command. This command displays list of tools, with versions available and supported package types.
+To get a list of all the `tools` that the user has access to in SWAMP, use `--list` option with the `tools` sub-command. This command displays list of tools, with _versions_ available and supported _package types_.
 
-`tools` sub-command with `--list` option accepts an additional option:
+`tools` sub-command with `--list` option accepts the following additional option:
 [cols="<40%,<60%",options="header",]
 |=======================================================================
 |Option | Value
@@ -350,7 +368,7 @@ To get a list of all the `tools` that the user has access to in SWAMP, use `--li
 
 Example:
 ```
-java -jar java-cli-1.4.0-with-dependencies.jar tools --list
+java -jar java-cli-1.5.0-with-dependencies.jar tools --list
 ```
 
 Example output of the above command:
@@ -391,7 +409,7 @@ To get a tool's UUID, use `--uuid` option with the `tools` sub-command.
 
 Example:
 ```
-java -jar java-cli-1.4.0-with-dependencies.jar tools --uuid --name PMD
+java -jar java-cli-1.5.0-with-dependencies.jar tools --uuid --name PMD
 ```
 
 Example output of the above command:
@@ -400,36 +418,36 @@ Example output of the above command:
 ```
 
 
-=== Assessments in SWAMP
+=== Assessments  Sub-Command
 
 `assessments` sub-command is used for the following:
 
-* Perform assessments in SWAMP
-* List assessments
+. Perform assessments in SWAMP
+. List assessments
 
 
 ==== Perform assessments in SWAMP
 
-To *perform* an assessment, use `--run` option with `assessments` sub-command.
+To *perform* an assessment, use `--run` option with the `assessments` sub-command.
 
-The `assessments` sub-command with the `--run` option requires the following additional options:
+The `assessments` sub-command with the `--run` option supports the following additional options:
 
 [cols="<40%,<60%",options="header",]
 |=======================================================================
 |Option | Value
-| `--package <PACKAGE_NAME> ` | Name of the package to be assessed. By default uses the latest version. For a particular version of a package, use `<PACKAGE_NAME>:<VERSION>`
-| `--tool <TOOL1> <TOOL2> ...` | Name of the tool to be assessed with. By default uses the latest version. For a particular version of a tool, use `<TOOL_NAME>:<VERSION>`. This option accepts multiple tool names
-| `--platform <PLATFORM1> <PLATFORM2> ...` | Platform to be assessed on. This option accepts multiple platform names
-| `--quiet` |
-| `--pkg-uuid <PKG_VERSION_UUID>` | UUID of the version of a package that must be assessed. This option is deprecated, use `--package` option
-| `--project-uuid <PROJECT_UUID>` | Project that the package is part of. This option is deprecated.
-| `--platform-uuid <PLATFORM_UUID1 PLATFORM_UUID2> ...` | UUIDs of the platforms that assessments must be performed on. This is optional and is only valid for `C/C++` assessments. This option is deprecated, use `--platform` option.
-| `--tool-uuid <TOOL_UUID1> <TOOL_UUID2> ...` | UUIDs of the tools that must be used for assessments. This option is deprecated, use `--tool` option.
+| `--package <PACKAGE_NAME> ` | Name of the package to be assessed. By default uses the latest version. For a particular version of a package, use `<PACKAGE_NAME>:<VERSION>`. This option is _required_
+| `--tool <TOOL1> <TOOL2> ...` | Name of the tool to be assessed with. By default uses the latest version. For a particular version of a tool, use `<TOOL_NAME>:<VERSION>`. This option accepts multiple tool names. This option is _required_
+| `--platform <PLATFORM1> <PLATFORM2> ...` | Platform to be assessed on. This option accepts multiple platform names.
+| `--pkg-uuid <PKG_VERSION_UUID>` | UUID of the version of a package that must be assessed. This option is _deprecated_, use `--package` option
+| `--project-uuid <PROJECT_UUID>` | Project that the package is part of. This option is _deprecated_.
+| `--platform-uuid <PLATFORM_UUID1> PLATFORM_UUID2> ...` | UUIDs of the platforms that assessments must be performed on. _This is optional_ and is only valid for `C/C++` assessments. This option is _deprecated_, use `--platform` option.
+| `--tool-uuid <TOOL_UUID1> <TOOL_UUID2> ...` | UUIDs of the tools that must be used for assessments. This option is _deprecated_, use `--tool` option.
+| `--quiet` | Does not print headers
 |=======================================================================
 
 Example:
 ```
-java -jar java-cli-1.4.0-with-dependencies.jar assessments --run --package swamp-gradle-example --tool error-prone
+java -jar java-cli-1.5.0-with-dependencies.jar assessments --run --package swamp-gradle-example --tool error-prone
 ```
 
 Example output of the above command:
@@ -440,22 +458,22 @@ d14aa1f9-d0f1-48b6-adb4-088ac0e1ffee
 
 Example with a particular package version and tool version:
 ```
-java -jar java-cli-1.4.0-with-dependencies.jar assessments --run --package swamp-gradle-example:1.0 --tool error-prone:1.1.1
+java -jar java-cli-1.5.0-with-dependencies.jar assessments --run --package swamp-gradle-example:1.0 --tool error-prone:1.1.1
 ```
 
 Example with a particular package version and tool version:
 ```
-java -jar java-cli-1.4.0-with-dependencies.jar assessments --run --package swamp-gradle-example:1.0 --tool error-prone:1.1.1
+java -jar java-cli-1.5.0-with-dependencies.jar assessments --run --package swamp-gradle-example:1.0 --tool error-prone:1.1.1
 ```
 
 Example with a particular package version and multiple tools:
 ```
-java -jar java-cli-1.4.0-with-dependencies.jar assessments --run --package swamp-gradle-example:1.0 --tool error-prone:1.1.1 spotbugs PMD
+java -jar java-cli-1.5.0-with-dependencies.jar assessments --run --package swamp-gradle-example:1.0 --tool error-prone:1.1.1 spotbugs PMD
 ```
 
 Example with a package, multiple tools, and multiple platforms:
 ```
-java -jar java-cli-1.4.0-with-dependencies.jar assessments --run --package lighttpd --tool cppcheck "Clang Static Analyzer" --platform centos-7-64  debian-8-64  fedora-24-64 ubuntu-16.04-64
+java -jar java-cli-1.5.0-with-dependencies.jar assessments --run --package lighttpd --tool cppcheck "Clang Static Analyzer" --platform centos-7-64  debian-8-64  fedora-24-64 ubuntu-16.04-64
 ```
 
 
@@ -466,7 +484,7 @@ To *list* assessments created, use `--list` with the `assessments` sub-command. 
 [cols="<40%,<60%",options="header",]
 |=======================================================================
 |Option | Value
-| `--project <PROJECT>` |     Only show assessments in this Project
+| `--project <PROJECT>` |     Only show assessments in this Project.
 | `--package <PACKAGE>` |     Only show assessments for this Package
 | `--platform <PLATFORM>` |   Only show assessments on this Platform
 | `--tool <TOOL>`  |          Only show assessments with this Tool
@@ -477,7 +495,7 @@ To *list* assessments created, use `--list` with the `assessments` sub-command. 
 
 Example:
 ```
-java -jar java-cli-1.4.0-with-dependencies.jar assessments -L --tool SpotBugs
+java -jar java-cli-1.5.0-with-dependencies.jar assessments -L --tool SpotBugs
 ```
 
 Example output for the above command
@@ -491,7 +509,8 @@ scarf-io2:2018-03-29-11			             SpotBugs:latest                ubuntu-16.
 scarf-io2:2018-03-27-15			             SpotBugs:latest                ubuntu-16.04-64
 java-cli:2018-03-27-15			             SpotBugs:latest                ubuntu-16.04-64
 ```
-=== Assessment Results
+
+===  Results  Sub-Command
 
 To download SCARF results of an assessment run or show list of assessment runs, use `results` sub-command.
 
@@ -512,7 +531,7 @@ To *list* assessment runs, use `--list` with the `results` sub-command. The `res
 
 Example:
 ```
-java -jar java-cli-1.4.0-with-dependencies.jar results -L
+java -jar java-cli-1.5.0-with-dependencies.jar results --list
 ```
 
 Example output for the above command:
@@ -551,29 +570,34 @@ To download SCARF results use `--download` option with the `results` sub-command
 [cols="<40%,<60%",options="header",]
 |=======================================================================
 |Option | Value
-| `--file-path <SCARF_FILEPATH>`  | File path to write SCARF Results into
+| `--filepath <SCARF_FILEPATH>`  | File path to write SCARF Results into
 | `--package <PACKAGE>` |             Download results for this package name
 | `--tool <TOOL>` |                  Download results for this tool
 | `--platform <PLATFORM>` |           Download results for this platform
 | `--results-uuid <RESULTS_UUID>` |    Assessment Results UUID
-| `--project-uuid <PROJECT_UUID>` |    Project UUID of a project. This option is deprecated.
+| `--project-uuid <PROJECT_UUID>` |    Project UUID of a project. This option is _deprecated_.
 | `--quiet`  |                         Do not print Headers
 |=======================================================================
 
 SCARF results downloaded from the assessment run will be stored into `<SCARF_FILEPATH>`.
 
 
-Example:
+.Example 1:
 ```
-java -jar java-cli-1.4.0-with-dependencies.jar results --results-uuid f4856ee8-b402-11e7-92c3-001a4a814413 --project-uuid df2e7c15-4d28-4224-b25c-c2570bd91156 --file-path $PWD/scarf-results.xml
+java -jar java-cli-1.5.0-with-dependencies.jar results --download --results-uuid f4856ee8-b402-11e7-92c3-001a4a814413 --filepath $PWD/scarf-results.xml
 ```
 
-=== Projects
+.Example 2:
+```
+java -jar java-cli-1.5.0-with-dependencies.jar results --download  --package swamp-gradle-example:1.0 --tool SpotBugs:3.2.0  --platform  ubuntu-16.04-64
+```
+
+=== Projects  Sub-Command
 
 `projects` sub-command must be used for the following:
 
-1. Get the list of all the SWAMP projects the user is part of.
-2. Given a project name, get the project UUID.
+. Get the list of all the SWAMP projects the user is part of.
+. Given a project name, get the project UUID.
 
 ==== Get Project List
 
@@ -590,7 +614,7 @@ The `projects` sub-command with `--list` option supports the following additiona
 
 Example:
 ```
-java -jar java-cli-1.4.0-with-dependencies.jar projects --list
+java -jar java-cli-1.5.0-with-dependencies.jar projects --list
 ```
 
 Example for the output of the above command:
@@ -607,7 +631,7 @@ MyProject                 Starter project for running assessments. 02/23/2015 15
 
 ==== Get Project UUID
 
-To get a list of all the projects that user of part of, use `--uuid` option with the `projects` sub-command.
+To get UUID of a project, use `--uuid` option with the `projects` sub-command.
 
 `projects` sub-command with `--uuid` option requires the following additional options:
 
@@ -619,7 +643,7 @@ To get a list of all the projects that user of part of, use `--uuid` option with
 
 Example:
 ```
-java -jar java-cli-1.4.0-with-dependencies.jar projects --uuid --name 4plugins
+java -jar java-cli-1.5.0-with-dependencies.jar projects --uuid --name 4plugins
 ```
 
 Example for the output of the above command:
@@ -631,8 +655,8 @@ df2e7c15-4d28-4224-b25c-c2570bd91156
 
 `platform` sub-command is used for the following:
 
-1. Get a list of all the platforms supported by the SWAMP.
-2. Given a platform name, get the platform UUID.
+. Get a list of all the platforms supported by the SWAMP.
+. Given a platform name, get the platform UUID.
 
 ==== Get Platforms List
 
@@ -649,7 +673,7 @@ The `platforms` sub-command with `--list` option supports the following addition
 
 Example:
 ```
-java -jar java-cli-1.4.0-with-dependencies.jar platforms --list
+java -jar java-cli-1.5.0-with-dependencies.jar platforms --list
 ```
 
 Example for the output of the above command:
@@ -691,7 +715,7 @@ To get UUID of a platform, use `--uuid` option with the `platforms` sub-command.
 
 Example:
 ```
-java -jar java-cli-1.4.0-with-dependencies.jar platforms --uuid --name ubuntu-16.04-64
+java -jar java-cli-1.5.0-with-dependencies.jar platforms --uuid --name ubuntu-16.04-64
 ```
 
 Example for the output of the above command:
@@ -699,7 +723,7 @@ Example for the output of the above command:
 03b18efe-7c41-11e6-88bc-001a4a81450b
 ```
 
-=== Assessment Status
+=== Status  Sub-Command
 
 To get the status of an assessment run, `status` sub-command is used with the following options:
 
@@ -717,7 +741,7 @@ The output of the above sub-command will display (SUCCESS|FAILURE|INPROGRESS). I
 Example:
 
 ```
-java -jar java-cli-1.4.0-with-dependencies.jar status --assess-uuid 96e6e4e0-efce-4216-bff9-b20b30ca2e83 --project-uuid df2e7c15-4d28-4224-b25c-c2570bd91156
+java -jar java-cli-1.5.0-with-dependencies.jar status --assess-uuid 96e6e4e0-efce-4216-bff9-b20b30ca2e83 --project-uuid df2e7c15-4d28-4224-b25c-c2570bd91156
 ```
 
 Example output of the above command:
@@ -731,7 +755,7 @@ In case of errors or exceptions the Java CLI program returns the following exit 
 [cols="<40%,<60%",options="header",]
 |=======================================================================
 |Exit Code | Description
-| 0 | Everything is fine or No errors
+| 0 | No errors
 | 1 | Incorrect command line options
 | 2 | Command line parser error
 | 3 | Invalid UUID of a Tool, Project, Package, Assessment
