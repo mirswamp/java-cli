@@ -403,6 +403,8 @@ public class Cli {
             OptionGroup list_opt_grps = new OptionGroup();
             list_opt_grps.addOption(Option.builder("V").required(false).hasArg(false).longOpt("verbose")
                     .desc("Print Assessment Results UUID as well").build());
+            list_opt_grps.addOption(Option.builder("Q").required(false).hasArg(false).longOpt("quiet")
+                    .desc("Do not print Headers").build());
             list_options.addOptionGroup(list_opt_grps);
             list_options.addOption(Option.builder("PK").required(false).hasArg().argName("PACKAGE").longOpt("package")
                     .desc("Show results for this package").build());
@@ -486,6 +488,7 @@ public class Cli {
         }else if (main_options.hasOption("L")){
             CommandLine parsed_options = new DefaultParser().parse(list_options, main_options.getArgList().toArray(new String[0]));
             cred_map.put("sub-command", "list");
+            cred_map.put("quiet", parsed_options.hasOption("Q"));
             cred_map.put("verbose", parsed_options.hasOption("V"));
             cred_map.put("package", parsed_options.getOptionValue("PK"));
             cred_map.put("project", main_options.getOptionValue("PJ"));
@@ -1119,7 +1122,8 @@ public class Cli {
                     "Project",
                     "Description",
                     "Date Added");
-
+            System.out.printf("------------------------------------------------------------------------");
+            
             for(Project proj : apiWrapper.getProjectsList()) {
                 System.out.printf("%-37s %-25s %-40s %-15s\n", 
                         proj.getUUIDString(), 
@@ -1127,23 +1131,24 @@ public class Cli {
                         proj.getDescription(),
                         toCurrentTimeZone(proj.getCreateDate()));
             }
-        }else if (quiet) {
-            for(Project proj : apiWrapper.getProjectsList()) {
-                System.out.printf("%-25s\n",
-                        proj.getFullName());
-            }
-        }else {
+        }else if (!quiet) {
             System.out.printf("%-25s %-40s %-15s\n", 
                     "Project",
                     "Description",
                     "Date Added");
-
+            System.out.printf("------------------------------------------------------------------------");
+            
             for(Project proj : apiWrapper.getProjectsList()) {
                 System.out.printf("%-25s %-40s %-15s\n", 
                         proj.getFullName(),
                         proj.getDescription(),
                         toCurrentTimeZone(proj.getCreateDate()));
             }  
+        }else {
+            for(Project proj : apiWrapper.getProjectsList()) {
+                System.out.printf("%-25s\n",
+                        proj.getFullName());
+            }
         }
     }
 
@@ -1162,7 +1167,8 @@ public class Cli {
         if (optMap.get("sub-command").equals("list")) {
             if ((boolean)optMap.get("verbose")) {
                 System.out.printf("%-37s %-30s\n", "UUID", "Platform");
-
+                System.out.printf("------------------------------------------------------------------------");
+                
                 for (PlatformVersion platform_version : apiWrapper.getAllPlatformVersionsList()){
                     System.out.printf("%-37s %-30s\n",
                             platform_version.getIdentifierString(),
@@ -1171,6 +1177,7 @@ public class Cli {
             }else {
                 if (!(boolean)optMap.get("quiet")) {
                     System.out.printf("Platform\n");
+                    System.out.printf("------------------------------------------------------------------------");
                 }
                 for (PlatformVersion platform_version : apiWrapper.getAllPlatformVersionsList()){
                     System.out.printf("%-30s\n", platform_version.getDisplayString());
@@ -1295,6 +1302,7 @@ public class Cli {
 
         if (!quiet){
             System.out.println("Package Version UUID");
+            System.out.println("------------------------------------------------------------------------");
         }
 
         System.out.println(package_uuid);
@@ -1371,7 +1379,8 @@ public class Cli {
         }else if(verbose) {
             System.out.printf("%-37s %-25s %-40s %-25s %-25s\n",
                     "UUID", "Package", "Description","Type", "Version");
-
+            System.out.printf("------------------------------------------------------------------------");
+            
             for(PackageThing pkg : apiWrapper.getPackagesList(project)) {
                 if (pkgType == null ||
                         pkg.getType().equalsIgnoreCase(pkgType)) {
@@ -1389,7 +1398,8 @@ public class Cli {
         }else {
             System.out.printf("%-25s %-40s %-25s %-25s\n",
                     "Package", "Description","Type", "Version");
-
+            System.out.printf("------------------------------------------------------------------------");
+            
             for(PackageThing pkg : apiWrapper.getPackagesList(project)) {
                 if (pkgType == null ||
                         pkg.getType().equalsIgnoreCase(pkgType)) {
@@ -1798,7 +1808,8 @@ public class Cli {
 
         if (assessment_run.size() > 0) {
             if (!quiet) {
-                System.out.println("Assessment UUID"); 
+                System.out.println("Assessment UUID");
+                System.out.println("------------------------------------------------------------------------");
             }
             for (AssessmentRun arun : assessment_run) {
                 System.out.println(arun.getUUIDString()); 
@@ -1828,9 +1839,11 @@ public class Cli {
         if (verbose) {
             System.out.printf("%-37s %-40s %-30s %-20s\n",
                     "UUID", "Package", "Tool","Platform");
+            System.out.println("------------------------------------------------------------------------");
         }else if (!quiet) {
             System.out.printf("%-40s %-30s %-20s\n",
                     "Package", "Tool","Platform");
+            System.out.println("------------------------------------------------------------------------");
         }		
 
         for (AssessmentRun arun : all_assessments) {
@@ -1902,7 +1915,8 @@ public class Cli {
                     (String)optMap.get("package"), 
                     (String)optMap.get("tool"),
                     (String)optMap.get("platform"),
-                    (boolean)optMap.get("verbose"));
+                    (boolean)optMap.get("verbose"),
+                    (boolean)optMap.get("quiet"));
         }
     }
 
@@ -2036,7 +2050,8 @@ public class Cli {
             String packageName, 
             String toolName,
             String platName,
-            boolean verbose) {
+            boolean verbose,
+            boolean quiet) {
 
         List<AssessmentRecord> all_results = new ArrayList<AssessmentRecord>();
 
@@ -2070,10 +2085,12 @@ public class Cli {
         
         if (verbose) {
             System.out.printf("%-37s %-40s %-30s %-20s %-20s %-20s %10s\n",
-                    "Assessment Result UUID", "Package", "Tool","Platform", "Date", "Status", "Results");      
-        }else {
+                    "Assessment Result UUID", "Package", "Tool","Platform", "Date", "Status", "Results");
+            System.out.println("------------------------------------------------------------------------");
+        }else if (!quiet) {
             System.out.printf("%-40s %-30s %-20s %-20s %-20s %10s\n",
-                    "Package", "Tool", "Platform", "Date", "Status", "Results");      
+                    "Package", "Tool", "Platform", "Date", "Status", "Results");
+            System.out.println("------------------------------------------------------------------------");
         }
 
         for (AssessmentRecord arun : all_results) {
@@ -2190,18 +2207,15 @@ public class Cli {
     public void printTools(String projectName, boolean quiet, boolean verbose) throws InvalidIdentifierException {
 
         Project project = getProject(projectName);
-
-        if(quiet){
-            for(Tool tool : apiWrapper.getAllTools(project.getUUIDString()).values()){			
-                System.out.printf("%-21s\n", tool.getName());
-            }
-        }else if(verbose){
+            
+        if(verbose){
             System.out.printf("%-37s %-21s %15s %-40s\n",
                     "UUID",
                     "Tool",
                     "Version",
                     "Supported Package Types");
-
+            System.out.println("------------------------------------------------------------------------");
+            
             for(Tool tool : apiWrapper.getAllTools(project.getUUIDString()).values()) {
                 for (ToolVersion tool_version : apiWrapper.getToolVersions(tool)) {
                     System.out.printf("%-37s %-21s %15s %-40s\n",
@@ -2211,12 +2225,13 @@ public class Cli {
                             tool.getSupportedPkgTypes());
                 }
             }
-        }else {
+        }else if(!quiet) {
             System.out.printf("%-21s %15s %-40s\n",
                     "Tool",
                     "Version",
                     "Supported Package Types");
-
+            System.out.println("------------------------------------------------------------------------");
+            
             for(Tool tool : apiWrapper.getAllTools(project.getUUIDString()).values()) {
                 for (ToolVersion tool_version : apiWrapper.getToolVersions(tool)) {
                     System.out.printf("%-21s %15s %-40s\n",
@@ -2224,6 +2239,10 @@ public class Cli {
                             tool_version.getVersion(),
                             tool.getSupportedPkgTypes());
                 }
+            }
+        }else {
+            for(Tool tool : apiWrapper.getAllTools(project.getUUIDString()).values()) {
+                System.out.printf("%-21s\n", tool.getName());
             }
         }
     }
@@ -2236,6 +2255,8 @@ public class Cli {
                     "Package Name", "Package Version",
                     "Tool Name", "Tool Version",
                     "Platform Name", "Platform Version");
+            System.out.println("------------------------------------------------------------------------");
+            
             for (AssessmentRun arun : apiWrapper.getAllAssessments(projectUuid)){
 
                 System.out.printf("%-37s %-15s %-15s %-15s %-15s %-15s %-15s\n", 
@@ -2289,7 +2310,8 @@ public class Cli {
         if (assessment_record != null) {
             if (!quiet) {
                 System.out.printf("%-15s %-15s %-37s\n", 
-                        "Status", "Weakness", "Assessments Results UUID");
+                        "Status", "Weakness", "Assessments Result UUID");
+                System.out.println("------------------------------------------------------------------------");
             }
             
             System.out.printf("%-15s %-15d %-37s\n", 

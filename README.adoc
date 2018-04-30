@@ -4,6 +4,8 @@ Vamshi Basupalli <vamshi@cs.wisc.edu>; v1.5.0; {docdatetime}
 
 :numbered:
 
+image:https://travis-ci.org/vamshikr/java-cli.svg?branch=master["Build Status", link="https://travis-ci.org/vamshikr/java-cli"]
+
 == Introduction
 
 The SWAMP Java CLI is a Java library and a command line interface that provides many common operation on a SWAMP instance.  These operations include getting the list of projects, packages, versions of packages, assessments, tools and platforms.  Creating packages, uploading new versions of a package, configuring and start an assessment, checking the status of an assessment, and downloading SCARF results.
@@ -435,8 +437,8 @@ The `assessments` sub-command with the `--run` option supports the following add
 [cols="<40%,<60%",options="header",]
 |=======================================================================
 |Option | Value
-| `--package <PACKAGE_NAME> ` | Name of the package to be assessed. By default uses the latest version. For a particular version of a package, use `<PACKAGE_NAME>:<VERSION>`. This option is _required_
-| `--tool <TOOL1> <TOOL2> ...` | Name of the tool to be assessed with. By default uses the latest version. For a particular version of a tool, use `<TOOL_NAME>:<VERSION>`. This option accepts multiple tool names. This option is _required_
+| `--package <PACKAGE_NAME> ` | Name of the package to be assessed. By default uses the latest version. For a particular version of a package, use `<PACKAGE_NAME>::<VERSION>`. This option is _required_
+| `--tool <TOOL1> <TOOL2> ...` | Name of the tool to be assessed with. By default uses the latest version. For a particular version of a tool, use `<TOOL_NAME>::<VERSION>`. This option accepts multiple tool names. This option is _required_
 | `--platform <PLATFORM1> <PLATFORM2> ...` | Platform to be assessed on. This option accepts multiple platform names.
 | `--pkg-uuid <PKG_VERSION_UUID>` | UUID of the version of a package that must be assessed. This option is _deprecated_, use `--package` option
 | `--project-uuid <PROJECT_UUID>` | Project that the package is part of. This option is _deprecated_.
@@ -458,17 +460,17 @@ d14aa1f9-d0f1-48b6-adb4-088ac0e1ffee
 
 Example with a particular package version and tool version:
 ```
-java -jar java-cli-1.5.0-with-dependencies.jar assessments --run --package swamp-gradle-example:1.0 --tool error-prone:1.1.1
+java -jar java-cli-1.5.0-with-dependencies.jar assessments --run --package swamp-gradle-example::1.0 --tool error-prone::1.1.1
 ```
 
 Example with a particular package version and tool version:
 ```
-java -jar java-cli-1.5.0-with-dependencies.jar assessments --run --package swamp-gradle-example:1.0 --tool error-prone:1.1.1
+java -jar java-cli-1.5.0-with-dependencies.jar assessments --run --package swamp-gradle-example::1.0 --tool error-prone::1.1.1
 ```
 
 Example with a particular package version and multiple tools:
 ```
-java -jar java-cli-1.5.0-with-dependencies.jar assessments --run --package swamp-gradle-example:1.0 --tool error-prone:1.1.1 spotbugs PMD
+java -jar java-cli-1.5.0-with-dependencies.jar assessments --run --package swamp-gradle-example::1.0 --tool error-prone::1.1.1 spotbugs PMD
 ```
 
 Example with a package, multiple tools, and multiple platforms:
@@ -502,12 +504,12 @@ Example output for the above command
 
 ```
 Package                                  Tool                           Platform
-TestPerm:2018-03-29-12 			             SpotBugs:latest                ubuntu-16.04-64
-java-cli:2018-03-29-12             			 SpotBugs:latest                ubuntu-16.04-64
-scarf-io:2018-03-29-11			             SpotBugs:latest                ubuntu-16.04-64
-scarf-io2:2018-03-29-11			             SpotBugs:latest                ubuntu-16.04-64
-scarf-io2:2018-03-27-15			             SpotBugs:latest                ubuntu-16.04-64
-java-cli:2018-03-27-15			             SpotBugs:latest                ubuntu-16.04-64
+TestPerm::2018-03-29-12 			             SpotBugs::latest                ubuntu-16.04-64
+java-cli::2018-03-29-12             			 SpotBugs::latest                ubuntu-16.04-64
+scarf-io::2018-03-29-11			             SpotBugs::latest                ubuntu-16.04-64
+scarf-io2::2018-03-29-11			             SpotBugs::latest                ubuntu-16.04-64
+scarf-io2::2018-03-27-15			             SpotBugs::latest                ubuntu-16.04-64
+java-cli::2018-03-27-15			             SpotBugs::latest                ubuntu-16.04-64
 ```
 
 ===  Results  Sub-Command
@@ -538,28 +540,28 @@ Example output for the above command:
 
 ```
 Package                                  Tool                           Platform             Date                 Status                  Results
-lighttpd:1.4.45                          Clang Static Analyzer:3.8      centos-7-64          04/23/2018 10:07     Finished                      4
-lighttpd:1.4.45                          Clang Static Analyzer:3.8      debian-8-64          04/23/2018 10:07     Finished                      4
-lighttpd:1.4.45                          Clang Static Analyzer:3.8      fedora-24-64         04/23/2018 10:07     Finished                      4
-lighttpd:1.4.45                          Clang Static Analyzer:3.8      ubuntu-16.04-64      04/23/2018 10:07     Finished                      4
-lighttpd:1.4.45                          cppcheck:1.75                  centos-7-64          04/23/2018 10:07     Finished                    209
-lighttpd:1.4.45                          cppcheck:1.75                  debian-8-64          04/23/2018 10:07     Finished                    209
-lighttpd:1.4.45                          cppcheck:1.75                  fedora-24-64         04/23/2018 10:07     Finished                    209
-lighttpd:1.4.45                          cppcheck:1.75                  ubuntu-16.04-64      04/23/2018 10:07     Finished                    209
-lighttpd:1.4.45                          Clang Static Analyzer:3.8      centos-7-64          04/23/2018 07:31     Finished                      4
-lighttpd:1.4.45                          Clang Static Analyzer:3.8      debian-8-64          04/23/2018 07:31     Finished                      4
-lighttpd:1.4.45                          Clang Static Analyzer:3.8      fedora-24-64         04/23/2018 07:31     Finished                      4
-lighttpd:1.4.45                          Clang Static Analyzer:3.8      ubuntu-16.04-64      04/23/2018 07:31     Finished                      4
-lighttpd:1.4.45                          cppcheck:1.75                  centos-7-64          04/23/2018 07:31     Finished                    209
-lighttpd:1.4.45                          cppcheck:1.75                  debian-8-64          04/23/2018 07:31     Finished                    209
-lighttpd:1.4.45                          cppcheck:1.75                  fedora-24-64         04/23/2018 07:31     Finished                    209
-lighttpd:1.4.45                          cppcheck:1.75                  ubuntu-16.04-64      04/23/2018 07:31     Finished                    209
-swamp-gradle-example:1.0                 SpotBugs:3.1.0                 ubuntu-16.04-64      04/23/2018 07:22     Finished                     13
-swamp-gradle-example:1.0                 PMD:5.8.1                      ubuntu-16.04-64      04/23/2018 07:22     Finished                     33
-swamp-gradle-example:1.0                 error-prone:1.1.1              ubuntu-16.04-64      04/23/2018 07:22     Finished                      0
-swamp-gradle-example:1.0                 error-prone:1.1.1              ubuntu-16.04-64      04/23/2018 07:17     Finished                      0
-swamp-gradle-example:1.0                 error-prone:1.1.1              ubuntu-16.04-64      04/23/2018 07:17     Finished                      0
-swamp-gradle-example:1.0                 error-prone:2.0.21             ubuntu-16.04-64      04/23/2018 07:15     Finished                      1
+lighttpd::1.4.45                          Clang Static Analyzer::3.8      centos-7-64          04/23/2018 10:07     Finished                      4
+lighttpd::1.4.45                          Clang Static Analyzer::3.8      debian-8-64          04/23/2018 10:07     Finished                      4
+lighttpd::1.4.45                          Clang Static Analyzer::3.8      fedora-24-64         04/23/2018 10:07     Finished                      4
+lighttpd::1.4.45                          Clang Static Analyzer::3.8      ubuntu-16.04-64      04/23/2018 10:07     Finished                      4
+lighttpd::1.4.45                          cppcheck::1.75                  centos-7-64          04/23/2018 10:07     Finished                    209
+lighttpd::1.4.45                          cppcheck::1.75                  debian-8-64          04/23/2018 10:07     Finished                    209
+lighttpd::1.4.45                          cppcheck::1.75                  fedora-24-64         04/23/2018 10:07     Finished                    209
+lighttpd::1.4.45                          cppcheck::1.75                  ubuntu-16.04-64      04/23/2018 10:07     Finished                    209
+lighttpd::1.4.45                          Clang Static Analyzer::3.8      centos-7-64          04/23/2018 07:31     Finished                      4
+lighttpd::1.4.45                          Clang Static Analyzer::3.8      debian-8-64          04/23/2018 07:31     Finished                      4
+lighttpd::1.4.45                          Clang Static Analyzer::3.8      fedora-24-64         04/23/2018 07:31     Finished                      4
+lighttpd::1.4.45                          Clang Static Analyzer::3.8      ubuntu-16.04-64      04/23/2018 07:31     Finished                      4
+lighttpd::1.4.45                          cppcheck::1.75                  centos-7-64          04/23/2018 07:31     Finished                    209
+lighttpd::1.4.45                          cppcheck::1.75                  debian-8-64          04/23/2018 07:31     Finished                    209
+lighttpd::1.4.45                          cppcheck::1.75                  fedora-24-64         04/23/2018 07:31     Finished                    209
+lighttpd::1.4.45                          cppcheck::1.75                  ubuntu-16.04-64      04/23/2018 07:31     Finished                    209
+swamp-gradle-example::1.0                 SpotBugs::3.1.0                 ubuntu-16.04-64      04/23/2018 07:22     Finished                     13
+swamp-gradle-example::1.0                 PMD::5.8.1                      ubuntu-16.04-64      04/23/2018 07:22     Finished                     33
+swamp-gradle-example::1.0                 error-prone::1.1.1              ubuntu-16.04-64      04/23/2018 07:22     Finished                      0
+swamp-gradle-example::1.0                 error-prone::1.1.1              ubuntu-16.04-64      04/23/2018 07:17     Finished                      0
+swamp-gradle-example::1.0                 error-prone::1.1.1              ubuntu-16.04-64      04/23/2018 07:17     Finished                      0
+swamp-gradle-example::1.0                 error-prone::2.0.21             ubuntu-16.04-64      04/23/2018 07:15     Finished                      1
 
 ```
 
@@ -589,7 +591,7 @@ java -jar java-cli-1.5.0-with-dependencies.jar results --download --results-uuid
 
 .Example 2:
 ```
-java -jar java-cli-1.5.0-with-dependencies.jar results --download  --package swamp-gradle-example:1.0 --tool SpotBugs:3.2.0  --platform  ubuntu-16.04-64
+java -jar java-cli-1.5.0-with-dependencies.jar results --download  --package swamp-gradle-example::1.0 --tool SpotBugs::3.2.0  --platform  ubuntu-16.04-64
 ```
 
 === Projects  Sub-Command
