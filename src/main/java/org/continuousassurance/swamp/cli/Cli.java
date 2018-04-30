@@ -30,6 +30,7 @@ import org.continuousassurance.swamp.api.Tool;
 import org.continuousassurance.swamp.api.ToolVersion;
 import org.continuousassurance.swamp.api.User;
 import org.continuousassurance.swamp.session.HTTPException;
+import org.continuousassurance.swamp.session.handlers.AssessmentRecordHandler;
 import org.continuousassurance.swamp.session.util.Proxy;
 import org.apache.commons.cli.*;
 import org.apache.log4j.varia.NullAppender;
@@ -507,6 +508,8 @@ public class Cli {
                 .desc("UUID of an assessment run").build());
         options.addOption(Option.builder("P").required(false).hasArg(true).argName("PROJECT_UUID").longOpt("project-uuid")
                 .desc("Project UUID of the project. This option is deprecated").build());
+        options.addOption(Option.builder("Q").required(false).hasArg(false).longOpt("quiet")
+                .desc("Do not print Headers").build());
         options.addOptionGroup(opt_grp);
 
         if (args.isEmpty() ) {
@@ -531,6 +534,7 @@ public class Cli {
             HashMap<String, Object> cred_map = new HashMap<String, Object>();
             cred_map.put("project-uuid", parsed_options.getOptionValue("project-uuid"));
             cred_map.put("assess-uuid", parsed_options.getOptionValue("assess-uuid"));
+            cred_map.put("quiet", parsed_options.hasOption("Q"));
             return cred_map;
         }
     }
@@ -691,7 +695,7 @@ public class Cli {
                         " or|and " + optionMissingStr(delete_options.getOption("PK")));
             }
             
-            if (cred_map.get("project") != null && (boolean)cred_map.get("delete-all") == false) {
+            if (cred_map.get("project") != null && cred_map.get("package") == null && (boolean)cred_map.get("delete-all") == false) {
                 throw new CommandLineOptionException(optionMissingStr(delete_options.getOption("A")));
             }
         }
@@ -1704,9 +1708,16 @@ public class Cli {
                                 }
                             }
                         }
-                        target_project = project;
+                        
+                        if (target_pkg != null) {
+                            target_project = project;
+                            break;
+                        }
                     }
                 }
+                
+                 
+                
             }else {
                 for (PackageVersion pkg_ver : apiWrapper.getPackageVersionsList(project.getIdentifierString())) {
                     if (pkg_ver.getIdentifierString().equals(packageName)) {
@@ -1787,7 +1798,7 @@ public class Cli {
 
         if (assessment_run.size() > 0) {
             if (!quiet) {
-                System.out.println("Assessment UUIDs"); 
+                System.out.println("Assessment UUID"); 
             }
             for (AssessmentRun arun : assessment_run) {
                 System.out.println(arun.getUUIDString()); 
@@ -1838,14 +1849,14 @@ public class Cli {
             if (verbose) {
                 System.out.printf("%-37s %-40s %-30s %-20s\n",
                         arun.getIdentifierString(),
-                        arun.getPackageName() + ":" + arun.getPackageVersion(),
-                        arun.getToolName() + ":" + arun.getToolVersion(),
+                        arun.getPackageName() + VERSION_SEPERATOR + arun.getPackageVersion(),
+                        arun.getToolName() + VERSION_SEPERATOR + arun.getToolVersion(),
                         PlatformVersion.getDisplayString(arun.getPlatformName(),
                                 arun.getPlatformVersion()));
             }else {
                 System.out.printf("%-40s %-30s %-20s\n",
-                        arun.getPackageName() + ":" + arun.getPackageVersion(),
-                        arun.getToolName() + ":" + arun.getToolVersion(),
+                        arun.getPackageName() + VERSION_SEPERATOR + arun.getPackageVersion(),
+                        arun.getToolName() + VERSION_SEPERATOR + arun.getToolVersion(),
                         PlatformVersion.getDisplayString(arun.getPlatformName(),
                                 arun.getPlatformVersion()));
             }
@@ -1929,7 +1940,6 @@ public class Cli {
         List<AssessmentRecord> results = new ArrayList<AssessmentRecord>();
 
         String package_version = null;
-        
         if (packageName.contains(VERSION_SEPERATOR)) {
             String name_version[] = getNameAndVersion(packageName);
             packageName = name_version[0];
@@ -2044,6 +2054,20 @@ public class Cli {
             }
         });
 
+        String package_version = null;
+        if (packageName != null && packageName.contains(VERSION_SEPERATOR)) {
+            String name_version[] = getNameAndVersion(packageName);
+            packageName = name_version[0];
+            package_version = name_version[1];
+        }
+        
+        String tool_version = null;
+        if (toolName != null && toolName.contains(VERSION_SEPERATOR)) {
+            String name_version[] = getNameAndVersion(toolName);
+            toolName = name_version[0];
+            tool_version =  name_version[1];
+        }
+        
         if (verbose) {
             System.out.printf("%-37s %-40s %-30s %-20s %-20s %-20s %10s\n",
                     "Assessment Result UUID", "Package", "Tool","Platform", "Date", "Status", "Results");      
@@ -2053,23 +2077,32 @@ public class Cli {
         }
 
         for (AssessmentRecord arun : all_results) {
-            if (packageName != null && !arun.getPkg().getName().equals(packageName)) {
+            if (packageName != null && !arun.getConversionMap().getString("package_name").equals(packageName)) {
                 continue;
             }
 
-            if (toolName != null && !arun.getTool().getName().equals(toolName)) {
+            if (package_version != null && !arun.getConversionMap().getString("package_version").equals(package_version)) {
+                continue;
+            }
+            
+            if (toolName != null && !arun.getConversionMap().getString("tool_name").equals(toolName)) {
                 continue;
             }
 
-            if (platName != null && !arun.getPlatform().getName().equals(platName)) {
+            if (tool_version != null && !arun.getConversionMap().getString("tool_version").equals(tool_version)) {
+                continue;
+            }
+            
+            if (platName != null && !PlatformVersion.getDisplayString(arun.getConversionMap().getString("platform_name"), 
+                    arun.getConversionMap().getString("platform_version")).equals(platName)) {
                 continue;
             }
 
             if (verbose) {
                 System.out.printf("%-37s %-40s %-30s %-20s %-20s %-20s %10s\n",
                         arun.getAssessmentResultUUID(),
-                        arun.getConversionMap().getString("package_name") + "-" + arun.getConversionMap().getString("package_version"),
-                        arun.getConversionMap().getString("tool_name") + "-" + arun.getConversionMap().getString("tool_version"),
+                        arun.getConversionMap().getString("package_name") + VERSION_SEPERATOR + arun.getConversionMap().getString("package_version"),
+                        arun.getConversionMap().getString("tool_name") + VERSION_SEPERATOR + arun.getConversionMap().getString("tool_version"),
                         PlatformVersion.getDisplayString(arun.getConversionMap().getString("platform_name"), arun.getConversionMap().getString("platform_version")),
                         toCurrentTimeZone(arun.getConversionMap().getDate("create_date")),
                         arun.getConversionMap().getString("status"),
@@ -2077,8 +2110,8 @@ public class Cli {
             }else {
 
                 System.out.printf("%-40s %-30s %-20s %-20s %-20s %10s\n",
-                        arun.getConversionMap().getString("package_name") + ":" + arun.getConversionMap().getString("package_version"),
-                        arun.getConversionMap().getString("tool_name") + ":" + arun.getConversionMap().getString("tool_version"),
+                        arun.getConversionMap().getString("package_name") + VERSION_SEPERATOR + arun.getConversionMap().getString("package_version"),
+                        arun.getConversionMap().getString("tool_name") + VERSION_SEPERATOR + arun.getConversionMap().getString("tool_version"),
                         PlatformVersion.getDisplayString(arun.getConversionMap().getString("platform_name"), arun.getConversionMap().getString("platform_version")),
                         toCurrentTimeZone(arun.getConversionMap().getDate("create_date")),
                         arun.getConversionMap().getString("status"),
@@ -2088,7 +2121,9 @@ public class Cli {
     }
 
     public void statusHandler(HashMap<String, Object> optMap) {
-        printAssessmentStatus((String)optMap.get("project-uuid"), (String)optMap.get("assess-uuid"));
+        printAssessmentStatus((String)optMap.get("project-uuid"),
+                (String)optMap.get("assess-uuid"),
+                (boolean)optMap.get("quiet"));
     }
 
     public void printUserInfo(HashMap<String, Object> optMap) {
@@ -2233,7 +2268,7 @@ public class Cli {
         }
     }
 
-    public void printAssessmentStatus(String projectUuid, String assessmentUuid) {
+    public void printAssessmentStatus(String projectUuid, String assessmentUuid, boolean quiet) {
 
         AssessmentRecord assessment_record = null;
 
@@ -2252,16 +2287,16 @@ public class Cli {
         }
 
         if (assessment_record != null) {
-            System.out.printf("%s, %d", 
-                    //AssessmentStatus.translateAssessmentStatus(assessment_record.getStatus()),
-                    assessment_record.getStatus(),
-                    assessment_record.getWeaknessCount());
-
-            if (assessment_record.getAssessmentResultUUID() == null){
-                System.out.printf("\n");
-            }else{
-                System.out.printf(", %-37s\n", assessment_record.getAssessmentResultUUID());
+            if (!quiet) {
+                System.out.printf("%-15s %-15s %-37s\n", 
+                        "Status", "Weakness", "Assessments Results UUID");
             }
+            
+            System.out.printf("%-15s %-15d %-37s\n", 
+                    assessment_record.getStatus(),
+                    assessment_record.getWeaknessCount(),
+                    assessment_record.getAssessmentResultUUID() != null ? assessment_record.getAssessmentResultUUID() : "");
+                
         }else {
             throw new InvalidIdentifierException("Invalid Assessment UUID: " + assessmentUuid);  
         }
