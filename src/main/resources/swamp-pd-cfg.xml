@@ -1,0 +1,48 @@
+<!-- 
+    This is a sample configuration file for testing against production (mir-swamp.org). 
+    Generally you should not run tests against production unless you have a very good reason
+    to do so.
+-->
+<tests rws_address="https://swa-rws-pd-01.mir-swamp.org/"
+       csa_address="https://swa-csaweb-pd-01.mir-swamp.org/"
+       origin_header="https://www.mir-swamp.org"
+       referer_header="https://www.mir-swamp.org/"
+       host_header="swa-rws-pd-01.mir-swamp.org">
+  <test name="username" >
+      <data name="username">YOUR_USERNAME</data>
+  </test>
+<!-- A(w$-?.F77>:>>( -->
+  <test name="password">
+      <data name="password"><![CDATA[YOUR_PASSWORD]]></data>
+  </test>
+  <test name="change-password" >
+      <data name="new-password"><![CDATA[SOME_OTHER_PASSWORD]]></data>
+  </test>
+  <test name="badpasswords">
+      <data type="list" name="test-list">
+          <![CDATA[hello
+          ohai&lt;html&gt;dere
+          DROP TABLES;
+          aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+          aAaAaAaAaaAaAaAaAaaAaAaAaAaaAaAaAaAaaAaAaAaAaaAaAaAaAa
+          aQ1!
+          <html>foo</html>
+          sql'foo
+          username'); DELETE FROM users; SELECT * FROM users WHERE 'a'='a
+          Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!
+          <script>alert(“XSS”)</script>
+          icnhz<=chez]]>
+      </data>
+  </test>
+   <test name="upload-java-bytecode.tar">
+        <data name="filename">FULL_PATH_TO_BYTECODE</data>
+    </test>
+    <test name="upload-java-source.Z">
+        <data name="filename">FULL_PATH_TO_JAVA_SOURCE</data>
+    </test>
+
+ <test name="upload-hello-world.c">
+        <data name="filename">FULLL_PATH_TO_C_SOURCE</data>
+    </test>
+
+</tests>

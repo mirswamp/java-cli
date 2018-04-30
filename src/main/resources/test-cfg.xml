@@ -1,0 +1,72 @@
+<!-- OLD DO NOT USE -->
+<!DOCTYPE tests [
+        <!ELEMENT tests (test)*>
+        <!ATTLIST tests
+                rws_address CDATA #REQUIRED
+                csa_address CDATA #REQUIRED
+                origin_header CDATA #REQUIRED
+                referer_header CDATA #REQUIRED
+                host_header CDATA #REQUIRED
+                >
+        <!ELEMENT test (data)*>
+        <!ATTLIST test
+                disabled CDATA #IMPLIED
+                name CDATA #REQUIRED>
+        <!ELEMENT data (#PCDATA)>
+        <!ATTLIST data
+                name CDATA #REQUIRED
+                type CDATA #IMPLIED>
+        ]>
+<tests rws_address="https://swamp-rws.ncsa.illinois.edu/"
+       csa_address="https://swamp-csa.ncsa.illinois.edu/"
+       origin_header="https://swamp-web.ncsa.illinois.edu/"
+       referer_header="https://swamp-web.ncsa.illinois.edu/"
+       host_header="swamp-csa.ncsa.illinois.edu">
+    <test name="dud" disabled="true"/>
+    <test name="username">
+        <data name="username">YOUR USER NAME</data>
+    </test>
+    <test name="password">
+        <data name="password">YOUR PASSWORD</data>
+    </test>
+    <test name="test-secure-cookie"
+          disabled="true">
+    </test>
+    <test name="test-session-lifetime">
+       <data name="directory">/home/ncsa/swamp-git/temp/test-ser-lifetime</data>
+    </test>
+    <test name="session-serialization">
+       <data name="csa-file">/tmp/csa-session.ser</data>
+      <data name="rws-file">/tmp/rws-session.ser</data>
+    </test>
+    <test name="change-password">
+        <data name="new-password">YOUR TEST PASSWORD</data>
+    </test>
+    <test name="badpasswords">
+        <data type="list" name="test-list">
+            <![CDATA[hello
+          ohai&lt;html&gt;dere
+          DROP TABLES;
+          aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+          aAaAaAaAaaAaAaAaAaaAaAaAaAaaAaAaAaAaaAaAaAaAaaAaAaAaAa
+          aQ1!
+          <html>foo</html>
+          sql'foo
+          username'); DELETE FROM users; SELECT * FROM users WHERE 'a'='a
+          Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!Aq1!
+          <script>alert(“XSS”)</script>
+          icnhz<=chez]]>
+        </data>
+    </test>
+    <test name="upload-java-bytecode.tar">
+        <data name="filename">/path/to/bytecode-test.tar</data>
+    </test>
+    <test name="upload-java-source.Z">
+        <data name="filename">path/to/java-source.Z</data>
+    </test>
+
+ <test name="upload-hello-world.c">
+        <data name="filename">/path/to/helloworld.zip</data>
+    </test>
+
+</tests>
