@@ -1949,7 +1949,7 @@ public class Cli {
             String toolName,
             String platform, 
             String filepath, 
-            boolean verbose) throws IOException {
+            boolean quiet) throws IOException {
 
         List<AssessmentRecord> results = new ArrayList<AssessmentRecord>();
 
@@ -2001,8 +2001,9 @@ public class Cli {
                     toolName, tool_version,
                     platform));           
         }else if (results.size() > 1) {
-            throw new ConflictingNamesException("More than one assessment records have same " +
-                    "package_name, package_version, tool_name, tool_version, platform\n, Use Assessment result UUID to download results");
+            throw new ConflictingNamesException("More than one assessment records have the same " +
+                    "(package_name, package_version, tool_name, tool_version, platform)\n, "
+                    + "Use Assessment result UUID to download results");
         }
 
         if (filepath == null) {
@@ -2014,7 +2015,7 @@ public class Cli {
                 filepath); 
 
 
-        if (!verbose) {
+        if (!quiet) {
             if (status) {
                 System.out.println("Downloaded SCARF into: " + filepath);
             }else {
