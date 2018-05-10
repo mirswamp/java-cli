@@ -30,11 +30,11 @@ import org.continuousassurance.swamp.api.Tool;
 import org.continuousassurance.swamp.api.ToolVersion;
 import org.continuousassurance.swamp.api.User;
 import org.continuousassurance.swamp.session.HTTPException;
-import org.continuousassurance.swamp.session.handlers.AssessmentRecordHandler;
 import org.continuousassurance.swamp.session.util.Proxy;
 import org.apache.commons.cli.*;
 import org.apache.log4j.varia.NullAppender;
 import org.continuousassurance.swamp.cli.exceptions.*;
+import org.continuousassurance.swamp.cli.util.AssessmentStatus;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -166,7 +166,7 @@ public class Cli {
 
     public ArrayList<String> reformatArgs(Options mainOptions, ArrayList<String> args) {
         ArrayList<String> new_args = new ArrayList<String>();
-
+        
         for(Option opt : mainOptions.getOptions()) {
             String short_opt_str = "-" + opt.getOpt();
             String long_opt_str = "--" + opt.getLongOpt();
@@ -260,9 +260,11 @@ public class Cli {
 
         if (args.isEmpty()) {
             args.add("-H");
-        }else {
-            args = reformatArgs(options, args);
         }
+        
+        /*else {
+            args = reformatArgs(options, args);
+        }*/
 
         CommandLine parsed_options = new DefaultParser().parse(options, args.toArray(new String[0]));
 
@@ -2316,7 +2318,8 @@ public class Cli {
             }
             
             System.out.printf("%-15s %-15d %-37s\n", 
-                    assessment_record.getStatus(),
+                    AssessmentStatus.translateAssessmentStatus(assessment_record.getStatus()),
+                    //assessment_record.getStatus(),
                     assessment_record.getWeaknessCount(),
                     assessment_record.getAssessmentResultUUID() != null ? assessment_record.getAssessmentResultUUID() : "");
                 
