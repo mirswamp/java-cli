@@ -8,22 +8,35 @@ image:https://travis-ci.org/vamshikr/java-cli.svg?branch=master["Build Status", 
 
 == Introduction
 
-The SWAMP Java CLI is a Java library and a command line interface that provides many common operation on a SWAMP instance.  These operations include getting the list of projects, packages, versions of packages, assessments, tools and platforms.  Creating packages, uploading new versions of a package, configuring and start an assessment, checking the status of an assessment, and downloading SCARF results.
+The SWAMP Java CLI is a _Java library_ and a _command line interface_ that provides many common operation on a SWAMP instance.  These operations include getting the list of projects, packages, versions of packages, assessments, tools and platforms.  Creating packages, uploading new versions of a package, configuring and start an assessment, checking the status of an assessment, and downloading SCARF results.
 
 == Installation and Network Settings
 
-From https://github.com/mirswamp/java-cli/releases page, download the latest java-cli-X.Y.Z-with-dependencies.jar archive, where X.Y.Z stands for the latest release version number.
+From https://github.com/mirswamp/java-cli/releases page, download the latest `java-cli-X.Y.Z.zip` archive, where `X.Y.Z` stands for the latest release version number.
 
-Pre-requisites for running the Java CLI is Java-7 or above. For the rest of this document we will use `java-cli-1.5.0-with-dependencies.jar` as the reference file.
+Extract/Unarchive the `java-cli-X.Y.Z.zip` file. This extracts all the files into `java-cli-X.Y.Z` directory. The executable files are in the `bin` directory and the main jar file is in the `lib`
+For rest of this document we will use `1.5.0` as the reference CLI version and _Linux_ as the reference OS.
 
+[NOTE]
+Pre-requisites for running the Java CLI is Java-7 or above.
 
-To check if the `jar` file works run the following command on the terminal:
+On Posix compatible systems run the following command from the `java-cli-X.Y.Z` directory:
+```
+./bin/swamp
 ```
 
-java -jar java-cli-1.5.0-with-dependencies.jar
+On Windows systems run the following command  from the `java-cli-X.Y.Z` directory:
+```
+.\bin\swamp.bat
 ```
 
-If the above command is successful, the program display `sub-commands` available:
+Users can also run the `jar` file directory by running the following command from the `java-cli-X.Y.Z` directory:
+```
+java -jar lib/java-cli-1.5.0-with-dependencies.jar
+```
+
+
+If any of the above command is successful, the program display `sub-commands` available:
 ```
 ------------------------------------------------------------------------
 Usage: <program> <sub-command> <options>
@@ -82,19 +95,19 @@ In your environment, setup the environment variables `http_proxy` or `https_prox
 .Example 1:
 ```
 % export http_proxy=http://squid.cs.wisc.edu:3128
-% java -jar target/java-cli-1.5.0-jar-with-dependencies.jar login --filepath ./scripts/resources/userinfo.properties
+% ./bin/swamp login --filepath ./scripts/resources/userinfo.properties
 ```
 
 .Example 2:
 ```
 % export http_proxy=http://user1:password1@squid.cs.wisc.edu:3128
-% java -jar target/java-cli-1.5.0-jar-with-dependencies.jar login --filepath ./scripts/resources/userinfo.properties
+% ./bin/swamp login --filepath ./scripts/resources/userinfo.properties
 ```
 
 .Example 3:
 ```
 % export https_proxy=https://user1:password1@squid.cs.wisc.edu:3128
-% java -jar target/java-cli-1.5.0-jar-with-dependencies.jar login --filepath ./scripts/resources/userinfo.properties
+% ./bin/swamp login --filepath ./scripts/resources/userinfo.properties
 ```
 --
 
@@ -110,12 +123,12 @@ Pass the following java properties to the java-cli's `login` sub-command:
 --
 .Example 1:
 .................
-% java -Dhttp.proxyHost=squid.cs.wisc.edu -Dhttp.proxyPort=3128 -jar target/java-cli-1.5.0-jar-with-dependencies.jar login --filepath ./scripts/resources/userinfo.properties
+% ./bin/swamp login --filepath ./scripts/resources/userinfo.properties -Dhttp.proxyHost=squid.cs.wisc.edu -Dhttp.proxyPort=3128
 .................
 
 .Example 2:
 .................
-% java -Dhttp.proxyHost=squid.cs.wisc.edu -Dhttp.proxyPort=3128 -Dhttp.proxyUser=user1 -Dhttp.proxyPassword=password1 -jar target/java-cli-1.5.0-jar-with-dependencies.jar login --filepath ./scripts/resources/userinfo.properties
+% ./bin/swamp login --filepath ./scripts/resources/userinfo.properties -Dhttp.proxyHost=squid.cs.wisc.edu -Dhttp.proxyPort=3128 -Dhttp.proxyUser=user1 -Dhttp.proxyPassword=password1
 .................
 --
 
@@ -130,12 +143,12 @@ Pass the following java properties to the java-cli's `login` sub-command:
 --
 .Example 1:
 .................
-% java -Dhttps.proxyHost=squid.cs.wisc.edu -Dhttps.proxyPort=3128 -jar target/java-cli-1.5.0-jar-with-dependencies.jar login --filepath ./scripts/resources/userinfo.properties
+% ./bin/swamp  login --filepath ./scripts/resources/userinfo.properties -Dhttps.proxyHost=squid.cs.wisc.edu -Dhttps.proxyPort=3128
 .................
 
 .Example 2:
 .................
-% java -Dhttps.proxyHost=squid.cs.wisc.edu -Dhttps.proxyPort=3128 -Dhttps.proxyUser=user1 -Dhttps.proxyPassword=password1 -jar target/java-cli-1.5.0-jar-with-dependencies.jar login --filepath ./scripts/resources/userinfo.properties
+% ./bin/swamp  login --filepath ./scripts/resources/userinfo.properties -Dhttps.proxyHost=squid.cs.wisc.edu -Dhttps.proxyPort=3128 -Dhttps.proxyUser=user1 -Dhttps.proxyPassword=password1
 .................
 --
 
@@ -158,7 +171,7 @@ SWAMP Java CLI provides *sub-commands* to perform various operations on SWAMP. A
 | user | Information about the current user
 |=======================================================================
 
-To get help on each of the sub-command in the above list run `java -jar java-cli-1.5.0-with-dependencies.jar <sub-command> --help` or `java -jar java-cli-1.5.0-with-dependencies.jar <sub-command> --H`.
+To get help on each of the sub-command in the above list run `./bin/swamp <sub-command> --help` or `./bin/swamp <sub-command> --H`.
 
 [[login]]
 === Login Sub-Command
@@ -252,7 +265,7 @@ The `packages` sub-command with `--upload` option supports the following additio
 
 Example:
 ```
-java -jar java-cli-1.5.0-with-dependencies.jar package --upload --pkg-archive /home//swamp/api-dev/java-cli/scripts/resources/test_packages/railsgoat-9052b4fcf0/railsgoat-9052b4fcf0.zip -pkg-conf /home//swamp/api-dev/java-cli/scripts/resources/test_packages/railsgoat-9052b4fcf0/package.conf --os-deps 'ubuntu-16.04-64=libsqlite3-dev libmysqlclient-dev' --new-pkg
+./bin/swamp package --upload --pkg-archive /home//swamp/api-dev/java-cli/scripts/resources/test_packages/railsgoat-9052b4fcf0/railsgoat-9052b4fcf0.zip -pkg-conf /home//swamp/api-dev/java-cli/scripts/resources/test_packages/railsgoat-9052b4fcf0/package.conf --os-deps 'ubuntu-16.04-64=libsqlite3-dev libmysqlclient-dev' --new-pkg
 ```
 
 If the above command is successful, the output will be:
@@ -267,7 +280,7 @@ To display the *types of software packages* supported by SWAMP, `--types` option
 
 Example:
 ```
-java -jar java-cli-1.5.0-with-dependencies.jar package --types
+./bin/swamp package --types
 ```
 
 Example output from the above command:
@@ -306,7 +319,7 @@ The package sub-command with the `--list` option accepts the following additiona
 
 Example:
 ```
-java -jar java-cli-1.5.0-with-dependencies.jar packages --list --project MyProject
+./bin/swamp packages --list --project MyProject
 ```
 
 Example output from the above command:
@@ -345,7 +358,7 @@ To *delete* one or more packages, use `--delete` option with the `package` sub-c
 
 Example:
 ```
-% java -jar java-cli-1.5.0-with-dependencies.jar packages --delete -project MyProject --package webgoat-lessons
+% ./bin/swamp packages --delete -project MyProject --package webgoat-lessons
 Deleted 'Name: webgoat-lessons, Version: 7.1'
 ```
 
@@ -370,7 +383,7 @@ To get a list of all the `tools` that the user has access to in SWAMP, use `--li
 
 Example:
 ```
-java -jar java-cli-1.5.0-with-dependencies.jar tools --list
+./bin/swamp tools --list
 ```
 
 Example output of the above command:
@@ -411,7 +424,7 @@ To get a tool's UUID, use `--uuid` option with the `tools` sub-command.
 
 Example:
 ```
-java -jar java-cli-1.5.0-with-dependencies.jar tools --uuid --name PMD
+./bin/swamp tools --uuid --name PMD
 ```
 
 Example output of the above command:
@@ -449,7 +462,7 @@ The `assessments` sub-command with the `--run` option supports the following add
 
 Example:
 ```
-java -jar java-cli-1.5.0-with-dependencies.jar assessments --run --package swamp-gradle-example --tool error-prone
+./bin/swamp assessments --run --package swamp-gradle-example --tool error-prone
 ```
 
 Example output of the above command:
@@ -460,22 +473,22 @@ d14aa1f9-d0f1-48b6-adb4-088ac0e1ffee
 
 Example with a particular package version and tool version:
 ```
-java -jar java-cli-1.5.0-with-dependencies.jar assessments --run --package swamp-gradle-example::1.0 --tool error-prone::1.1.1
+./bin/swamp assessments --run --package swamp-gradle-example::1.0 --tool error-prone::1.1.1
 ```
 
 Example with a particular package version and tool version:
 ```
-java -jar java-cli-1.5.0-with-dependencies.jar assessments --run --package swamp-gradle-example::1.0 --tool error-prone::1.1.1
+./bin/swamp assessments --run --package swamp-gradle-example::1.0 --tool error-prone::1.1.1
 ```
 
 Example with a particular package version and multiple tools:
 ```
-java -jar java-cli-1.5.0-with-dependencies.jar assessments --run --package swamp-gradle-example::1.0 --tool error-prone::1.1.1 spotbugs PMD
+./bin/swamp assessments --run --package swamp-gradle-example::1.0 --tool error-prone::1.1.1 spotbugs PMD
 ```
 
 Example with a package, multiple tools, and multiple platforms:
 ```
-java -jar java-cli-1.5.0-with-dependencies.jar assessments --run --package lighttpd --tool cppcheck "Clang Static Analyzer" --platform centos-7-64  debian-8-64  fedora-24-64 ubuntu-16.04-64
+./bin/swamp assessments --run --package lighttpd --tool cppcheck "Clang Static Analyzer" --platform centos-7-64  debian-8-64  fedora-24-64 ubuntu-16.04-64
 ```
 
 
@@ -497,7 +510,7 @@ To *list* assessments created, use `--list` with the `assessments` sub-command. 
 
 Example:
 ```
-java -jar java-cli-1.5.0-with-dependencies.jar assessments -L --tool SpotBugs
+./bin/swamp assessments -L --tool SpotBugs
 ```
 
 Example output for the above command
@@ -533,7 +546,7 @@ To *list* assessment runs, use `--list` with the `results` sub-command. The `res
 
 Example:
 ```
-java -jar java-cli-1.5.0-with-dependencies.jar results --list
+./bin/swamp results --list
 ```
 
 Example output for the above command:
@@ -586,12 +599,12 @@ SCARF results downloaded from the assessment run will be stored into `<SCARF_FIL
 
 .Example 1:
 ```
-java -jar java-cli-1.5.0-with-dependencies.jar results --download --results-uuid f4856ee8-b402-11e7-92c3-001a4a814413 --filepath $PWD/scarf-results.xml
+./bin/swamp results --download --results-uuid f4856ee8-b402-11e7-92c3-001a4a814413 --filepath $PWD/scarf-results.xml
 ```
 
 .Example 2:
 ```
-java -jar java-cli-1.5.0-with-dependencies.jar results --download  --package swamp-gradle-example::1.0 --tool SpotBugs::3.2.0  --platform  ubuntu-16.04-64
+./bin/swamp results --download  --package swamp-gradle-example::1.0 --tool SpotBugs::3.2.0  --platform  ubuntu-16.04-64
 ```
 
 === Projects  Sub-Command
@@ -616,7 +629,7 @@ The `projects` sub-command with `--list` option supports the following additiona
 
 Example:
 ```
-java -jar java-cli-1.5.0-with-dependencies.jar projects --list
+./bin/swamp projects --list
 ```
 
 Example for the output of the above command:
@@ -645,7 +658,7 @@ To get UUID of a project, use `--uuid` option with the `projects` sub-command.
 
 Example:
 ```
-java -jar java-cli-1.5.0-with-dependencies.jar projects --uuid --name 4plugins
+./bin/swamp projects --uuid --name 4plugins
 ```
 
 Example for the output of the above command:
@@ -675,7 +688,7 @@ The `platforms` sub-command with `--list` option supports the following addition
 
 Example:
 ```
-java -jar java-cli-1.5.0-with-dependencies.jar platforms --list
+./bin/swamp platforms --list
 ```
 
 Example for the output of the above command:
@@ -717,7 +730,7 @@ To get UUID of a platform, use `--uuid` option with the `platforms` sub-command.
 
 Example:
 ```
-java -jar java-cli-1.5.0-with-dependencies.jar platforms --uuid --name ubuntu-16.04-64
+./bin/swamp platforms --uuid --name ubuntu-16.04-64
 ```
 
 Example for the output of the above command:
@@ -743,7 +756,7 @@ The output of the above sub-command will display (SUCCESS|FAILURE|INPROGRESS). I
 Example:
 
 ```
-java -jar java-cli-1.5.0-with-dependencies.jar status --assess-uuid 96e6e4e0-efce-4216-bff9-b20b30ca2e83 --project-uuid df2e7c15-4d28-4224-b25c-c2570bd91156
+./bin/swamp status --assess-uuid 96e6e4e0-efce-4216-bff9-b20b30ca2e83 --project-uuid df2e7c15-4d28-4224-b25c-c2570bd91156
 ```
 
 Example output of the above command:
