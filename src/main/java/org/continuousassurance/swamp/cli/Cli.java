@@ -32,6 +32,7 @@ import org.continuousassurance.swamp.api.User;
 import org.continuousassurance.swamp.session.HTTPException;
 import org.continuousassurance.swamp.session.util.Proxy;
 import org.apache.commons.cli.*;
+import org.apache.log4j.Logger;
 import org.apache.log4j.varia.NullAppender;
 import org.continuousassurance.swamp.cli.exceptions.*;
 import org.continuousassurance.swamp.cli.util.AssessmentStatus;
@@ -64,40 +65,51 @@ public class Cli {
     protected static final String VERSION = "1.5.0";
     protected static final String VERSION_SEPERATOR = "::";
     
+    //Sub Commands
+    protected static final String SC_LOGIN = "login";
+    protected static final String SC_LOGOUT = "logout";  
+    protected static final String SC_PACKAGES = "packages";
+    protected static final String SC_TOOLS = "tools";
+    protected static final String SC_ASSESSMENTS = "assessments";
+    protected static final String SC_PROJECTS = "projects";
+    protected static final String SC_RESULTS = "results";
+    protected static final String SC_PLATFORMS = "platforms";
+    protected static final String SC_STATUS = "status";
+    
     //for backwards compatibility
     protected static final ArrayList<String> DISPLAY_COMMANDS = new ArrayList<String>(Arrays.asList(
-            "login", 
-            "logout", 
-            "package OR packages",
-            "tool OR tools",
-            "assess OR assessments", 
-            "results",
+            SC_LOGIN, 
+            SC_LOGOUT, 
+            "package" + " OR " + SC_PACKAGES,
+            "tool" + " OR " + SC_TOOLS,
+            "assess" + " OR " + SC_ASSESSMENTS, 
+            SC_RESULTS,
             //"runs",
-            "project OR projects",
-            "platform OR platforms",
-            "status",
+            "project" + " OR " + SC_PROJECTS,
+            "platform" + " OR " + SC_PLATFORMS,
+            SC_STATUS,
             "user"));
 
     protected static final ArrayList<String> COMMANDS = new ArrayList<String>(Arrays.asList(
-            "login", 
-            "logout",
+            SC_LOGIN, 
+            SC_LOGOUT,
             "package",
-            "packages",
+            SC_PACKAGES,
             "assess",
-            "assessments", 
-            "results",
+            SC_ASSESSMENTS, 
+            SC_RESULTS,
             //"runs",
             "project",
-            "projects",
+            SC_PROJECTS,
             "tool",
-            "tools",
+            SC_TOOLS,
             "platform",
-            "platforms",
-            "status",
+            SC_PLATFORMS,
+            SC_STATUS,
             "user"));
 
-
-    public static final String DEFAULT_PROJECT = "MyProject";
+    static final Logger LOGGER = Logger.getLogger(Cli.class);
+    protected static final String DEFAULT_PROJECT = "MyProject";
 
     SwampApiWrapper apiWrapper;
 
@@ -120,7 +132,7 @@ public class Cli {
     }
 
     private static void printVersion() {
-        System.out.printf("%s\n", VERSION);
+        System.out.println(VERSION);
     }
 
     public static boolean isUuid(String str) {
@@ -133,19 +145,14 @@ public class Cli {
         apiWrapper = new SwampApiWrapper();
     }
 
-    protected HashMap<String, Object> getUserCredentials(String filename) {
+    protected HashMap<String, Object> getUserCredentials(String filename) throws FileNotFoundException, IOException {
         HashMap<String, Object> cred_map = new HashMap<String, Object>();
         Properties prop = new Properties();
-
-        try {
-            prop.load(new FileInputStream(filename));
-            cred_map.put("username", prop.getProperty("username"));
-            cred_map.put("password", prop.getProperty("password"));
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
-
+      
+        prop.load(new FileInputStream(filename));
+        cred_map.put("username", prop.getProperty("username"));
+        cred_map.put("password", prop.getProperty("password"));
+        
         return cred_map;
     }
 
@@ -168,6 +175,7 @@ public class Cli {
         ArrayList<String> new_args = new ArrayList<String>();
         
         for(Option opt : mainOptions.getOptions()) {
+
             String short_opt_str = "-" + opt.getOpt();
             String long_opt_str = "--" + opt.getLongOpt();
 
@@ -231,6 +239,7 @@ public class Cli {
         
         return name_version;
     }
+
 
     public HashMap<String, Object> loginOptionsHandler(String cmdName, 
             ArrayList<String> args) throws ParseException, CommandLineOptionException, FileNotFoundException, IOException {
@@ -896,7 +905,7 @@ public class Cli {
             return null;
         }else {
             HashMap<String, Object> cred_map = new HashMap<String, Object>();
-            cred_map.put("logout", "logout");
+            cred_map.put(SC_LOGOUT, SC_LOGOUT);
             if (parsed_options.hasOption("Q")){
                 cred_map.put("quiet", true);
             }else {
@@ -1047,39 +1056,39 @@ public class Cli {
         HashMap<String, Object> opt_map = null;
 
         switch (command) {
-        case "login":
+        case SC_LOGIN:
             opt_map = loginOptionsHandler(command, cliArgs);
             break;
         case "package":
-        case "packages":
+        case SC_PACKAGES:
             opt_map = packageOptionsHandler(command, cliArgs);
             break;
         case "project":
-        case "projects":
+        case SC_PROJECTS:
             opt_map = projectOptionsHandler(command, cliArgs);
             break;
         case "tool":    
-        case "tools":
+        case SC_TOOLS:
             opt_map = toolsOptionsHandler(command, cliArgs);
             break;
         case "assess":
-        case "assessments":
+        case SC_ASSESSMENTS:
             opt_map = assessmentOptionsHandler(command, cliArgs);
             break;
         case "platform":
-        case "platforms":
+        case SC_PLATFORMS:
             opt_map = platformOptionsHandler(command, cliArgs);
             break;
-        case "results":
+        case SC_RESULTS:
             opt_map = resultsOptionsHandler(command, cliArgs);
             break;
-        case "status":
+        case SC_STATUS:
             opt_map = statusOptionsHandler(command, cliArgs);
             break;
         case "user":
             opt_map = userOptionsHandler(command, cliArgs);
             break;
-        case "logout":
+        case SC_LOGOUT:
             opt_map = logoutOptionsHandler(command, cliArgs);
             break;
         default:
@@ -1108,7 +1117,7 @@ public class Cli {
             if ((boolean)optMap.get("quiet") == false) {
                 System.out.println("Login successful");
             }
-            //System.out.printf("User UUID: %s", user_uuid + "\n");
+
             apiWrapper.saveSession();
         }else {
             if ((boolean)optMap.get("quiet") == false) {
@@ -1119,37 +1128,36 @@ public class Cli {
 
     public void printAllProjects(boolean quiet, boolean verbose) {
         if (verbose) {
-            System.out.printf("%-37s %-25s %-40s %-15s\n", 
+            System.out.println(String.format("%-37s %-25s %-40s %-15s", 
                     "UUID",
                     "Project",
                     "Description",
-                    "Date Added");
-            System.out.printf("------------------------------------------------------------------------");
+                    "Date Added"));
+            System.out.println("------------------------------------------------------------------------");
             
             for(Project proj : apiWrapper.getProjectsList()) {
-                System.out.printf("%-37s %-25s %-40s %-15s\n", 
+                System.out.println(String.format("%-37s %-25s %-40s %-15s", 
                         proj.getUUIDString(), 
                         proj.getFullName(),
                         proj.getDescription(),
-                        toCurrentTimeZone(proj.getCreateDate()));
+                        toCurrentTimeZone(proj.getCreateDate())));
             }
         }else if (!quiet) {
-            System.out.printf("%-25s %-40s %-15s\n", 
+            System.out.println(String.format("%-25s %-40s %-15s", 
                     "Project",
                     "Description",
-                    "Date Added");
-            System.out.printf("------------------------------------------------------------------------");
+                    "Date Added"));
+            System.out.println("------------------------------------------------------------------------");
             
             for(Project proj : apiWrapper.getProjectsList()) {
-                System.out.printf("%-25s %-40s %-15s\n", 
+                System.out.println(String.format("%-25s %-40s %-15s", 
                         proj.getFullName(),
                         proj.getDescription(),
-                        toCurrentTimeZone(proj.getCreateDate()));
+                        toCurrentTimeZone(proj.getCreateDate())));
             }  
         }else {
             for(Project proj : apiWrapper.getProjectsList()) {
-                System.out.printf("%-25s\n",
-                        proj.getFullName());
+                System.out.println(proj.getFullName());
             }
         }
     }
@@ -1168,21 +1176,21 @@ public class Cli {
 
         if (optMap.get("sub-command").equals("list")) {
             if ((boolean)optMap.get("verbose")) {
-                System.out.printf("%-37s %-30s\n", "UUID", "Platform");
-                System.out.printf("------------------------------------------------------------------------");
+                System.out.println(String.format("%-37s %-30s", "UUID", "Platform"));
+                System.out.println("------------------------------------------------------------------------");
                 
                 for (PlatformVersion platform_version : apiWrapper.getAllPlatformVersionsList()){
-                    System.out.printf("%-37s %-30s\n",
+                    System.out.println(String.format("%-37s %-30s",
                             platform_version.getIdentifierString(),
-                            platform_version.getDisplayString());
+                            platform_version.getDisplayString()));
                 }
             }else {
                 if (!(boolean)optMap.get("quiet")) {
-                    System.out.printf("Platform\n");
-                    System.out.printf("------------------------------------------------------------------------");
+                    System.out.println("Platform");
+                    System.out.println("------------------------------------------------------------------------");
                 }
                 for (PlatformVersion platform_version : apiWrapper.getAllPlatformVersionsList()){
-                    System.out.printf("%-30s\n", platform_version.getDisplayString());
+                    System.out.println(platform_version.getDisplayString());
                 }
             }
         }else {
@@ -1372,46 +1380,46 @@ public class Cli {
                         pkg.getType().equalsIgnoreCase(pkgType)) {
 
                     for(PackageVersion pkg_ver : apiWrapper.getPackageVersions(pkg)) {
-                        System.out.printf("%-25s %-25s\n",
+                        System.out.println(String.format("%-25s %-25s",
                                 pkg_ver.getPackageThing().getName(),
-                                pkg_ver.getVersionString());
+                                pkg_ver.getVersionString()));
                     }
                 }
             }
         }else if(verbose) {
-            System.out.printf("%-37s %-25s %-40s %-25s %-25s\n",
-                    "UUID", "Package", "Description","Type", "Version");
-            System.out.printf("------------------------------------------------------------------------");
+            System.out.println(String.format("%-37s %-25s %-40s %-25s %-25s",
+                    "UUID", "Package", "Description","Type", "Version"));
+            System.out.println("------------------------------------------------------------------------");
             
             for(PackageThing pkg : apiWrapper.getPackagesList(project)) {
                 if (pkgType == null ||
                         pkg.getType().equalsIgnoreCase(pkgType)) {
 
                     for(PackageVersion pkg_ver : apiWrapper.getPackageVersions(pkg)) {
-                        System.out.printf("%-37s %-25s %-40s %-25s %-25s\n", 
+                        System.out.println(String.format("%-37s %-25s %-40s %-25s %-25s", 
                                 pkg_ver.getUUIDString(),
                                 pkg_ver.getPackageThing().getName(),
                                 pkg_ver.getPackageThing().getDescription(),
                                 pkg_ver.getPackageThing().getType(),
-                                pkg_ver.getVersionString());
+                                pkg_ver.getVersionString()));
                     }
                 }
             }
         }else {
-            System.out.printf("%-25s %-40s %-25s %-25s\n",
-                    "Package", "Description","Type", "Version");
-            System.out.printf("------------------------------------------------------------------------");
+            System.out.println(String.format("%-25s %-40s %-25s %-25s",
+                    "Package", "Description","Type", "Version"));
+            System.out.println("------------------------------------------------------------------------");
             
             for(PackageThing pkg : apiWrapper.getPackagesList(project)) {
                 if (pkgType == null ||
                         pkg.getType().equalsIgnoreCase(pkgType)) {
 
                     for(PackageVersion pkg_ver : apiWrapper.getPackageVersions(pkg)) {
-                        System.out.printf("%-25s %-40s %-25s %-25s\n",
+                        System.out.println(String.format("%-25s %-40s %-25s %-25s",
                                 pkg_ver.getPackageThing().getName(),
                                 pkg_ver.getPackageThing().getDescription(),
                                 pkg_ver.getPackageThing().getType(),
-                                pkg_ver.getVersionString());
+                                pkg_ver.getVersionString()));
                     }
                 }
             }
@@ -1839,12 +1847,12 @@ public class Cli {
         }
 
         if (verbose) {
-            System.out.printf("%-37s %-40s %-30s %-20s\n",
-                    "UUID", "Package", "Tool","Platform");
+            System.out.println(String.format("%-37s %-40s %-30s %-20s",
+                    "UUID", "Package", "Tool","Platform"));
             System.out.println("------------------------------------------------------------------------");
         }else if (!quiet) {
-            System.out.printf("%-40s %-30s %-20s\n",
-                    "Package", "Tool","Platform");
+            System.out.println(String.format("%-40s %-30s %-20s",
+                    "Package", "Tool","Platform"));
             System.out.println("------------------------------------------------------------------------");
         }		
 
@@ -1862,18 +1870,18 @@ public class Cli {
             }
 
             if (verbose) {
-                System.out.printf("%-37s %-40s %-30s %-20s\n",
+                System.out.println(String.format("%-37s %-40s %-30s %-20s",
                         arun.getIdentifierString(),
                         arun.getPackageName() + VERSION_SEPERATOR + arun.getPackageVersion(),
                         arun.getToolName() + VERSION_SEPERATOR + arun.getToolVersion(),
                         PlatformVersion.getDisplayString(arun.getPlatformName(),
-                                arun.getPlatformVersion()));
+                                arun.getPlatformVersion())));
             }else {
-                System.out.printf("%-40s %-30s %-20s\n",
+                System.out.println(String.format("%-40s %-30s %-20s",
                         arun.getPackageName() + VERSION_SEPERATOR + arun.getPackageVersion(),
                         arun.getToolName() + VERSION_SEPERATOR + arun.getToolVersion(),
                         PlatformVersion.getDisplayString(arun.getPlatformName(),
-                                arun.getPlatformVersion()));
+                                arun.getPlatformVersion())));
             }
         }
     }
@@ -2043,7 +2051,8 @@ public class Cli {
             date_format.setTimeZone(Calendar.getInstance().getTimeZone());
             converted_date =  date_format.format(calendar.getTime());
         }catch (Exception e){ 
-            e.printStackTrace();
+            LOGGER.error(e.getMessage(), e);
+            converted_date = date.toString();
         }
 
         return converted_date;
@@ -2087,12 +2096,12 @@ public class Cli {
         }
         
         if (verbose) {
-            System.out.printf("%-37s %-40s %-30s %-20s %-20s %-20s %10s\n",
-                    "Assessment Result UUID", "Package", "Tool","Platform", "Date", "Status", "Results");
+            System.out.println(String.format("%-37s %-40s %-30s %-20s %-20s %-20s %10s",
+                    "Assessment Result UUID", "Package", "Tool","Platform", "Date", "Status", "Results"));
             System.out.println("------------------------------------------------------------------------");
         }else if (!quiet) {
-            System.out.printf("%-40s %-30s %-20s %-20s %-20s %10s\n",
-                    "Package", "Tool", "Platform", "Date", "Status", "Results");
+            System.out.println(String.format("%-40s %-30s %-20s %-20s %-20s %10s",
+                    "Package", "Tool", "Platform", "Date", "Status", "Results"));
             System.out.println("------------------------------------------------------------------------");
         }
 
@@ -2119,23 +2128,22 @@ public class Cli {
             }
 
             if (verbose) {
-                System.out.printf("%-37s %-40s %-30s %-20s %-20s %-20s %10s\n",
+                System.out.println(String.format("%-37s %-40s %-30s %-20s %-20s %-20s %10s",
                         arun.getAssessmentResultUUID(),
                         arun.getConversionMap().getString("package_name") + VERSION_SEPERATOR + arun.getConversionMap().getString("package_version"),
                         arun.getConversionMap().getString("tool_name") + VERSION_SEPERATOR + arun.getConversionMap().getString("tool_version"),
                         PlatformVersion.getDisplayString(arun.getConversionMap().getString("platform_name"), arun.getConversionMap().getString("platform_version")),
                         toCurrentTimeZone(arun.getConversionMap().getDate("create_date")),
-                        arun.getConversionMap().getString("status"),
-                        arun.getWeaknessCount());    
+                        arun.getConversionMap().getString(SC_STATUS),
+                        arun.getWeaknessCount()));    
             }else {
-
-                System.out.printf("%-40s %-30s %-20s %-20s %-20s %10s\n",
+                System.out.println(String.format("%-40s %-30s %-20s %-20s %-20s %10s",
                         arun.getConversionMap().getString("package_name") + VERSION_SEPERATOR + arun.getConversionMap().getString("package_version"),
                         arun.getConversionMap().getString("tool_name") + VERSION_SEPERATOR + arun.getConversionMap().getString("tool_version"),
                         PlatformVersion.getDisplayString(arun.getConversionMap().getString("platform_name"), arun.getConversionMap().getString("platform_version")),
                         toCurrentTimeZone(arun.getConversionMap().getDate("create_date")),
-                        arun.getConversionMap().getString("status"),
-                        arun.getWeaknessCount()); 
+                        arun.getConversionMap().getString(SC_STATUS),
+                        arun.getWeaknessCount())); 
             }
         }
     }
@@ -2148,9 +2156,9 @@ public class Cli {
 
     public void printUserInfo(HashMap<String, Object> optMap) {
         User user = apiWrapper.getUserInfo();
-        System.out.printf("%s\n", "User:\t" + user.getFirstName() + " " + user.getLastName());
-        System.out.printf("%s\n", "Email:\t" + user.getEmail());
-        System.out.printf("%s\n", "UUID:\t" + user.getUUIDString());
+        System.out.println(String.format("%s", "User:\t" + user.getFirstName() + " " + user.getLastName()));
+        System.out.println(String.format("%s", "Email:\t" + user.getEmail()));
+        System.out.println(String.format("%s", "UUID:\t" + user.getUUIDString()));
     }
 
     public void logoutHandler(HashMap<String, Object> optMap) {
@@ -2162,41 +2170,41 @@ public class Cli {
 
     public int executeCommands(String command, HashMap<String, Object> optMap) throws IOException, SessionExpiredException, InvalidIdentifierException, IncompatibleAssessmentTupleException {
 
-        if (command.equals("login")) {
+        if (command.equals(SC_LOGIN)) {
             loginHandler(optMap);
         }else {
             apiWrapper.restoreSession();
             switch (command) {
             case "project":
-            case "projects":
+            case SC_PROJECTS:
                 projectHandler(optMap);
                 break;
             case "platform":
-            case "platforms":
+            case SC_PLATFORMS:
                 platformHandler(optMap);
                 break;
             case "tool":    
-            case "tools":
+            case SC_TOOLS:
                 toolHandler(optMap);
                 break;
             case "package":    
-            case "packages":
+            case SC_PACKAGES:
                 packageHandler(optMap);
                 break;
             case "assess":
             case "assessments":
                 assessmentHandler(optMap);
                 break;
-            case "results":
+            case SC_RESULTS:
                 resultsHandler(optMap);
                 break;
-            case "status":
+            case SC_STATUS:
                 statusHandler(optMap);
                 break;
             case "user":
                 printUserInfo(optMap);
                 break;
-            case "logout":
+            case SC_LOGOUT:
                 logoutHandler(optMap);
                 break;
             default:
@@ -2212,40 +2220,40 @@ public class Cli {
         Project project = getProject(projectName);
             
         if(verbose){
-            System.out.printf("%-37s %-21s %15s %-40s\n",
+            System.out.println(String.format("%-37s %-21s %15s %-40s",
                     "UUID",
                     "Tool",
                     "Version",
-                    "Supported Package Types");
+                    "Supported Package Types"));
             System.out.println("------------------------------------------------------------------------");
             
             for(Tool tool : apiWrapper.getAllTools(project.getUUIDString()).values()) {
                 for (ToolVersion tool_version : apiWrapper.getToolVersions(tool)) {
-                    System.out.printf("%-37s %-21s %15s %-40s\n",
+                    System.out.println(String.format("%-37s %-21s %15s %-40s",
                             tool_version.getUUIDString(),
                             tool_version.getTool().getName(),
                             tool_version.getVersion(),
-                            tool.getSupportedPkgTypes());
+                            tool.getSupportedPkgTypes()));
                 }
             }
         }else if(!quiet) {
-            System.out.printf("%-21s %15s %-40s\n",
+            System.out.println(String.format("%-21s %15s %-40s",
                     "Tool",
                     "Version",
-                    "Supported Package Types");
+                    "Supported Package Types"));
             System.out.println("------------------------------------------------------------------------");
             
             for(Tool tool : apiWrapper.getAllTools(project.getUUIDString()).values()) {
                 for (ToolVersion tool_version : apiWrapper.getToolVersions(tool)) {
-                    System.out.printf("%-21s %15s %-40s\n",
+                    System.out.println(String.format("%-21s %15s %-40s",
                             tool_version.getTool().getName(),
                             tool_version.getVersion(),
-                            tool.getSupportedPkgTypes());
+                            tool.getSupportedPkgTypes()));
                 }
             }
         }else {
             for(Tool tool : apiWrapper.getAllTools(project.getUUIDString()).values()) {
-                System.out.printf("%-21s\n", tool.getName());
+                System.out.println(tool.getName());
             }
         }
     }
@@ -2253,23 +2261,23 @@ public class Cli {
     public void printAssessments(String projectUuid, boolean quiet) {
 
         if (!quiet){
-            System.out.printf("%-37s %-15s %-15s %-15s %-15s %-15s %-15s\n", 
+            System.out.println(String.format("%-37s %-15s %-15s %-15s %-15s %-15s %-15s", 
                     "UUID",
                     "Package Name", "Package Version",
                     "Tool Name", "Tool Version",
-                    "Platform Name", "Platform Version");
+                    "Platform Name", "Platform Version"));
             System.out.println("------------------------------------------------------------------------");
             
             for (AssessmentRun arun : apiWrapper.getAllAssessments(projectUuid)){
 
-                System.out.printf("%-37s %-15s %-15s %-15s %-15s %-15s %-15s\n", 
+                System.out.println(String.format("%-37s %-15s %-15s %-15s %-15s %-15s %-15s", 
                         arun.getUUIDString(), 
                         arun.getPackageName(), 
                         arun.getPackageVersion(),
                         arun.getToolName(),
                         arun.getToolVersion(),
                         arun.getPlatformName(),
-                        arun.getPlatformVersion());
+                        arun.getPlatformVersion()));
             }
         }else{
             for (AssessmentRun arun : apiWrapper.getAllAssessments(projectUuid)){
@@ -2312,16 +2320,16 @@ public class Cli {
 
         if (assessment_record != null) {
             if (!quiet) {
-                System.out.printf("%-15s %-15s %-37s\n", 
-                        "Status", "Weakness", "Assessments Result UUID");
+                System.out.println(String.format("%-15s %-15s %-37s", 
+                        "Status", "Weakness", "Assessments Result UUID"));
                 System.out.println("------------------------------------------------------------------------");
             }
             
-            System.out.printf("%-15s %-15d %-37s\n", 
+            System.out.println(String.format("%-15s %-15d %-37s", 
                     AssessmentStatus.translateAssessmentStatus(assessment_record.getStatus()),
                     //assessment_record.getStatus(),
                     assessment_record.getWeaknessCount(),
-                    assessment_record.getAssessmentResultUUID() != null ? assessment_record.getAssessmentResultUUID() : "");
+                    assessment_record.getAssessmentResultUUID() != null ? assessment_record.getAssessmentResultUUID() : ""));
                 
         }else {
             throw new InvalidIdentifierException("Invalid Assessment UUID: " + assessmentUuid);  
@@ -2330,7 +2338,7 @@ public class Cli {
 
     public static void main(String[] args) throws Exception {
 
-        org.apache.log4j.BasicConfigurator.configure(new NullAppender());
+        //org.apache.log4j.BasicConfigurator.configure(new NullAppender());
 
         if (args.length == 1 && (args[0].equals("-V") || args[0].equals("-v") ||
                 args[0].equals("--version"))){
@@ -2352,26 +2360,23 @@ public class Cli {
                 cli.executeCommands(command, opt_map);
             }
         } catch(SwampApiWrapperException e){
-            System.err.println("ERROR:: " + e.getMessage());
+            LOGGER.error(e.getMessage());
             System.exit(e.getExitCode());
         }catch(ParseException e){
-            System.err.println("ERROR:: " + e.getMessage());
+            LOGGER.error(e.getMessage());
             System.exit(SwampApiWrapperExitCodes.CLI_PARSER_ERROR.getExitCode());
         }catch (HTTPException e) {
-            System.err.println("ERROR:: " + e.getMessage());
+            LOGGER.error(e.getMessage());
             System.exit(SwampApiWrapperExitCodes.NormalizeHttpExitCode(((HTTPException)e).getStatusCode()));
         }catch(GeneralException e){
-            e.printStackTrace();
-            System.err.println("ERROR:: " + e.getMessage());
+            LOGGER.error(e.getMessage(), e);
             System.exit(SwampApiWrapperExitCodes.HTTP_GENERAL_EXCEPTION.getExitCode());
         }catch(IllegalStateException e){
-            System.err.println("ERROR:: " + e.getMessage());
+            LOGGER.error(e.getMessage());
             System.exit(SwampApiWrapperExitCodes.HTTP_GENERAL_EXCEPTION.getExitCode());
         }
 
         System.exit(SwampApiWrapperExitCodes.NO_ERRORS.getExitCode());
     }
-
-
 
 }
