@@ -21,6 +21,7 @@ package org.continuousassurance.swamp.cli;
 import edu.uiuc.ncsa.security.util.ssl.SSLConfiguration;
 import net.sf.json.JSONException;
 import org.apache.http.client.CookieStore;
+import org.apache.log4j.Logger;
 import org.continuousassurance.swamp.api.*;
 import org.continuousassurance.swamp.cli.exceptions.*;
 import org.continuousassurance.swamp.session.Session;
@@ -48,11 +49,11 @@ import java.util.*;
 public class SwampApiWrapper {
 
 	public static final String SWAMP_HOST_NAME  = HandlerFactoryUtil.PD_ORIGIN_HEADER;
-	private final String SWAMP_DIR_PATH;
-	private final String CSA_SESSION_OBJECT;
-	private final String RWS_SESSION_OBJECT;
-	private final String CSA_COOKIES;
-	private final String RWS_COOKIES;
+	private final String swampDirPath;
+	private final String csaSessionObject;
+	private final String rwsSessionObbject;
+	private final String csaCookies;
+	private final String rwsCookies;
 
 	private String rwsAddress;
 	private String csaAddress;
@@ -71,13 +72,14 @@ public class SwampApiWrapper {
 	private SSLConfiguration sslConfig;
 
 	private HandlerFactory handlerFactory;
-
+	protected static final Logger LOGGER = Logger.getLogger(SwampApiWrapper.class);
+	
 	public Properties getProp(String filepath){
 		Properties prop = new Properties();
 		try {
 			prop.load(new FileInputStream(filepath));
 		} catch (Exception e) {
-			e.printStackTrace();
+		    LOGGER.error(null, e);
 			return null;
 		}
 		return prop;
@@ -144,11 +146,11 @@ public class SwampApiWrapper {
      *
      */
     public SwampApiWrapper() {
-        SWAMP_DIR_PATH = getSwampDirPath();
-        CSA_SESSION_OBJECT  = SWAMP_DIR_PATH + File.separator + "csa_session_object.ser";
-        RWS_SESSION_OBJECT  = SWAMP_DIR_PATH + File.separator + "rws_session_object.ser";
-        CSA_COOKIES = SWAMP_DIR_PATH + File.separator + "csa_session_cookies.ser";
-        RWS_COOKIES = SWAMP_DIR_PATH + File.separator + "rws_session_cookies.ser";
+        swampDirPath = getSwampDirPath();
+        csaSessionObject  = swampDirPath + File.separator + "csa_session_object.ser";
+        rwsSessionObbject  = swampDirPath + File.separator + "rws_session_object.ser";
+        csaCookies = swampDirPath + File.separator + "csa_session_cookies.ser";
+        rwsCookies = swampDirPath + File.separator + "rws_session_cookies.ser";
 
         cachedPkgProjectID = "";
         cachedPkgVersionProjectID = "";
@@ -175,35 +177,33 @@ public class SwampApiWrapper {
 						Files.exists(rws_cookies, LinkOption.NOFOLLOW_LINKS)) {
 					
 					try {
-						Files.move(csa_session, Paths.get(CSA_SESSION_OBJECT), StandardCopyOption.ATOMIC_MOVE);
-						Files.move(rws_session, Paths.get(RWS_SESSION_OBJECT), StandardCopyOption.ATOMIC_MOVE);
-						Files.move(csa_cookies, Paths.get(CSA_COOKIES), StandardCopyOption.ATOMIC_MOVE);
-						Files.move(rws_cookies, Paths.get(RWS_COOKIES), StandardCopyOption.ATOMIC_MOVE);
+						Files.move(csa_session, Paths.get(csaSessionObject), StandardCopyOption.ATOMIC_MOVE);
+						Files.move(rws_session, Paths.get(rwsSessionObbject), StandardCopyOption.ATOMIC_MOVE);
+						Files.move(csa_cookies, Paths.get(csaCookies), StandardCopyOption.ATOMIC_MOVE);
+						Files.move(rws_cookies, Paths.get(rwsCookies), StandardCopyOption.ATOMIC_MOVE);
 					} catch (IOException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
+					    LOGGER.error(null, e);
 					}
 				}
 				
 				try {
 					Files.delete(old_dir);
 				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+				    LOGGER.error(null, e);
 				}
 			}
 		}
 	}
 	
-	protected final void setHost(String host_name, Proxy proxy) throws MalformedURLException {
+	protected final void setHost(String hostName, Proxy proxy) throws InvalidIdentifierException {
 
-        if (host_name == null) {
+        if (hostName == null) {
             throw new InvalidIdentifierException("host_name cannot be null");
         }
 
-        String web_server = SWAMPConfigurationLoader.getWebServiceURL(host_name, sslConfig, proxy);
+        String web_server = SWAMPConfigurationLoader.getWebServiceURL(hostName, sslConfig, proxy);
 		if (web_server == null) {
-			web_server = host_name;
+			web_server = hostName;
 		}
 		
 		setRwsAddress(web_server);
@@ -309,9 +309,9 @@ public class SwampApiWrapper {
      * @return SWAMP user-id
      * @throws MalformedURLException 
      */
-    public String login(String user_name, String password, String host_name) throws MalformedURLException {
+    public String login(String userName, String password, String hostName) throws MalformedURLException {
         Proxy proxy = getProxy();
-        return login(user_name, password, host_name, proxy, null); 
+        return login(userName, password, hostName, proxy, null); 
     }
     
 
@@ -325,9 +325,9 @@ public class SwampApiWrapper {
      * @return SWAMP user-id
      * @throws MalformedURLException 
      */
-    public String login(String user_name, 
+    public String login(String userName, 
             String password, 
-            String host_name, 
+            String hostName, 
             Proxy proxy, 
             String keystore) throws MalformedURLException {
 		
@@ -335,14 +335,14 @@ public class SwampApiWrapper {
             sslConfig.setKeystore(keystore);
         }
         
-        setHost(host_name, proxy);   
+        setHost(hostName, proxy);   
         
 		handlerFactory = HandlerFactoryUtil.createHandlerFactory(getRwsAddress(),
 				getCsaAddress(),
 				getOriginHeader(),
 				getRefereHeader(),
 				getHostHeader(),
-				user_name,
+				userName,
 				password,
 				sslConfig,
 				proxy);
@@ -351,7 +351,6 @@ public class SwampApiWrapper {
 			return handlerFactory.getUserHandler().getCurrentUser().getIdentifierString();
 		}
 
-		//TODO: raise exception
 		return null;
 	}
 
@@ -452,19 +451,19 @@ public class SwampApiWrapper {
 	public void saveSession() {
 		try {
 
-			File dir = new File(SWAMP_DIR_PATH);
+			File dir = new File(swampDirPath);
 			if (!dir.exists()) {
 				if (!dir.mkdir()) {
 					throw new IOException("Failed to create directory " + dir);
 				}
 			}
 
-			serialize(handlerFactory.getCSASession(), CSA_SESSION_OBJECT);
+			serialize(handlerFactory.getCSASession(), csaSessionObject);
 			serialize(handlerFactory.getCSASession().getClient().getContext().getCookieStore(),
-				CSA_COOKIES);
-			serialize(handlerFactory.getRWSSession(),  RWS_SESSION_OBJECT);
+				csaCookies);
+			serialize(handlerFactory.getRWSSession(),  rwsSessionObbject);
 			serialize(handlerFactory.getRWSSession().getClient().getContext().getCookieStore(),
-				RWS_COOKIES);
+				rwsCookies);
 		}catch(IOException e){
 			throw new SessionSaveException(e);
 		}
@@ -491,7 +490,7 @@ public class SwampApiWrapper {
 	 *
 	 */
 	private void deleteSession() {
-		File file = new File(SWAMP_DIR_PATH);
+		File file = new File(swampDirPath);
 		if (file.isDirectory()){
 			File[] fileList = file.listFiles();
 			for (File f : fileList) {
@@ -510,18 +509,18 @@ public class SwampApiWrapper {
 
 		moveCookies();
 		
-		if (!(SwampApiWrapper.fileExists(CSA_SESSION_OBJECT) && SwampApiWrapper.fileExists(RWS_SESSION_OBJECT) &&
-				SwampApiWrapper.fileExists(CSA_COOKIES) && SwampApiWrapper.fileExists(RWS_COOKIES))) {
+		if (!(SwampApiWrapper.fileExists(csaSessionObject) && SwampApiWrapper.fileExists(rwsSessionObbject) &&
+				SwampApiWrapper.fileExists(csaCookies) && SwampApiWrapper.fileExists(rwsCookies))) {
 			throw new SessionRestoreException("Could not locate session objects and cookies to recover the session");
 		}
 
 		try {
-			Session csa_session = (Session)deserialize(CSA_SESSION_OBJECT);
-			Session rws_session = (Session)deserialize(RWS_SESSION_OBJECT);
+			Session csa_session = (Session)deserialize(csaSessionObject);
+			Session rws_session = (Session)deserialize(rwsSessionObbject);
 			handlerFactory = new HandlerFactory(rws_session, csa_session);
 
-			CookieStore csa_cookie_store = (CookieStore)deserialize(CSA_COOKIES);
-			CookieStore rws_cookie_store = (CookieStore)deserialize(RWS_COOKIES);
+			CookieStore csa_cookie_store = (CookieStore)deserialize(csaCookies);
+			CookieStore rws_cookie_store = (CookieStore)deserialize(rwsCookies);
 
 			Date current_date = new Date();
 			if (csa_cookie_store.clearExpired(current_date) || rws_cookie_store.clearExpired(current_date)){
@@ -566,7 +565,7 @@ public class SwampApiWrapper {
      * that SWAMP UI understands
      * <p>
      *
-     * @param pkg_lang any one of: [Java, C, C++, Ruby, 
+     * @param pkgLang any one of: [Java, C, C++, Ruby, 
      * Python-2, Python-3, Javascript, CSS, XML, HTML, PHP]
      * @param pkg_lang_version: The version of language 
      * required at build time Example: java-7, java-8, ruby-2.0.0
@@ -577,31 +576,31 @@ public class SwampApiWrapper {
                         "Ruby Sinatra", "Ruby on Rails", "Ruby Padrino",
                         "Android .apk","Java 8 Source Code","Java 8 Bytecode"].
      */
-    public String getPkgTypeString(String pkg_lang,
-            String pkg_lang_version,
-            String pkg_build_sys,
-            String package_type) {
+    public String getPkgTypeString(String pkgLang,
+            String pkgLangVersion,
+            String pkgBuildSys,
+            String packageType) {
 
         String pkg_type = null;
 
-        if (pkg_build_sys.toLowerCase().equals("android-apk")) {
+        if (pkgBuildSys.toLowerCase().equals("android-apk")) {
             pkg_type = "Android .apk";
         }else {
-            if (pkg_lang != null) {
-                pkg_lang = pkg_lang.split(" ")[0];
+            if (pkgLang != null) {
+                pkgLang = pkgLang.split(" ")[0];
             }
-            switch (pkg_lang){
+            switch (pkgLang){
             case "Java":
-                if(pkg_build_sys.toLowerCase().startsWith("android")) {
+                if(pkgBuildSys.toLowerCase().startsWith("android")) {
                     pkg_type = "Android Java Source Code";
-                }else if(pkg_build_sys.toLowerCase().equals("java-bytecode")) {
-                    if (pkg_lang_version.toLowerCase().startsWith("java-7")) {
+                }else if(pkgBuildSys.toLowerCase().equals("java-bytecode")) {
+                    if (pkgLangVersion.toLowerCase().startsWith("java-7")) {
                         pkg_type = "Java 7 Bytecode";
                     }else {
                         pkg_type = "Java 8 Bytecode";
                     }
                 }else {
-                    if (pkg_lang_version.toLowerCase().startsWith("java-7")) {
+                    if (pkgLangVersion.toLowerCase().startsWith("java-7")) {
                         pkg_type = "Java 7 Source Code";
                     }else {
                         pkg_type = "Java 8 Source Code";
@@ -622,13 +621,13 @@ public class SwampApiWrapper {
                 pkg_type = "Python3";
                 break;
             case "Ruby":
-                if (package_type == null) {
+                if (packageType == null) {
                     pkg_type = "Ruby";
-                }else if (package_type.toLowerCase().equals("rails")) {
+                }else if (packageType.toLowerCase().equals("rails")) {
                     pkg_type = "Ruby on Rails";
-                }else if (package_type.toLowerCase().equals("sinatra")) {
+                }else if (packageType.toLowerCase().equals("sinatra")) {
                     pkg_type = "Ruby Sinatra";
-                }else if (package_type.toLowerCase().equals("padrino")) {
+                }else if (packageType.toLowerCase().equals("padrino")) {
                     pkg_type = "Ruby Padrino";
                 }
                 break;
@@ -651,7 +650,7 @@ public class SwampApiWrapper {
      * that SWAMP UI understands
      * <p>
      *
-     * @param pkg_lang any one of: [Java, C, C++, Ruby, 
+     * @param pkgLang any one of: [Java, C, C++, Ruby, 
      * Python-2, Python-3, Javascript, CSS, XML, HTML, PHP]
      * @param pkg_lang_version: The version of language 
      * required at build time Example: java-7, java-8, ruby-2.0.0
@@ -663,11 +662,11 @@ public class SwampApiWrapper {
                         "Android .apk": 11, "Java 8 Source Code": 12, 
                         "Java 8 Bytecode": 13, "Web Scripting": 14].
      */
-    public Integer getPkgTypeId(String pkg_lang,
-            String pkg_lang_version,
-            String pkg_build_sys,
-            String package_type) {
-        String pkg_type = getPkgTypeString(pkg_lang, pkg_lang_version, pkg_build_sys, package_type);
+    public Integer getPkgTypeId(String pkgLang,
+            String pkgLangVersion,
+            String pkgBuildSys,
+            String packageType) {
+        String pkg_type = getPkgTypeString(pkgLang, pkgLangVersion, pkgBuildSys, packageType);
         return getPackageTypes().get(pkg_type);
     }
 
@@ -716,39 +715,39 @@ public class SwampApiWrapper {
      * The keys in the map are what SWAMP API understands 
      * <p>
      *
-     *@param pkg_conf properties object of a package.conf file
+     *@param pkgConf properties object of a package.conf file
      *@return hash-map for package version configuration 
      */
-    protected ConversionMapImpl getPkgConfMap(Properties pkg_conf) {
+    protected ConversionMapImpl getPkgConfMap(Properties pkgConf) {
         ConversionMapImpl map = new ConversionMapImpl();
-        map.put("android_sdk_target", pkg_conf.getProperty("android-sdk-target", null));
-        map.put("android_lint_target", pkg_conf.getProperty("android-lint-target", null));
-        map.put("android_maven_plugin", pkg_conf.getProperty("android-maven-plugin", null));
-        map.put("android_redo_build", pkg_conf.getProperty("android-redo-build", "false"));
+        map.put("android_sdk_target", pkgConf.getProperty("android-sdk-target", null));
+        map.put("android_lint_target", pkgConf.getProperty("android-lint-target", null));
+        map.put("android_maven_plugin", pkgConf.getProperty("android-maven-plugin", null));
+        map.put("android_redo_build", pkgConf.getProperty("android-redo-build", "false"));
         
-        map.put("ant-version", pkg_conf.getProperty("ant-version", null));
+        map.put("ant-version", pkgConf.getProperty("ant-version", null));
 
-        map.put("build_cmd", pkg_conf.getProperty("build-cmd", null));
-        map.put("build_dir", pkg_conf.getProperty("build-dir", null));
-        map.put("build_file", pkg_conf.getProperty("build-file", null));
-        map.put("build_opt", pkg_conf.getProperty("build-opt", null));
-        map.put("build_system", pkg_conf.getProperty("build-sys", null));
-        map.put("build_target", pkg_conf.getProperty("build-target", null));
+        map.put("build_cmd", pkgConf.getProperty("build-cmd", null));
+        map.put("build_dir", pkgConf.getProperty("build-dir", null));
+        map.put("build_file", pkgConf.getProperty("build-file", null));
+        map.put("build_opt", pkgConf.getProperty("build-opt", null));
+        map.put("build_system", pkgConf.getProperty("build-sys", null));
+        map.put("build_target", pkgConf.getProperty("build-target", null));
         
-        map.put("config_cmd", pkg_conf.getProperty("config-cmd", null));
-        map.put("config_opt", pkg_conf.getProperty("config-opt", null));
-        map.put("config_dir", pkg_conf.getProperty("config-dir", null));
+        map.put("config_cmd", pkgConf.getProperty("config-cmd", null));
+        map.put("config_opt", pkgConf.getProperty("config-opt", null));
+        map.put("config_dir", pkgConf.getProperty("config-dir", null));
 
-        map.put("use_gradle_wrapper", pkg_conf.getProperty("gradle-wrapper", "false"));
-        map.put("maven_version", pkg_conf.getProperty("maven_version", null));
+        map.put("use_gradle_wrapper", pkgConf.getProperty("gradle-wrapper", "false"));
+        map.put("maven_version", pkgConf.getProperty("maven_version", null));
         
-        map.put("version_string", pkg_conf.getProperty("package-version"));
-        map.put("source_path", pkg_conf.getProperty("package-dir"));
+        map.put("version_string", pkgConf.getProperty("package-version"));
+        map.put("source_path", pkgConf.getProperty("package-dir"));
 
-        map.put("language_version", pkg_conf.getProperty("package-language-version", null));
-        map.put("bytecode_class_path", pkg_conf.getProperty("package-classpath", null));
-        map.put("bytecode_aux_class_path", pkg_conf.getProperty("package-auxclasspath", null));
-        map.put("bytecode_source_path", pkg_conf.getProperty("package-srcdir", null));
+        map.put("language_version", pkgConf.getProperty("package-language-version", null));
+        map.put("bytecode_class_path", pkgConf.getProperty("package-classpath", null));
+        map.put("bytecode_aux_class_path", pkgConf.getProperty("package-auxclasspath", null));
+        map.put("bytecode_source_path", pkgConf.getProperty("package-srcdir", null));
 
         return map;
     }
@@ -791,10 +790,10 @@ public class SwampApiWrapper {
 	 * @return project object
 	 * @throws InvalidIdentifierException if UUID provided is not a valid one
 	 */
-	public Project getProject(String project_uuid) {
-		Project project = getAllProjects().get(project_uuid);
+	public Project getProject(String projectUuid) {
+		Project project = getAllProjects().get(projectUuid);
 		if (project == null) {
-			throw new InvalidIdentifierException("Invalid project UUID: " + project_uuid);
+			throw new InvalidIdentifierException("Invalid project UUID: " + projectUuid);
 		}
 		return project;
 	}
@@ -806,13 +805,13 @@ public class SwampApiWrapper {
 	 * @return project object
 	 * @throws InvalidNameException if UUID provided is not a valid one
 	 */
-	public Project getProjectFromName (String project_name){
+	public Project getProjectFromName (String projectName){
 		for (Project project : getProjectsList()){	
-			if (project.getFullName().equals(project_name)){
+			if (project.getFullName().equals(projectName)){
 				return project;
 			}
 		}
-		throw new InvalidNameException("Invalid project name: " + project_name);
+		throw new InvalidNameException("Invalid project name: " + projectName);
 	}
 
 	/**
@@ -826,12 +825,12 @@ public class SwampApiWrapper {
 	 * 
 	 * @return the new package's version UUID
 	 */
-	public String uploadNewPackage(String pkg_conf_file, 
-			String pkg_archive_file, 
-			String project_uuid,
-			Map<String, String> os_dep_map) {
+	public String uploadNewPackage(String pkgConfFile, 
+			String pkgArchiveFile, 
+			String projectUuid,
+			Map<String, String> osDepMap) {
 		PackageHandler<? extends PackageThing> pkg_handler = handlerFactory.getPackageHandler();
-		Properties pkg_conf = getProp(pkg_conf_file);
+		Properties pkg_conf = getProp(pkgConfFile);
 
 		PackageThing pkg_thing = pkg_handler.create(pkg_conf.getProperty("package-short-name"),
 				pkg_conf.getProperty("package-description", "No Description Available"),
@@ -843,13 +842,13 @@ public class SwampApiWrapper {
 				pkg_conf.getProperty("package-language"));
 
 		ConversionMapImpl map = getPkgConfMap(pkg_conf);
-		map.put("project_uuid", project_uuid);
+		map.put("project_uuid", projectUuid);
 
 		PackageVersion pkg_version = handlerFactory.getPackageVersionHandler().create(pkg_thing,
-				new File(pkg_archive_file),
+				new File(pkgArchiveFile),
 				map);
 
-		addPackageDependencies(pkg_version, os_dep_map);
+		addPackageDependencies(pkg_version, osDepMap);
 
 		packageVersionMap = null;
 		packageMap = null;
@@ -875,14 +874,14 @@ public class SwampApiWrapper {
 	 * 
 	 * @return the new package's version UUID
 	 */
-	public String uploadPackageVersion(String pkg_conf_file, 
-			String pkg_archive_file, 
-			String project_uuid,
-			Map<String, String> os_dep_map) {
-		Properties pkg_conf = getProp(pkg_conf_file);
+	public String uploadPackageVersion(String pkgConfFile, 
+			String pkgArchiveFile, 
+			String projectUuid,
+			Map<String, String> osDepMap) {
+		Properties pkg_conf = getProp(pkgConfFile);
 		PackageThing pkg_thing = null;
 
-		for(PackageThing pkg : getAllPackages(project_uuid).values()){
+		for(PackageThing pkg : getAllPackages(projectUuid).values()){
 			if (pkg.getName().equals(pkg_conf.getProperty("package-short-name"))){
 				pkg_thing = pkg;
 				break;
@@ -890,15 +889,15 @@ public class SwampApiWrapper {
 		}
 
 		if (pkg_thing == null){
-			return uploadNewPackage(pkg_conf_file, pkg_archive_file, project_uuid, os_dep_map);
+			return uploadNewPackage(pkgConfFile, pkgArchiveFile, projectUuid, osDepMap);
 		}else{
 			ConversionMapImpl map = getPkgConfMap(pkg_conf);
-			map.put("project_uuid", project_uuid);
+			map.put("project_uuid", projectUuid);
 
 			PackageVersion pkg_version = handlerFactory.getPackageVersionHandler().create(pkg_thing,
-					new File(pkg_archive_file),
+					new File(pkgArchiveFile),
 					map);
-			addPackageDependencies(pkg_version, os_dep_map);
+			addPackageDependencies(pkg_version, osDepMap);
 			packageVersionMap = null;
 			//getAllPackageVersions(project_uuid);
 
@@ -924,18 +923,18 @@ public class SwampApiWrapper {
 	 * @return the new package's version UUID
 	 */
 
-	public String uploadPackage(String pkg_conf_file, 
-			String pkg_archive_file,
-			String project_uuid,
-			Map<String, String> os_dep_map,
-			boolean is_new) throws InvalidIdentifierException {
+	public String uploadPackage(String pkgConfFile, 
+			String pkgArchiveFile,
+			String projectUuid,
+			Map<String, String> osDepMap,
+			boolean isNew) throws InvalidIdentifierException {
 
-		getProject(project_uuid);
+		getProject(projectUuid);
 
-		if(is_new) {
-			return uploadNewPackage(pkg_conf_file, pkg_archive_file, project_uuid, os_dep_map);
+		if(isNew) {
+			return uploadNewPackage(pkgConfFile, pkgArchiveFile, projectUuid, osDepMap);
 		}else{
-			return uploadPackageVersion(pkg_conf_file, pkg_archive_file, project_uuid, os_dep_map);
+			return uploadPackageVersion(pkgConfFile, pkgArchiveFile, projectUuid, osDepMap);
 		}
 	}
 
@@ -953,18 +952,18 @@ public class SwampApiWrapper {
 	 * 
 	 * @throws InvalidIdentifierException if UUID provided is not a valid one
 	 */
-	protected void addPackageDependencies(PackageVersion package_version, Map<String, String> os_dep_map) {
-		if (os_dep_map != null){
+	protected void addPackageDependencies(PackageVersion packageVersion, Map<String, String> osDepMap) {
+		if (osDepMap != null){
 			
 			ConversionMapImpl dep_map = new ConversionMapImpl();
 
 			for (PlatformVersion platform_version : getAllPlatformVersionsList()) {
-				String deps = os_dep_map.get(platform_version.getDisplayString());
+				String deps = osDepMap.get(platform_version.getDisplayString());
 				if (deps != null) {
 					dep_map.put(platform_version.getIdentifierString(), deps);
 				}
 			}
-			handlerFactory.getPackageVersionHandler().addPackageVersionDependencies(package_version, dep_map);
+			handlerFactory.getPackageVersionHandler().addPackageVersionDependencies(packageVersion, dep_map);
 		}
 	}
 
@@ -977,17 +976,17 @@ public class SwampApiWrapper {
 	 * @return status: deleted or not deleted
 	 * @throws InvalidIdentifierException if UUID provided is not a valid one
 	 */
-	public boolean deletePackageVersion(String pkg_ver_uuid, String project_uuid) throws InvalidIdentifierException {
+	public boolean deletePackageVersion(String pkgVerUuid, String projectUuid) throws InvalidIdentifierException {
 
-		getProject(project_uuid);
+		getProject(projectUuid);
 
-		for(PackageVersion pkg_ver : getAllPackageVersions(project_uuid).values()){
-			if (pkg_ver.getUUIDString().equals(pkg_ver_uuid)){
+		for(PackageVersion pkg_ver : getAllPackageVersions(projectUuid).values()){
+			if (pkg_ver.getUUIDString().equals(pkgVerUuid)){
 				return deletePackageVersion(pkg_ver);
 			}
 		}
 
-		throw new InvalidIdentifierException("Invalid package version UUID: " + pkg_ver_uuid);
+		throw new InvalidIdentifierException("Invalid package version UUID: " + pkgVerUuid);
 	}
 
 	/**
@@ -998,15 +997,15 @@ public class SwampApiWrapper {
 	 * @return status: deleted or not deleted
 	 * @throws InvalidIdentifierException if UUID provided is not a valid one
 	 */
-	public boolean deletePackageVersion(String pkg_ver_uuid) throws InvalidIdentifierException {
+	public boolean deletePackageVersion(String pkgVerUuid) throws InvalidIdentifierException {
 
 		for(PackageVersion pkg_ver : getAllPackageVersions().values()){
-			if (pkg_ver.getUUIDString().equals(pkg_ver_uuid)){
+			if (pkg_ver.getUUIDString().equals(pkgVerUuid)){
 				return deletePackageVersion(pkg_ver);
 			}
 		}
 
-		throw new InvalidIdentifierException("Invalid package version UUID: " + pkg_ver_uuid);
+		throw new InvalidIdentifierException("Invalid package version UUID: " + pkgVerUuid);
 	}
 
 	/**
@@ -1016,11 +1015,11 @@ public class SwampApiWrapper {
 	 * 
 	 * @return status: deleted or not deleted
 	 */
-	public boolean deletePackageVersion(PackageVersion pkg_ver) throws InvalidIdentifierException {
-		boolean ret_val = handlerFactory.getPackageVersionHandler().deletePackageVersion(pkg_ver);
+	public boolean deletePackageVersion(PackageVersion pkgVer) throws InvalidIdentifierException {
+		boolean ret_val = handlerFactory.getPackageVersionHandler().deletePackageVersion(pkgVer);
 		if(ret_val) {
 			//packageVersionMap = null;
-			packageVersionMap.remove(pkg_ver.getIdentifierString());
+			packageVersionMap.remove(pkgVer.getIdentifierString());
 		}
 		return ret_val;
 	}
@@ -1034,17 +1033,17 @@ public class SwampApiWrapper {
 	 * @return status: deleted or not deleted
 	 * @throws InvalidIdentifierException if UUID provided is not a valid one
 	 */
-	public boolean deletePackage(String pkg_uuid, String project_uuid) throws InvalidIdentifierException {
+	public boolean deletePackage(String pkgUuid, String projectUuid) throws InvalidIdentifierException {
 
-		getProject(project_uuid);
+		getProject(projectUuid);
 
-		for(PackageThing pkg : getAllPackages(project_uuid).values()){
-			if (pkg.getUUIDString().equals(pkg_uuid)){
+		for(PackageThing pkg : getAllPackages(projectUuid).values()){
+			if (pkg.getUUIDString().equals(pkgUuid)){
 				return deletePackage(pkg);
 			}
 		}
 
-		throw new InvalidIdentifierException("Invalid package UUID: " + pkg_uuid);
+		throw new InvalidIdentifierException("Invalid package UUID: " + pkgUuid);
 	}
 
 	/**
@@ -1069,16 +1068,16 @@ public class SwampApiWrapper {
 	 *  
 	 *  @return hash-map of package-uuid, package object
 	 */
-	protected Map<String, PackageThing> getAllPackages(String project_uuid) {
-		if ((packageMap == null) || (!stringsAreEqual(cachedPkgProjectID, project_uuid))) {
-			cachedPkgProjectID = project_uuid;
+	protected Map<String, PackageThing> getAllPackages(String projectUuid) {
+		if ((packageMap == null) || (!stringsAreEqual(cachedPkgProjectID, projectUuid))) {
+			cachedPkgProjectID = projectUuid;
 			packageMap = new HashMap<String, PackageThing>();
-			if (project_uuid == null) {
+			if (projectUuid == null) {
 				for (PackageThing pkg : handlerFactory.getPackageHandler().getAll()){
 					packageMap.put(pkg.getUUIDString(), pkg);
 				}
 			}else {
-				for (PackageThing pkg : handlerFactory.getPackageHandler().getAll(getProject(project_uuid))){
+				for (PackageThing pkg : handlerFactory.getPackageHandler().getAll(getProject(projectUuid))){
 					packageMap.put(pkg.getUUIDString(), pkg);
 				}
 			}
@@ -1108,8 +1107,8 @@ public class SwampApiWrapper {
 	 *  @param project_uuid: project UUID
 	 *  @return hash-map of package-uuid, package object
 	 */
-	public List<PackageThing> getPackagesList(String project_uuid) {
-		List<PackageThing> pkg_list = new ArrayList<PackageThing>(getAllPackages(project_uuid).values());
+	public List<PackageThing> getPackagesList(String projectUuid) {
+		List<PackageThing> pkg_list = new ArrayList<PackageThing>(getAllPackages(projectUuid).values());
 
 		Collections.sort(pkg_list, new Comparator<PackageThing>() {
 			public int compare(PackageThing i1, PackageThing i2) {
@@ -1141,18 +1140,18 @@ public class SwampApiWrapper {
 	 *  @param project_uuid: project UUID
 	 *  @return hash-map of package-version-uuid, package version object
 	 */
-	protected Map<String, PackageVersion> getAllPackageVersions(String project_uuid) {
-		if ((packageVersionMap == null) || (!stringsAreEqual(cachedPkgVersionProjectID, project_uuid))) {
-			cachedPkgVersionProjectID = project_uuid;
+	protected Map<String, PackageVersion> getAllPackageVersions(String projectUuid) {
+		if ((packageVersionMap == null) || (!stringsAreEqual(cachedPkgVersionProjectID, projectUuid))) {
+			cachedPkgVersionProjectID = projectUuid;
 			packageVersionMap = new HashMap<String, PackageVersion>();
-			if (project_uuid == null) {
+			if (projectUuid == null) {
 				for (PackageThing pkg : handlerFactory.getPackageHandler().getAll()){
 					for (PackageVersion pkg_ver : handlerFactory.getPackageVersionHandler().getAll(pkg)) {
 						packageVersionMap.put(pkg_ver.getUUIDString(), pkg_ver);
 					}
 				}
 			}else {
-				for (PackageThing pkg : handlerFactory.getPackageHandler().getAll(getProject(project_uuid))){
+				for (PackageThing pkg : handlerFactory.getPackageHandler().getAll(getProject(projectUuid))){
 					for (PackageVersion pkg_ver : handlerFactory.getPackageVersionHandler().getAll(pkg)) {
 						packageVersionMap.put(pkg_ver.getUUIDString(), pkg_ver);
 					}
@@ -1186,8 +1185,8 @@ public class SwampApiWrapper {
 	 *  @param project_uuid: project UUID
 	 *  @return list of package version objects
 	 */
-	public List<PackageVersion> getPackageVersionsList(String project_uuid) {
-		List<PackageVersion> pkg_list = new ArrayList<PackageVersion>(getAllPackageVersions(project_uuid).values());
+	public List<PackageVersion> getPackageVersionsList(String projectUuid) {
+		List<PackageVersion> pkg_list = new ArrayList<PackageVersion>(getAllPackageVersions(projectUuid).values());
 
 		Collections.sort(pkg_list, new Comparator<PackageVersion>() {
 			public int compare(PackageVersion i1, PackageVersion i2) {
@@ -1240,11 +1239,11 @@ public class SwampApiWrapper {
 	 *  
 	 *  @return package version object
 	 */
-	public PackageVersion getPackageVersion(String pkg_ver_uuid, String project_uuid) {
-		PackageVersion pkg_ver = getAllPackageVersions(project_uuid).get(pkg_ver_uuid);
+	public PackageVersion getPackageVersion(String pkgVerUuid, String projectUuid) {
+		PackageVersion pkg_ver = getAllPackageVersions(projectUuid).get(pkgVerUuid);
 
 		if (pkg_ver == null) {
-			throw new InvalidIdentifierException("Invalid Package Version UUID: " + pkg_ver_uuid);
+			throw new InvalidIdentifierException("Invalid Package Version UUID: " + pkgVerUuid);
 		}
 		return pkg_ver;
 	}
@@ -1256,10 +1255,10 @@ public class SwampApiWrapper {
 	 *  
 	 *  @return hash-map of tool-uuid, tool object
 	 */
-	protected Map<String, Tool> getAllTools(String project_uuid) throws InvalidIdentifierException {
+	protected Map<String, Tool> getAllTools(String projectUuid) throws InvalidIdentifierException {
 
-		if ((toolMap == null) || (!stringsAreEqual(cachedToolProjectID, project_uuid))) {
-			cachedToolProjectID = project_uuid;
+		if ((toolMap == null) || (!stringsAreEqual(cachedToolProjectID, projectUuid))) {
+			cachedToolProjectID = projectUuid;
 			toolMap = new HashMap<String, Tool>();
 			for (Tool tool : handlerFactory.getToolHandler().getAll()) {
 				//if (tool.getPolicyCode() == null){    //FIXME: This is temporary
@@ -1267,8 +1266,8 @@ public class SwampApiWrapper {
 				//}
 			}
 
-			if (project_uuid != null){
-				Project proj = getProject(project_uuid);
+			if (projectUuid != null){
+				Project proj = getProject(projectUuid);
 
 				for (Tool tool : handlerFactory.getToolHandler().getAll(proj)) {
 					//if (tool.getPolicyCode() == null){    //FIXME: This is temporary
@@ -1294,17 +1293,17 @@ public class SwampApiWrapper {
 	 *  
 	 *  @return list of tool objects
 	 */
-	public List<Tool> getTools(String pkg_type, String project_uuid) throws InvalidIdentifierException {
+	public List<Tool> getTools(String pkgType, String projectUuid) throws InvalidIdentifierException {
 
-		if (!getPackageTypes().containsKey(pkg_type)){
+		if (!getPackageTypes().containsKey(pkgType)){
 			throw new InvalidIdentifierException(String.format("Package type '%s' is invalid, it must be one of %s",
-					pkg_type, getPackageTypes().keySet()));
+					pkgType, getPackageTypes().keySet()));
 		}
 
 		List<Tool> tool_list = new ArrayList<>();
-		Map<String, Tool> tool_map = getAllTools(project_uuid);
+		Map<String, Tool> tool_map = getAllTools(projectUuid);
 		for(String tool_uuid : tool_map.keySet()){
-			if (tool_map.get(tool_uuid).getSupportedPkgTypes().contains(pkg_type)){
+			if (tool_map.get(tool_uuid).getSupportedPkgTypes().contains(pkgType)){
 				tool_list.add(tool_map.get(tool_uuid));
 			}
 		}
@@ -1319,10 +1318,10 @@ public class SwampApiWrapper {
 	 *  
 	 *  @return tool object
 	 */
-	public Tool getTool(String tool_uuid, String project_uuid) throws InvalidIdentifierException {
-		Tool tool = getAllTools(project_uuid).get(tool_uuid);
+	public Tool getTool(String toolUuid, String projectUuid) throws InvalidIdentifierException {
+		Tool tool = getAllTools(projectUuid).get(toolUuid);
 		if (tool == null){
-			throw new InvalidIdentifierException("Invalid Tool UUID: " + tool_uuid);
+			throw new InvalidIdentifierException("Invalid Tool UUID: " + toolUuid);
 		}
 		return tool;
 	}
@@ -1335,12 +1334,12 @@ public class SwampApiWrapper {
 	 *  
 	 *  @return tool object
 	 */
-	public Tool getToolFromName (String tool_name, String project_uuid) throws InvalidIdentifierException {
-		Map<String,Tool> tool_list = getAllTools(project_uuid);
+	public Tool getToolFromName (String toolName, String projectUuid) throws InvalidIdentifierException {
+		Map<String,Tool> tool_list = getAllTools(projectUuid);
 		Iterator<Tool> tool_iterator = tool_list.values().iterator();
 		while (tool_iterator.hasNext()){
 			Tool next_tool = tool_iterator.next();
-			if (next_tool.getName().equals(tool_name)){
+			if (next_tool.getName().equals(toolName)){
 				return next_tool;
 			}
 		}
@@ -1465,8 +1464,8 @@ public class SwampApiWrapper {
 	 *  
 	 *  @return platform object
 	 */
-	public Platform getPlatform(String platform_uuid) {
-		return getAllPlatforms().get(platform_uuid);
+	public Platform getPlatform(String platformUuid) {
+		return getAllPlatforms().get(platformUuid);
 	}
 
 	/**
@@ -1522,10 +1521,10 @@ public class SwampApiWrapper {
 	 *  
 	 *  @return platform version object
 	 */
-	public PlatformVersion getPlatformVersion(String platform_version_uuid) {
-		PlatformVersion platform = getAllPlatformVersions().get(platform_version_uuid);
+	public PlatformVersion getPlatformVersion(String platformVersionUuid) {
+		PlatformVersion platform = getAllPlatformVersions().get(platformVersionUuid);
 		if (platform == null) {
-			throw new InvalidIdentifierException("Invalid Platform UUID: " + platform_version_uuid);
+			throw new InvalidIdentifierException("Invalid Platform UUID: " + platformVersionUuid);
 		}
 		return platform;
 	}
@@ -1538,17 +1537,17 @@ public class SwampApiWrapper {
 	 *  @return platform version object
 	 */
 
-	public PlatformVersion getPlatformVersionFromName (String platform_version_name) throws InvalidNameException  {
+	public PlatformVersion getPlatformVersionFromName (String platformVersionName) throws InvalidNameException  {
 		Map<String, PlatformVersion> platform_version_list = getAllPlatformVersions();
 		Iterator<PlatformVersion> platform_iterator = platform_version_list.values().iterator();
 		while (platform_iterator.hasNext()){
 			PlatformVersion next_platform = platform_iterator.next();
-			if (next_platform.getDisplayString().equals(platform_version_name)){
+			if (next_platform.getDisplayString().equals(platformVersionName)){
 				return next_platform;
 			}
 		}
 
-		throw new InvalidNameException(String.format("Platform %s does not exist.\n", platform_version_name));
+		throw new InvalidNameException(String.format("Platform %s does not exist.\n", platformVersionName));
 	}
 
 	/**
@@ -1563,9 +1562,9 @@ public class SwampApiWrapper {
 	 *  
 	 *  @return list of platform version object
 	 */
-	public List<PlatformVersion> getSupportedPlatformVersions(String tool_uuid, 
-			String project_uuid) {
-		Tool tool = getTool(tool_uuid, project_uuid);
+	public List<PlatformVersion> getSupportedPlatformVersions(String toolUuid, 
+			String projectUuid) {
+		Tool tool = getTool(toolUuid, projectUuid);
 		List<PlatformVersion> supported_platforms = new ArrayList<>();
 		for (PlatformVersion platform_version : new ArrayList<PlatformVersion>(getAllPlatformVersions().values())){
 			for (String supp_plat_name : tool.getSupportedPlatforms()){
@@ -1587,18 +1586,18 @@ public class SwampApiWrapper {
 	 *  
 	 *  @return platform version object
 	 */
-	public PlatformVersion getDefaultPlatformVersion(String pkg_type) {
+	public PlatformVersion getDefaultPlatformVersion(String pkgType) {
 
-		if(!getPackageTypesList().contains(pkg_type)) {
-			throw new InvalidIdentifierException(String.format("Invalid package type: %s", pkg_type));
+		if(!getPackageTypesList().contains(pkgType)) {
+			throw new InvalidIdentifierException(String.format("Invalid package type: %s", pkgType));
 		}
 
 		String default_platform_uuid;
 
 		try {
-			default_platform_uuid = handlerFactory.getPackageHandler().getDefaultPlatform(pkg_type);
+			default_platform_uuid = handlerFactory.getPackageHandler().getDefaultPlatform(pkgType);
 		}catch (JSONException e) {
-			throw new NoDefaultPlatformException("No default platform set for package type: " + pkg_type);
+			throw new NoDefaultPlatformException("No default platform set for package type: " + pkgType);
 		}
 
 		if (default_platform_uuid != null) {
@@ -1623,8 +1622,8 @@ public class SwampApiWrapper {
 	 *  
 	 *  @return list of assessments objects
 	 */
-	public List<AssessmentRun> getAllAssessments(String project_uuid) {
-		Project project = getProject(project_uuid);
+	public List<AssessmentRun> getAllAssessments(String projectUuid) {
+		Project project = getProject(projectUuid);
 		return (List<AssessmentRun>) handlerFactory.getAssessmentHandler().getAllAssessments(project);
 	}
 
@@ -1637,13 +1636,13 @@ public class SwampApiWrapper {
 	 *  @return assessments objects
 	 *  @throws InvalidIdentifierException Invalid assessment UUI
 	 */
-	public AssessmentRun getAssessment(String assess_uuid, String project_uuid) {
-		for (AssessmentRun arun : getAllAssessments(project_uuid)){
-			if (arun.getIdentifierString().equals(assess_uuid)){
+	public AssessmentRun getAssessment(String assessUuid, String projectUuid) {
+		for (AssessmentRun arun : getAllAssessments(projectUuid)){
+			if (arun.getIdentifierString().equals(assessUuid)){
 				return arun;
 			}
 		}
-		throw new InvalidIdentifierException("Invalid assessment UUID: " + assess_uuid);
+		throw new InvalidIdentifierException("Invalid assessment UUID: " + assessUuid);
 	}
 
 	/**
@@ -1667,14 +1666,14 @@ public class SwampApiWrapper {
 	 *  @return status: deleted or not
 	 *  @throws InvalidIdentifierException Invalid Assessment UUID
 	 */
-	public boolean deleteAssessment(String assess_uuid, String project_uuid) {
+	public boolean deleteAssessment(String assessUuid, String projectUuid) {
 
-		for (AssessmentRun arun : getAllAssessments(project_uuid)){
-			if (arun.getIdentifierString().equalsIgnoreCase(assess_uuid)) {
+		for (AssessmentRun arun : getAllAssessments(projectUuid)){
+			if (arun.getIdentifierString().equalsIgnoreCase(assessUuid)) {
 				return deleteAssessment(arun);
 			}
 		}
-		throw new InvalidIdentifierException("Invalid Assessment UUID: " + assess_uuid);
+		throw new InvalidIdentifierException("Invalid Assessment UUID: " + assessUuid);
 	}
 
 	/**
@@ -1692,22 +1691,22 @@ public class SwampApiWrapper {
 	 *  @throws IncompatibleAssessmentTupleException if a tool does not support a package type
 	 *  
 	 */
-	public List<String> runAssessment(String pkg_ver_uuid,
-			List<String> tool_uuid_list,
-			String project_uuid,
-			List<String> platform_uuid_list) throws IncompatibleAssessmentTupleException {
+	public List<String> runAssessment(String pkgVerUuid,
+			List<String> toolUuidList,
+			String projectUuid,
+			List<String> platformUuidList) throws IncompatibleAssessmentTupleException {
 		
-		PackageVersion pkg_ver = getPackageVersion(pkg_ver_uuid, project_uuid);
-		Project project = getProject(project_uuid);
+		PackageVersion pkg_ver = getPackageVersion(pkgVerUuid, projectUuid);
+		Project project = getProject(projectUuid);
 
 		List<PlatformVersion> platforms = new ArrayList<PlatformVersion>();
 
-		if (null == platform_uuid_list || platform_uuid_list.isEmpty()){
-			platform_uuid_list = new ArrayList<String>(); 
-			platform_uuid_list.add(getDefaultPlatformVersion(pkg_ver.getPackageThing().getType()).getUUIDString());
+		if (null == platformUuidList || platformUuidList.isEmpty()){
+			platformUuidList = new ArrayList<String>(); 
+			platformUuidList.add(getDefaultPlatformVersion(pkg_ver.getPackageThing().getType()).getUUIDString());
 		}
 
-		for (String platform_uuid: platform_uuid_list) {
+		for (String platform_uuid: platformUuidList) {
 			PlatformVersion platform_version = null;
 			if(platform_uuid == null) {
 				platform_version = getDefaultPlatformVersion(pkg_ver.getPackageThing().getType());
@@ -1715,8 +1714,8 @@ public class SwampApiWrapper {
 				platform_version = getPlatformVersion(platform_uuid);
 			}
 
-			for (String tool_uuid: tool_uuid_list) {
-				Tool tool = getTool(tool_uuid, project_uuid);
+			for (String tool_uuid: toolUuidList) {
+				Tool tool = getTool(tool_uuid, projectUuid);
 				
 				if (!tool.getSupportedPkgTypes().contains(pkg_ver.getPackageThing().getType())) {
 					throw new IncompatibleAssessmentTupleException(String.format("%s (%s) does not support this package type \"%s\"",
@@ -1736,8 +1735,8 @@ public class SwampApiWrapper {
 		}
 
 		List<Tool> tools = new ArrayList<Tool>();
-		for (String tool_uuid: tool_uuid_list) {
-			tools.add(getTool(tool_uuid, project_uuid));
+		for (String tool_uuid: toolUuidList) {
+			tools.add(getTool(tool_uuid, projectUuid));
 		}
 
 		List<AssessmentRun> arun_list = runAssessment(pkg_ver, tools, project, platforms);
@@ -1787,9 +1786,9 @@ public class SwampApiWrapper {
 	 *  
 	 */
 	protected List<AssessmentRun> runAssessment(PackageVersion pkg, List<Tool> tools, 
-			Project project, List<PlatformVersion> platform_versions) {
+			Project project, List<PlatformVersion> platformVersions) {
 		List<AssessmentRun> arun_list = new ArrayList<AssessmentRun>();
-		for (PlatformVersion platform_version : platform_versions) {
+		for (PlatformVersion platform_version : platformVersions) {
 			for (Tool tool : tools) {
 				arun_list.add(handlerFactory.getAssessmentHandler().create(project, pkg, platform_version, tool));
 			}
@@ -1814,12 +1813,12 @@ public class SwampApiWrapper {
      *  @return assessment run object
      *  
      */
-    public List<AssessmentRun> runAssessment(PackageVersion pkg, ToolVersion tool_version, Project project, 
-            List<PlatformVersion> platform_versions) {
+    public List<AssessmentRun> runAssessment(PackageVersion pkg, ToolVersion toolVersion, Project project, 
+            List<PlatformVersion> platformVersions) {
         
-        List<AssessmentRun> arun_list = new ArrayList<AssessmentRun>();
-        for (PlatformVersion platform_version : platform_versions) {
-            arun_list.add(handlerFactory.getAssessmentHandler().create(project, pkg, platform_version, tool_version));
+        List<AssessmentRun> arun_list = new ArrayList<AssessmentRun>(platformVersions.size());
+        for (PlatformVersion platform_version : platformVersions) {
+            arun_list.add(handlerFactory.getAssessmentHandler().create(project, pkg, platform_version, toolVersion));
         }
         if (handlerFactory.getRunRequestHandler().submitOneTimeRequest(arun_list, true)) {
             return arun_list;
@@ -1838,8 +1837,8 @@ public class SwampApiWrapper {
 	 *  @return list of assessment run objects
 	 *  
 	 */
-	protected List<? extends AssessmentResults> getAllAssessmentResults(String project_uuid) {
-		Project project = getProject(project_uuid);
+	protected List<? extends AssessmentResults> getAllAssessmentResults(String projectUuid) {
+		Project project = getProject(projectUuid);
 		return handlerFactory.getAssessmentResultHandler().getAll(project);
 	}
 
@@ -1853,11 +1852,11 @@ public class SwampApiWrapper {
 	 *  
 	 *  @throws IOException Exceptions when writing SCARF to a file
 	 */
-	public boolean getAssessmentResults(String project_uuid, String asssess_result_uuid, String filepath) 
+	public boolean getAssessmentResults(String projectUuid, String asssessResultUuid, String filepath) 
 			throws IOException {
 
-		for(AssessmentResults results : getAllAssessmentResults(project_uuid)){
-			if (results.getUUIDString().equals(asssess_result_uuid)) {
+		for(AssessmentResults results : getAllAssessmentResults(projectUuid)){
+			if (results.getUUIDString().equals(asssessResultUuid)) {
 				ByteArrayOutputStream data = (ByteArrayOutputStream)handlerFactory.getAssessmentResultHandler().getScarfResults(results);
 				if (data != null) {
 					OutputStream outputStream = new FileOutputStream(filepath);
@@ -1869,7 +1868,7 @@ public class SwampApiWrapper {
 			}
 		}
 		
-		throw new InvalidIdentifierException("Invalid Assessment Results UUID: " + asssess_result_uuid);
+		throw new InvalidIdentifierException("Invalid Assessment Results UUID: " + asssessResultUuid);
 	}
 
 	   /**
@@ -1880,12 +1879,12 @@ public class SwampApiWrapper {
      *  
      *  @throws IOException Exceptions when writing SCARF to a file
      */
-    public boolean getAssessmentResults(String asssess_result_uuid, String filepath) 
+    public boolean getAssessmentResults(String asssessResultUuid, String filepath) 
             throws IOException {
         
         for (Project project : getProjectsList()) {
             for(AssessmentResults results : getAllAssessmentResults(project.getIdentifierString())){
-                if (results.getUUIDString().equals(asssess_result_uuid)) {
+                if (results.getUUIDString().equals(asssessResultUuid)) {
                     ByteArrayOutputStream data = (ByteArrayOutputStream)handlerFactory.getAssessmentResultHandler().getScarfResults(results);
                     if (data != null) {
                         OutputStream outputStream = new FileOutputStream(filepath);
@@ -1898,7 +1897,7 @@ public class SwampApiWrapper {
             }
         }
         
-        throw new InvalidIdentifierException("Invalid Assessment Results UUID: " + asssess_result_uuid);
+        throw new InvalidIdentifierException("Invalid Assessment Results UUID: " + asssessResultUuid);
     }
 	/**
 	 * Get a list of all the assessment execution records associated with a project
@@ -1908,8 +1907,8 @@ public class SwampApiWrapper {
 	 *  @return list of assessment record objects  
 	 *  
 	 */
-	public List<? extends AssessmentRecord> getAllAssessmentRecords(String project_uuid) {
-		Project project = getProject(project_uuid);
+	public List<? extends AssessmentRecord> getAllAssessmentRecords(String projectUuid) {
+		Project project = getProject(projectUuid);
 		return handlerFactory.getassessmentRecordHandler().getExecutionRecords(project);
 	}
 
@@ -1922,15 +1921,15 @@ public class SwampApiWrapper {
   	 * @return assessment execution record
 	 *  
 	 */
-	public AssessmentRecord getAssessmentRecord(String project_uuid, String assessment_uuid){
+	public AssessmentRecord getAssessmentRecord(String projectUuid, String assessmentUuid){
 
-		for(AssessmentRecord assessment_record : getAllAssessmentRecords(project_uuid)) {
-			if (assessment_record.getAssessmentRunUUID().equals(assessment_uuid)){
+		for(AssessmentRecord assessment_record : getAllAssessmentRecords(projectUuid)) {
+			if (assessment_record.getAssessmentRunUUID().equals(assessmentUuid)){
 				return assessment_record;
 			}
 		}
 
-		throw new InvalidIdentifierException("Invalid Assessment UUID: " + assessment_uuid);
+		throw new InvalidIdentifierException("Invalid Assessment UUID: " + assessmentUuid);
 	}
 	
 	/**
@@ -1942,18 +1941,18 @@ public class SwampApiWrapper {
   	 * @return list of assessment execution records
 	 *  
 	 */
-	public List<AssessmentRecord> getAssessmentRecords(String project_uuid, String assessment_uuid){
+	public List<AssessmentRecord> getAssessmentRecords(String projectUuid, String assessmentUuid){
 		List<AssessmentRecord> execution_record_list = new ArrayList<AssessmentRecord>();
 		boolean found = false;
 		
-		for(AssessmentRecord assessment_record : getAllAssessmentRecords(project_uuid)) {
-			if (assessment_record.getAssessmentRunUUID().equals(assessment_uuid)){
+		for(AssessmentRecord assessment_record : getAllAssessmentRecords(projectUuid)) {
+			if (assessment_record.getAssessmentRunUUID().equals(assessmentUuid)){
 				execution_record_list.add(assessment_record);
 			}
 		}
 
 		if (!found) {
-			throw new InvalidIdentifierException("Invalid Assessment UUID: " + assessment_uuid);
+			throw new InvalidIdentifierException("Invalid Assessment UUID: " + assessmentUuid);
 		}
 		
 		return execution_record_list;
@@ -1967,8 +1966,8 @@ public class SwampApiWrapper {
 	 *  @return status: deleted or not  
 	 *  
 	 */
-	public boolean deleteAssessmentRecord(AssessmentRecord assessment_record){
-		return handlerFactory.getassessmentRecordHandler().deleteAssessmentRecord(assessment_record);
+	public boolean deleteAssessmentRecord(AssessmentRecord assessmentRecord){
+		return handlerFactory.getassessmentRecordHandler().deleteAssessmentRecord(assessmentRecord);
 	}
 	
 	/**
@@ -1980,13 +1979,13 @@ public class SwampApiWrapper {
 	 *  @return status: deleted or not  
 	 *  
 	 */
-	public boolean deleteAssessmentRecord(String assessment_uuid, String project_uuid){
+	public boolean deleteAssessmentRecord(String assessmentUuid, String projectUuid){
 		//TODO: public boolean deleteAssessmentRecord(String project_uuid, String assessment_uuid){
 		boolean found = false;
 		boolean not_deleted = false;
 		
-		for(AssessmentRecord assessment_record : getAllAssessmentRecords(project_uuid)) {
-			if (assessment_record.getAssessmentRunUUID().equals(assessment_uuid)){
+		for(AssessmentRecord assessment_record : getAllAssessmentRecords(projectUuid)) {
+			if (assessment_record.getAssessmentRunUUID().equals(assessmentUuid)){
 				if (!deleteAssessmentRecord(assessment_record)) {
 					not_deleted = true;
 				};
@@ -1995,7 +1994,7 @@ public class SwampApiWrapper {
 		}
 
 		if (!found) {
-			throw new InvalidIdentifierException("Invalid Assessment UUID: " + assessment_uuid);
+			throw new InvalidIdentifierException("Invalid Assessment UUID: " + assessmentUuid);
 		}
 		return not_deleted;
 	}

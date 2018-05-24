@@ -76,7 +76,12 @@ public class Cli {
     protected static final String SC_PLATFORMS = "platforms";
     protected static final String SC_STATUS = "status";
     
-    //for backwards compatibility
+    protected static final String LINE_SEP = "------------------------------------------------------------------------";
+    
+    protected static final Logger LOGGER = Logger.getLogger(Cli.class);
+    protected static final String DEFAULT_PROJECT = "MyProject";
+
+   //for backwards compatibility
     protected static final ArrayList<String> DISPLAY_COMMANDS = new ArrayList<String>(Arrays.asList(
             SC_LOGIN, 
             SC_LOGOUT, 
@@ -108,27 +113,24 @@ public class Cli {
             SC_STATUS,
             "user"));
 
-    static final Logger LOGGER = Logger.getLogger(Cli.class);
-    protected static final String DEFAULT_PROJECT = "MyProject";
-
-    SwampApiWrapper apiWrapper;
+    protected SwampApiWrapper apiWrapper;
 
     public static void printHelp() {
-        System.out.println("------------------------------------------------------------------------");
+        System.out.println(LINE_SEP);
         System.out.println("Usage: <program> <sub-command> <options>");
-        System.out.println("------------------------------------------------------------------------");
+        System.out.println(LINE_SEP);
         System.out.println("<sub-command> must be one of the following:");
         //for (String cmd :  COMMANDS) {
         for (String cmd :  DISPLAY_COMMANDS) {
             System.out.println("\t" + cmd);
         }
-        System.out.println("------------------------------------------------------------------------");
+        System.out.println(LINE_SEP);
         System.out.println("For information on the <options> for a <sub-command> execute:");
         System.out.println("\t<program> <sub-command> --help or <program> <sub-command> -H");
-        System.out.println("------------------------------------------------------------------------");
+        System.out.println(LINE_SEP);
         System.out.println("For version: <program> --version or <program> -V");
         System.out.println("For help: <program> --help or <program> -H");
-        System.out.println("------------------------------------------------------------------------");
+        System.out.println(LINE_SEP);
     }
 
     private static void printVersion() {
@@ -286,11 +288,8 @@ public class Cli {
         }else if (parsed_options.hasOption("F") || parsed_options.hasOption("C") ) {
             HashMap<String, Object> cred_map = new HashMap<String, Object>();
 
-            if (parsed_options.hasOption("Q")){
-                cred_map.put("quiet", true);
-            }else {
-                cred_map.put("quiet", false);
-            }
+            cred_map.put("quiet", parsed_options.hasOption("Q"));
+            
             cred_map.put("swamp-host", parsed_options.getOptionValue("S", SwampApiWrapper.SWAMP_HOST_NAME));
 
             if (parsed_options.hasOption("F")) {
@@ -906,11 +905,7 @@ public class Cli {
         }else {
             HashMap<String, Object> cred_map = new HashMap<String, Object>();
             cred_map.put(SC_LOGOUT, SC_LOGOUT);
-            if (parsed_options.hasOption("Q")){
-                cred_map.put("quiet", true);
-            }else {
-                cred_map.put("quiet", false);
-            }
+            cred_map.put("quiet", parsed_options.hasOption("Q"));
             return cred_map;
         }
 
@@ -1133,7 +1128,7 @@ public class Cli {
                     "Project",
                     "Description",
                     "Date Added"));
-            System.out.println("------------------------------------------------------------------------");
+            System.out.println(LINE_SEP);
             
             for(Project proj : apiWrapper.getProjectsList()) {
                 System.out.println(String.format("%-37s %-25s %-40s %-15s", 
@@ -1147,7 +1142,7 @@ public class Cli {
                     "Project",
                     "Description",
                     "Date Added"));
-            System.out.println("------------------------------------------------------------------------");
+            System.out.println(LINE_SEP);
             
             for(Project proj : apiWrapper.getProjectsList()) {
                 System.out.println(String.format("%-25s %-40s %-15s", 
@@ -1177,7 +1172,7 @@ public class Cli {
         if (optMap.get("sub-command").equals("list")) {
             if ((boolean)optMap.get("verbose")) {
                 System.out.println(String.format("%-37s %-30s", "UUID", "Platform"));
-                System.out.println("------------------------------------------------------------------------");
+                System.out.println(LINE_SEP);
                 
                 for (PlatformVersion platform_version : apiWrapper.getAllPlatformVersionsList()){
                     System.out.println(String.format("%-37s %-30s",
@@ -1187,7 +1182,7 @@ public class Cli {
             }else {
                 if (!(boolean)optMap.get("quiet")) {
                     System.out.println("Platform");
-                    System.out.println("------------------------------------------------------------------------");
+                    System.out.println(LINE_SEP);
                 }
                 for (PlatformVersion platform_version : apiWrapper.getAllPlatformVersionsList()){
                     System.out.println(platform_version.getDisplayString());
@@ -1312,7 +1307,7 @@ public class Cli {
 
         if (!quiet){
             System.out.println("Package Version UUID");
-            System.out.println("------------------------------------------------------------------------");
+            System.out.println(LINE_SEP);
         }
 
         System.out.println(package_uuid);
@@ -1389,7 +1384,7 @@ public class Cli {
         }else if(verbose) {
             System.out.println(String.format("%-37s %-25s %-40s %-25s %-25s",
                     "UUID", "Package", "Description","Type", "Version"));
-            System.out.println("------------------------------------------------------------------------");
+            System.out.println(LINE_SEP);
             
             for(PackageThing pkg : apiWrapper.getPackagesList(project)) {
                 if (pkgType == null ||
@@ -1408,7 +1403,7 @@ public class Cli {
         }else {
             System.out.println(String.format("%-25s %-40s %-25s %-25s",
                     "Package", "Description","Type", "Version"));
-            System.out.println("------------------------------------------------------------------------");
+            System.out.println(LINE_SEP);
             
             for(PackageThing pkg : apiWrapper.getPackagesList(project)) {
                 if (pkgType == null ||
@@ -1819,7 +1814,7 @@ public class Cli {
         if (assessment_run.size() > 0) {
             if (!quiet) {
                 System.out.println("Assessment UUID");
-                System.out.println("------------------------------------------------------------------------");
+                System.out.println(LINE_SEP);
             }
             for (AssessmentRun arun : assessment_run) {
                 System.out.println(arun.getUUIDString()); 
@@ -1849,11 +1844,11 @@ public class Cli {
         if (verbose) {
             System.out.println(String.format("%-37s %-40s %-30s %-20s",
                     "UUID", "Package", "Tool","Platform"));
-            System.out.println("------------------------------------------------------------------------");
+            System.out.println(LINE_SEP);
         }else if (!quiet) {
             System.out.println(String.format("%-40s %-30s %-20s",
                     "Package", "Tool","Platform"));
-            System.out.println("------------------------------------------------------------------------");
+            System.out.println(LINE_SEP);
         }		
 
         for (AssessmentRun arun : all_assessments) {
@@ -2098,11 +2093,11 @@ public class Cli {
         if (verbose) {
             System.out.println(String.format("%-37s %-40s %-30s %-20s %-20s %-20s %10s",
                     "Assessment Result UUID", "Package", "Tool","Platform", "Date", "Status", "Results"));
-            System.out.println("------------------------------------------------------------------------");
+            System.out.println(LINE_SEP);
         }else if (!quiet) {
             System.out.println(String.format("%-40s %-30s %-20s %-20s %-20s %10s",
                     "Package", "Tool", "Platform", "Date", "Status", "Results"));
-            System.out.println("------------------------------------------------------------------------");
+            System.out.println(LINE_SEP);
         }
 
         for (AssessmentRecord arun : all_results) {
@@ -2225,7 +2220,7 @@ public class Cli {
                     "Tool",
                     "Version",
                     "Supported Package Types"));
-            System.out.println("------------------------------------------------------------------------");
+            System.out.println(LINE_SEP);
             
             for(Tool tool : apiWrapper.getAllTools(project.getUUIDString()).values()) {
                 for (ToolVersion tool_version : apiWrapper.getToolVersions(tool)) {
@@ -2241,7 +2236,7 @@ public class Cli {
                     "Tool",
                     "Version",
                     "Supported Package Types"));
-            System.out.println("------------------------------------------------------------------------");
+            System.out.println(LINE_SEP);
             
             for(Tool tool : apiWrapper.getAllTools(project.getUUIDString()).values()) {
                 for (ToolVersion tool_version : apiWrapper.getToolVersions(tool)) {
@@ -2266,7 +2261,7 @@ public class Cli {
                     "Package Name", "Package Version",
                     "Tool Name", "Tool Version",
                     "Platform Name", "Platform Version"));
-            System.out.println("------------------------------------------------------------------------");
+            System.out.println(LINE_SEP);
             
             for (AssessmentRun arun : apiWrapper.getAllAssessments(projectUuid)){
 
@@ -2322,7 +2317,7 @@ public class Cli {
             if (!quiet) {
                 System.out.println(String.format("%-15s %-15s %-37s", 
                         "Status", "Weakness", "Assessments Result UUID"));
-                System.out.println("------------------------------------------------------------------------");
+                System.out.println(LINE_SEP);
             }
             
             System.out.println(String.format("%-15s %-15d %-37s", 

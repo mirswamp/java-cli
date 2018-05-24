@@ -788,12 +788,6 @@ In case of errors or exceptions the Java CLI program returns the following exit 
 
 == Building from Sources
 
-Clone https://github.com/mirswamp/java-api.git, and run the following commands to build `java-api`:
-```
-cd java-api
-mvn install -DskipTests
-```
-
 Clone https://github.com/mirswamp/java-cli.git, and run the following commands to build `java-cli`:
 ```
 cd java-cli
