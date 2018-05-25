@@ -302,9 +302,9 @@ public class SwampApiWrapper {
     /**
      * Login into SWAMP
      *
-     * @param user_name: SWAMP Instance's user name
+     * @param userName: SWAMP Instance's user name
      * @param password: SWAMP Instance's password 
-     * @param host_name: SWAMP Instance's host name
+     * @param hostName: SWAMP Instance's host name
      *   
      * @return SWAMP user-id
      * @throws MalformedURLException 
@@ -318,10 +318,11 @@ public class SwampApiWrapper {
     /**
      * Login into SWAMP
      *
-     * @param user_name: SWAMP Instance's user name
+     * @param userName: SWAMP Instance's user name
      * @param password: SWAMP Instance's password 
-     * @param host_name: SWAMP Instance's host name
+     * @param hostName: SWAMP Instance's host name
      * @param proxy: http[s] proxy setting to connect to SWAMP
+     * @param keystore: Path to the keystore file with certificactes
      * @return SWAMP user-id
      * @throws MalformedURLException 
      */
@@ -565,12 +566,10 @@ public class SwampApiWrapper {
      * that SWAMP UI understands
      * <p>
      *
-     * @param pkgLang any one of: [Java, C, C++, Ruby, 
-     * Python-2, Python-3, Javascript, CSS, XML, HTML, PHP]
-     * @param pkg_lang_version: The version of language 
-     * required at build time Example: java-7, java-8, ruby-2.0.0
-     * @param pkg_build_sys: Package build system, see package.conf documentation
-     * @param package_type: Package application type, valid only for ruby: Any one of [sinatra, rails, padrino]  
+     * @param pkgLang any one of: [Java, C, C++, Ruby, Python-2, Python-3, Javascript, CSS, XML, HTML, PHP]
+     * @param pkgLangVersion: The version of language required at build time Example: java-7, java-8, ruby-2.0.0
+     * @param pkgBuildSys: Package build system, see package.conf documentation
+     * @param packageType: Package application type, valid only for ruby: Any one of [sinatra, rails, padrino]  
      * @return One of ["C/C++", "Java 7 Source Code", "Java 7 Bytecode",
                         "Python2", "Python3", "Android Java Source Code", "Ruby",
                         "Ruby Sinatra", "Ruby on Rails", "Ruby Padrino",
@@ -650,12 +649,10 @@ public class SwampApiWrapper {
      * that SWAMP UI understands
      * <p>
      *
-     * @param pkgLang any one of: [Java, C, C++, Ruby, 
-     * Python-2, Python-3, Javascript, CSS, XML, HTML, PHP]
-     * @param pkg_lang_version: The version of language 
-     * required at build time Example: java-7, java-8, ruby-2.0.0
-     * @param pkg_build_sys: Package build system, see package.conf documentation
-     * @param package_type: Package application type, valid only for ruby: Any one of [sinatra, rails, padrino]  
+     * @param pkgLang any one of: [Java, C, C++, Ruby, Python-2, Python-3, Javascript, CSS, XML, HTML, PHP]
+     * @param pkgLangVersion: The version of language required at build time Example: java-7, java-8, ruby-2.0.0
+     * @param pkgBuildSys: Package build system, see package.conf documentation
+     * @param packageType: Package application type, valid only for ruby: Any one of [sinatra, rails, padrino]  
      * @return One of ["C/C++": 1 , "Java 7 Source Code": 2, "Java 7 Bytecode": 3,
                         "Python2": 4, "Python3": 5, "Android Java Source Code": 6, "Ruby": 7,
                         "Ruby Sinatra": 8, "Ruby on Rails": 9, "Ruby Padrino": 10,
@@ -786,7 +783,7 @@ public class SwampApiWrapper {
 	/**
 	 * Gets a project object from a project UUID string
 	 *
-	 * @param project_uuid: project UUID string
+	 * @param projectUuid: project UUID string
 	 * @return project object
 	 * @throws InvalidIdentifierException if UUID provided is not a valid one
 	 */
@@ -801,7 +798,7 @@ public class SwampApiWrapper {
 	/**
 	 * Gets a project object from a project name string
 	 *
-	 * @param project_name: project name
+	 * @param projectName: project name
 	 * @return project object
 	 * @throws InvalidNameException if UUID provided is not a valid one
 	 */
@@ -817,10 +814,10 @@ public class SwampApiWrapper {
 	/**
 	 * Upload a new software package
 	 *
-	 * @param pkg_conf_file: Path for the package.conf file for the package
-	 * @param pkg_archive_file: Path to the package archive 
-	 * @param project_uuid: UUID for the project that this package must be associated with
-	 * @param os_dep_map: hash-map of the OS dependencies 
+	 * @param pkgConfFile: Path for the package.conf file for the package
+	 * @param pkgArchiveFile: Path to the package archive 
+	 * @param projectUuid: UUID for the project that this package must be associated with
+	 * @param osDepMap: hash-map of the OS dependencies 
 	 * Example: (key, value) = (ubuntu-16.04-64=libsqlite3-dev libmysqlclient-dev)
 	 * 
 	 * @return the new package's version UUID
@@ -866,10 +863,10 @@ public class SwampApiWrapper {
 	 * a new package is created
 	 * <p>
 	 *
-	 * @param pkg_conf_file: Path for the package.conf file for the package
-	 * @param pkg_archive_file: Path to the package archive 
-	 * @param project_uuid: UUID for the project that this package must be associated with
-	 * @param os_dep_map: hash-map of the OS dependencies 
+	 * @param pkgConfFile: Path for the package.conf file for the package
+	 * @param pkgArchiveFile: Path to the package archive 
+	 * @param projectUuid: UUID for the project that this package must be associated with
+	 * @param osDepMap: hash-map of the OS dependencies 
 	 * Example: (key, value) = (ubuntu-16.04-64=libsqlite3-dev libmysqlclient-dev)
 	 * 
 	 * @return the new package's version UUID
@@ -913,12 +910,11 @@ public class SwampApiWrapper {
 	 * a new package is created
 	 * <p>
 	 *
-	 * @param pkg_conf_file: Path for the package.conf file for the package
-	 * @param pkg_archive_file: Path to the package archive 
-	 * @param project_uuid: UUID for the project that this package must be associated with
-	 * @param os_dep_map: hash-map of the OS dependencies
-	 * Example: (key, value) = (ubuntu-16.04-64=libsqlite3-dev libmysqlclient-dev)
-	 * @param is_new: flag to explictly say that this should be stored as a new package 
+	 * @param pkgConfFile: Path for the package.conf file for the package
+	 * @param pkgArchiveFile: Path to the package archive 
+	 * @param projectUuid: UUID for the project that this package must be associated with
+	 * @param osDepMap: hash-map of the OS dependencies Example: (key, value) = (ubuntu-16.04-64=libsqlite3-dev libmysqlclient-dev)
+	 * @param isNew: flag to explictly say that this should be stored as a new package 
 	 * 
 	 * @return the new package's version UUID
 	 */
@@ -946,8 +942,8 @@ public class SwampApiWrapper {
 	 * by specifying OS dependencies
 	 * <p>
 	 *
-	 * @param package_version: PackageVersion object for the package
-	 * @param os_dep_map: hash-map of the OS dependencies
+	 * @param packageVersion: PackageVersion object for the package
+	 * @param osDepMap: hash-map of the OS dependencies
 	 * Example: (key, value) = (ubuntu-16.04-64=libsqlite3-dev libmysqlclient-dev)
 	 * 
 	 * @throws InvalidIdentifierException if UUID provided is not a valid one
@@ -970,8 +966,8 @@ public class SwampApiWrapper {
 	/**
 	 * Delete a version of a package
 	 *
-	 * @param pkg_ver_uuid: package version UUID
-	 * @param project_uuid: project UUID
+	 * @param pkgVerUuid: package version UUID
+	 * @param projectUuid: project UUID
 	 * 
 	 * @return status: deleted or not deleted
 	 * @throws InvalidIdentifierException if UUID provided is not a valid one
@@ -992,7 +988,7 @@ public class SwampApiWrapper {
 	/**
 	 * Delete a version of a package
 	 *
-	 * @param pkg_ver_uuid: package version UUID
+	 * @param pkgVerUuid: package version UUID
 	 * 
 	 * @return status: deleted or not deleted
 	 * @throws InvalidIdentifierException if UUID provided is not a valid one
@@ -1011,7 +1007,7 @@ public class SwampApiWrapper {
 	/**
 	 * Delete a version of a package
 	 *
-	 * @param pkg_ver: package version object
+	 * @param pkgVer: package version object
 	 * 
 	 * @return status: deleted or not deleted
 	 */
@@ -1027,8 +1023,8 @@ public class SwampApiWrapper {
 	/**
 	 * Delete a package with all its versions
 	 *
-	 * @param pkg_uuid: package UUID
-	 * @param project_uuid: project UUID
+	 * @param pkgUuid: package UUID
+	 * @param projectUuid: project UUID
 	 * 
 	 * @return status: deleted or not deleted
 	 * @throws InvalidIdentifierException if UUID provided is not a valid one
@@ -1064,7 +1060,7 @@ public class SwampApiWrapper {
 	/**
 	 * Get a hash-map of all the packages of a project
 	 *
-	 *  @param project_uuid: project UUID
+	 *  @param projectUuid: project UUID
 	 *  
 	 *  @return hash-map of package-uuid, package object
 	 */
@@ -1104,7 +1100,7 @@ public class SwampApiWrapper {
 	/**
 	 * Get a list of all the packages in a project
 	 * 
-	 *  @param project_uuid: project UUID
+	 *  @param projectUuid: project UUID
 	 *  @return hash-map of package-uuid, package object
 	 */
 	public List<PackageThing> getPackagesList(String projectUuid) {
@@ -1137,7 +1133,7 @@ public class SwampApiWrapper {
 	/**
 	 * Get a hash-map of all the package versions in a project
 	 *  
-	 *  @param project_uuid: project UUID
+	 *  @param projectUuid: project UUID
 	 *  @return hash-map of package-version-uuid, package version object
 	 */
 	protected Map<String, PackageVersion> getAllPackageVersions(String projectUuid) {
@@ -1182,7 +1178,7 @@ public class SwampApiWrapper {
 	/**
 	 * Get a list of all the package versions in a project
 	 *  
-	 *  @param project_uuid: project UUID
+	 *  @param projectUuid: project UUID
 	 *  @return list of package version objects
 	 */
 	public List<PackageVersion> getPackageVersionsList(String projectUuid) {
@@ -1234,8 +1230,8 @@ public class SwampApiWrapper {
 	/**
 	 * Get a package version object
 	 *  
-	 *  @param pkg_ver_uuid: package version UUID
-	 *  @param project_uuid: project UUID
+	 *  @param pkgVerUuid: package version UUID
+	 *  @param projectUuid: project UUID
 	 *  
 	 *  @return package version object
 	 */
@@ -1251,7 +1247,7 @@ public class SwampApiWrapper {
 	/**
 	 * Get a hash-map of all the tools along with any project specific tools
 	 *  
-	 *  @param project_uuid: project UUID (for project specific tools)
+	 *  @param projectUuid: project UUID (for project specific tools)
 	 *  
 	 *  @return hash-map of tool-uuid, tool object
 	 */
@@ -1288,8 +1284,8 @@ public class SwampApiWrapper {
 	/**
 	 * Get a list of tools provided package type and project uuid (for project specific tools)
 	 *  
-	 *  @param pkg_type: should be one of the Key return by the API getPackageTypes
-	 *  @param project_uuid: project UUID (for project specific tools)
+	 *  @param pkgType: should be one of the Key return by the API getPackageTypes
+	 *  @param projectUuid: project UUID (for project specific tools)
 	 *  
 	 *  @return list of tool objects
 	 */
@@ -1313,8 +1309,8 @@ public class SwampApiWrapper {
 	/**
 	 * Get a tool object
 	 *  
-	 *  @param tool_uuid: tool UUID
-	 *  @param project_uuid: project UUID (for project specific tools)
+	 *  @param toolUuid: tool UUID
+	 *  @param projectUuid: project UUID (for project specific tools)
 	 *  
 	 *  @return tool object
 	 */
@@ -1329,8 +1325,8 @@ public class SwampApiWrapper {
 	/**
 	 * Get a tool object from tool name
 	 *  
-	 *  @param tool_name: name of a tool
-	 *  @param project_uuid: project UUID (for project specific tools)
+	 *  @param toolName: name of a tool
+	 *  @param projectUuid: project UUID (for project specific tools)
 	 *  
 	 *  @return tool object
 	 */
@@ -1460,7 +1456,7 @@ public class SwampApiWrapper {
 	/**
 	 * Get the platform object given the platform UUID
 	 *  
-	 *  @param platform_uuid: platform UUID
+	 *  @param platformUuid: platform UUID
 	 *  
 	 *  @return platform object
 	 */
@@ -1517,7 +1513,7 @@ public class SwampApiWrapper {
 	/**
 	 * Get the platform version object given the platform UUID
 	 *  
-	 *  @param platform_version_uuid: platform version UUID
+	 *  @param platformVersionUuid: platform version UUID
 	 *  
 	 *  @return platform version object
 	 */
@@ -1532,7 +1528,7 @@ public class SwampApiWrapper {
 	/**
 	 * Get the platform version object given the platform name
 	 *  
-	 *  @param platform_version_name: platform version name
+	 *  @param platformVersionName: platform version name
 	 *  
 	 *  @return platform version object
 	 */
@@ -1557,8 +1553,8 @@ public class SwampApiWrapper {
 	 * a list of platform version objects that a given tool can run on
 	 * <p>
 	 *  
-	 *  @param tool_uuid: tool UUID
-	 *  @param project_uuid: project UUID
+	 *  @param toolUuid: tool UUID
+	 *  @param projectUuid: project UUID
 	 *  
 	 *  @return list of platform version object
 	 */
@@ -1582,7 +1578,7 @@ public class SwampApiWrapper {
 	 * Each package type has a default platform version assigned to it 
 	 * <p>
 	 *  
-	 *  @param pkg_type: must be one of the values retured by getPackageTypesList()
+	 *  @param pkgType: must be one of the values retured by getPackageTypesList()
 	 *  
 	 *  @return platform version object
 	 */
@@ -1618,7 +1614,7 @@ public class SwampApiWrapper {
 	/**
 	 * Gets the list of assessment objects that are assigned to a project
 	 *  
-	 *  @param project_uuid: project UUID
+	 *  @param projectUuid: project UUID
 	 *  
 	 *  @return list of assessments objects
 	 */
@@ -1630,8 +1626,8 @@ public class SwampApiWrapper {
 	/**
 	 * Gets the list of assessment objects that are assigned to a project
 	 *  
-	 *  @param assess_uuid: assessment UUID
-	 *  @param project_uuid: project UUID
+	 *  @param assessUuid: assessment UUID
+	 *  @param projectUuid: project UUID
 	 *  
 	 *  @return assessments objects
 	 *  @throws InvalidIdentifierException Invalid assessment UUI
@@ -1660,8 +1656,8 @@ public class SwampApiWrapper {
 	/**
 	 * Delete an assessment
 	 *  
-	 *  @param assess_uuid: assessment run UUID
-	 *  @param project_uuid: project UUID
+	 *  @param assessUuid: assessment run UUID
+	 *  @param projectUuid: project UUID
 	 *  
 	 *  @return status: deleted or not
 	 *  @throws InvalidIdentifierException Invalid Assessment UUID
@@ -1682,10 +1678,10 @@ public class SwampApiWrapper {
 	 *  This method creates multiple assessments on a package with 
 	 *  multiple tools on multiple platforms
 	 *  
-	 *  @param pkg_ver_uuid: package version UUID
-	 *  @param tool_uuid_list: list of tool UUIDs
-	 *  @param project_uuid: project UUID
-	 *  @param platform_uuid_list: list of platform UUIDs
+	 *  @param pkgVerUuid: package version UUID
+	 *  @param toolUuidList: list of tool UUIDs
+	 *  @param projectUuid: project UUID
+	 *  @param platformUuidList: list of platform UUIDs
 	 *  
 	 *  @return list of assessment UUIDs
 	 *  @throws IncompatibleAssessmentTupleException if a tool does not support a package type
@@ -1780,7 +1776,7 @@ public class SwampApiWrapper {
 	 *  @param pkg: package version object
 	 *  @param tools: list of tool object
 	 *  @param project: project object
-	 *  @param platform_versions: list of platform object
+	 *  @param platformVersions: list of platform object
 	 *  
 	 *  @return list of assessment run objects
 	 *  
@@ -1806,9 +1802,9 @@ public class SwampApiWrapper {
      *  
      *  
      *  @param pkg: package version object
-     *  @param tool: tool object
+     *  @param toolVersion: tool object
      *  @param project: project object
-     *  @param platform: platform object
+     *  @param platformVersions: platform object
      *  
      *  @return assessment run object
      *  
@@ -1832,7 +1828,7 @@ public class SwampApiWrapper {
 	 * Get all assessment results objects in a project
 	 *  
 	 *  
-	 *  @param project_uuid: project UUID
+	 *  @param projectUuid: project UUID
 	 *  
 	 *  @return list of assessment run objects
 	 *  
@@ -1846,8 +1842,8 @@ public class SwampApiWrapper {
 	 * Write SCARF results from an assessment into a file
 	 *  
 	 *  
-	 *  @param project_uuid: project UUID
-	 *  @param asssess_result_uuid: asssess_result_uuid UUID
+	 *  @param projectUuid: project UUID
+	 *  @param asssessResultUuid: asssess_result_uuid UUID
 	 *  @param filepath: filepath to write to  
 	 *  
 	 *  @throws IOException Exceptions when writing SCARF to a file
@@ -1874,7 +1870,7 @@ public class SwampApiWrapper {
 	   /**
      * Write SCARF results from an assessment into a file
      *  
-     *  @param asssess_result_uuid: asssess_result_uuid UUID
+     *  @param asssessResultUuid: asssess_result_uuid UUID
      *  @param filepath: filepath to write to  
      *  
      *  @throws IOException Exceptions when writing SCARF to a file
@@ -1902,7 +1898,7 @@ public class SwampApiWrapper {
 	/**
 	 * Get a list of all the assessment execution records associated with a project
 	 *  
-	 *  @param project_uuid: project UUID
+	 *  @param projectUuid: project UUID
 	 *  
 	 *  @return list of assessment record objects  
 	 *  
@@ -1915,8 +1911,8 @@ public class SwampApiWrapper {
 	/**
 	 * Get a single assessment execution record of an assessment run
 	 *  
-	 *  @param project_uuid: project UUID
-	 *  @param assessment_uuid: assessment UUID 
+	 *  @param projectUuid: project UUID
+	 *  @param assessmentUuid: assessment UUID 
 	 *  
   	 * @return assessment execution record
 	 *  
@@ -1935,8 +1931,8 @@ public class SwampApiWrapper {
 	/**
 	 * Get all the assessment execution records of an assessment run
 	 *  
-	 *  @param project_uuid: project UUID
-	 *  @param assessment_uuid: assessment UUID 
+	 *  @param projectUuid: project UUID
+	 *  @param assessmentUuid: assessment UUID 
 	 *  
   	 * @return list of assessment execution records
 	 *  
@@ -1961,42 +1957,13 @@ public class SwampApiWrapper {
 	/**
 	 * Delete an assessment execution record
 	 *  
-	 *  @param assessment_record: assessment execution record object
+	 *  @param assessmentRecord: assessment execution record object
 	 *  
 	 *  @return status: deleted or not  
 	 *  
 	 */
 	public boolean deleteAssessmentRecord(AssessmentRecord assessmentRecord){
 		return handlerFactory.getassessmentRecordHandler().deleteAssessmentRecord(assessmentRecord);
-	}
-	
-	/**
-	 * Delete assessment execution records of an assessment run
-	 *  
-	 *  @param project_uuid: project UUID
-	 *  @param assessment_uuid: assessment UUID 
-	 *  
-	 *  @return status: deleted or not  
-	 *  
-	 */
-	public boolean deleteAssessmentRecord(String assessmentUuid, String projectUuid){
-		//TODO: public boolean deleteAssessmentRecord(String project_uuid, String assessment_uuid){
-		boolean found = false;
-		boolean not_deleted = false;
-		
-		for(AssessmentRecord assessment_record : getAllAssessmentRecords(projectUuid)) {
-			if (assessment_record.getAssessmentRunUUID().equals(assessmentUuid)){
-				if (!deleteAssessmentRecord(assessment_record)) {
-					not_deleted = true;
-				};
-				found = true;
-			}
-		}
-
-		if (!found) {
-			throw new InvalidIdentifierException("Invalid Assessment UUID: " + assessmentUuid);
-		}
-		return not_deleted;
 	}
 
 }

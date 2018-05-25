@@ -62,7 +62,8 @@ import java.util.regex.Pattern;
 
 public class Cli {
 
-    protected static final String VERSION = "1.5.0";
+    protected static final String PROGRAM = "swamp";
+    protected static final String VERSION = "1.5.1";
     protected static final String VERSION_SEPERATOR = "::";
     
     //Sub Commands
@@ -162,13 +163,17 @@ public class Cli {
 
         if (option.hasArg()) {
 
-            return String.format("Missing options/arguments: [(-%s|--%s) <%s>]\n",
+            return String.format("Missing options/arguments: [(%s%s|%s%s) <%s>]\n",
+                    HelpFormatter.DEFAULT_OPT_PREFIX,
                     option.getOpt(),
+                    HelpFormatter.DEFAULT_LONG_OPT_PREFIX,
                     option.getLongOpt(),
                     option.getArgName());
         }else {
-            return String.format("Missing options/arguments: [(-%s|--%s) ]\n",
+            return String.format("Missing options/arguments: [(%s%s|%s%s) ]\n",
+                    HelpFormatter.DEFAULT_OPT_PREFIX,
                     option.getOpt(),
+                    HelpFormatter.DEFAULT_LONG_OPT_PREFIX,
                     option.getLongOpt());
         }
     }
@@ -178,8 +183,8 @@ public class Cli {
         
         for(Option opt : mainOptions.getOptions()) {
 
-            String short_opt_str = "-" + opt.getOpt();
-            String long_opt_str = "--" + opt.getLongOpt();
+            String short_opt_str = HelpFormatter.DEFAULT_OPT_PREFIX + opt.getOpt();
+            String long_opt_str = HelpFormatter.DEFAULT_LONG_OPT_PREFIX + opt.getLongOpt();
 
             if (args.contains(short_opt_str) || (opt.hasLongOpt() && args.contains(long_opt_str))) {
                 String opt_str = short_opt_str;
@@ -282,14 +287,13 @@ public class Cli {
         if (parsed_options.hasOption("help")) {
             HelpFormatter formatter = new HelpFormatter();
             formatter.printHelp(new PrintWriter(System.out, true), 120, 
-                    cmdName + "", 
+                    String.format("%s %s", PROGRAM, cmdName), 
                     "", options, 4, 4, "", true);
             return null;
         }else if (parsed_options.hasOption("F") || parsed_options.hasOption("C") ) {
             HashMap<String, Object> cred_map = new HashMap<String, Object>();
 
             cred_map.put("quiet", parsed_options.hasOption("Q"));
-            
             cred_map.put("swamp-host", parsed_options.getOptionValue("S", SwampApiWrapper.SWAMP_HOST_NAME));
 
             if (parsed_options.hasOption("F")) {
@@ -371,12 +375,12 @@ public class Cli {
         CommandLine main_options = new DefaultParser().parse(options, args.toArray(new String[0]), true);
         if (main_options.hasOption("help") || args.contains("-H") || args.contains("--help")) {
             HelpFormatter formatter = new HelpFormatter();
-            formatter.printHelp("sub-commands", options, true);
+            formatter.printHelp(String.format("%s %s <main option> [<additional arguments OR options...>]\nmain options:", PROGRAM, cmdName), options);
             formatter.printHelp(new PrintWriter(System.out, true), 120, 
-                    cmdName + " --" + options.getOption("-L").getLongOpt(), 
+                    String.format("%s %s %s", PROGRAM, cmdName, formatter.DEFAULT_LONG_OPT_PREFIX +  options.getOption("-L").getLongOpt()), 
                     "", list_options, 4, 4, "", true);
             formatter.printHelp(new PrintWriter(System.out, true), 120,
-                    cmdName + " --" + options.getOption("-U").getLongOpt(), 
+                    String.format("%s %s %s", PROGRAM, cmdName, formatter.DEFAULT_LONG_OPT_PREFIX +  options.getOption("-U").getLongOpt()), 
                     "", uuid_options, 4, 4, "", true);
             return null;
         }
@@ -465,12 +469,12 @@ public class Cli {
 
         if (main_options.hasOption("help") || args.contains("-H") || args.contains("--help")) {
             HelpFormatter formatter = new HelpFormatter();
-            formatter.printHelp("sub-commands", options, true);
+            formatter.printHelp(String.format("%s %s <main option> [<additional arguments OR options...>]\nmain options:", PROGRAM, cmdName), options);
             formatter.printHelp(new PrintWriter(System.out, true), 120, 
-                    cmdName + " --" + options.getOption("-L").getLongOpt(), 
+                    String.format("%s %s %s", PROGRAM, cmdName, formatter.DEFAULT_LONG_OPT_PREFIX +  options.getOption("-L").getLongOpt()), 
                     "", list_options, 4, 4, "", true);
             formatter.printHelp(new PrintWriter(System.out, true), 120, 
-                    cmdName + " --" + options.getOption("-D").getLongOpt(), 
+                    String.format("%s %s %s", PROGRAM, cmdName, formatter.DEFAULT_LONG_OPT_PREFIX +  options.getOption("-D").getLongOpt()), 
                     "", download_options, 4, 4, "", true);
             return null;
         }
@@ -635,18 +639,18 @@ public class Cli {
         CommandLine main_options = new DefaultParser().parse(options, args.toArray(new String[0]), true);
         if (main_options.hasOption("help") || args.contains("-H") || args.contains("--help")) {
             HelpFormatter formatter = new HelpFormatter();
-            formatter.printHelp("sub-commands", options, true);
+            formatter.printHelp(String.format("%s %s <main option> [<additional arguments OR options...>]\nmain options:", PROGRAM, cmdName), options);
             formatter.printHelp(new PrintWriter(System.out, true), 120, 
-                    cmdName + " --" + options.getOption("-D").getLongOpt(), 
+                    String.format("%s %s %s", PROGRAM, cmdName, formatter.DEFAULT_LONG_OPT_PREFIX + options.getOption("-D").getLongOpt()), 
                     "", delete_options, 4, 4, "", true);
             formatter.printHelp(new PrintWriter(System.out, true), 120, 
-                    cmdName + " --" + options.getOption("-L").getLongOpt(), 
+                    String.format("%s %s %s", PROGRAM, cmdName, formatter.DEFAULT_LONG_OPT_PREFIX +  options.getOption("-L").getLongOpt()), 
                     "", list_options, 4, 4, "", true);
             formatter.printHelp(new PrintWriter(System.out, true), 120, 
-                    cmdName + " --" + options.getOption("-T").getLongOpt(), 
+                    String.format("%s %s %s", PROGRAM, cmdName, formatter.DEFAULT_LONG_OPT_PREFIX +  options.getOption("-T").getLongOpt()), 
                     "", new Options(), 4, 4, "", true);
             formatter.printHelp(new PrintWriter(System.out, true), 120,
-                    cmdName + " --" + options.getOption("-U").getLongOpt(), 
+                    String.format("%s %s %s", PROGRAM, cmdName, formatter.DEFAULT_LONG_OPT_PREFIX +  options.getOption("-U").getLongOpt()), 
                     "", upload_options, 4, 4, "", true);
             return null;
         }
@@ -795,12 +799,12 @@ public class Cli {
         CommandLine main_options = new DefaultParser().parse(options, args.toArray(new String[0]), true);
         if (main_options.hasOption("help") || args.contains("-H") || args.contains("--help")) {
             HelpFormatter formatter = new HelpFormatter();
-            formatter.printHelp("sub-commands", options, true);
+            formatter.printHelp(String.format("%s %s <main option> [<additional arguments OR options...>]\nmain options:", PROGRAM, cmdName), options);
             formatter.printHelp(new PrintWriter(System.out, true), 120, 
-                    cmdName + " --" + options.getOption("-L").getLongOpt(), 
+                    String.format("%s %s %s", PROGRAM, cmdName, formatter.DEFAULT_LONG_OPT_PREFIX +  options.getOption("-L").getLongOpt()), 
                     "", list_options, 4, 4, "", true);
             formatter.printHelp(new PrintWriter(System.out, true), 120,
-                    cmdName + " --" + options.getOption("-U").getLongOpt(), 
+                    String.format("%s %s %s", PROGRAM, cmdName, formatter.DEFAULT_LONG_OPT_PREFIX +  options.getOption("-U").getLongOpt()), 
                     "", uuid_options, 4, 4, "", true);
             return null;
         }
@@ -861,12 +865,12 @@ public class Cli {
         CommandLine main_options = new DefaultParser().parse(options, args.toArray(new String[0]), true);
         if (main_options.hasOption("help") || args.contains("-H") || args.contains("--help")) {
             HelpFormatter formatter = new HelpFormatter();
-            formatter.printHelp("sub-commands", options, true);
+            formatter.printHelp(String.format("%s %s <main option> [<additional arguments OR options...>]\nmain options:", PROGRAM, cmdName), options);
             formatter.printHelp(new PrintWriter(System.out, true), 120, 
-                    cmdName + " --" + options.getOption("-L").getLongOpt(), 
+                    String.format("%s %s %s", PROGRAM, cmdName, formatter.DEFAULT_LONG_OPT_PREFIX +  options.getOption("-L").getLongOpt()), 
                     "", list_options, 4, 4, "", true);
             formatter.printHelp(new PrintWriter(System.out, true), 120,
-                    cmdName + " --" + options.getOption("-U").getLongOpt(), 
+                    String.format("%s %s %s", PROGRAM, cmdName, formatter.DEFAULT_LONG_OPT_PREFIX +  options.getOption("-U").getLongOpt()), 
                     "", uuid_options, 4, 4, "", true);
             return null;
         }
@@ -971,12 +975,12 @@ public class Cli {
         CommandLine main_options = new DefaultParser().parse(options, args.toArray(new String[0]), true);
         if (main_options.hasOption("help") || args.contains("-H") || args.contains("--help")) {
             HelpFormatter formatter = new HelpFormatter();
-            formatter.printHelp("sub-commands", options, true);
+            formatter.printHelp(String.format("%s %s <main option> [<additional arguments OR options...>]\nmain options:", PROGRAM, cmdName), options);
             formatter.printHelp(new PrintWriter(System.out, true), 120, 
-                    cmdName + " --" + options.getOption("-L").getLongOpt(), 
+                    String.format("%s %s %s", PROGRAM, cmdName, formatter.DEFAULT_LONG_OPT_PREFIX +  options.getOption("-L").getLongOpt()), 
                     "", list_options, 4, 4, "", true);
             formatter.printHelp(new PrintWriter(System.out, true), 120, 
-                    cmdName + " --" + options.getOption("-R").getLongOpt(), 
+                    String.format("%s %s %s", PROGRAM, cmdName, formatter.DEFAULT_LONG_OPT_PREFIX +  options.getOption("-R").getLongOpt()), 
                     "", run_options, 4, 4, "", true);
             return null;
         }
