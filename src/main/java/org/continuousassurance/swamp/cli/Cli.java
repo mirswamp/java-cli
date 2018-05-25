@@ -377,10 +377,10 @@ public class Cli {
             HelpFormatter formatter = new HelpFormatter();
             formatter.printHelp(String.format("%s %s <main option> [<additional arguments OR options...>]\nmain options:", PROGRAM, cmdName), options);
             formatter.printHelp(new PrintWriter(System.out, true), 120, 
-                    String.format("%s %s %s", PROGRAM, cmdName, formatter.DEFAULT_LONG_OPT_PREFIX +  options.getOption("-L").getLongOpt()), 
+                    String.format("%s %s %s", PROGRAM, cmdName, HelpFormatter.DEFAULT_LONG_OPT_PREFIX +  options.getOption("-L").getLongOpt()), 
                     "", list_options, 4, 4, "", true);
             formatter.printHelp(new PrintWriter(System.out, true), 120,
-                    String.format("%s %s %s", PROGRAM, cmdName, formatter.DEFAULT_LONG_OPT_PREFIX +  options.getOption("-U").getLongOpt()), 
+                    String.format("%s %s %s", PROGRAM, cmdName, HelpFormatter.DEFAULT_LONG_OPT_PREFIX +  options.getOption("-U").getLongOpt()), 
                     "", uuid_options, 4, 4, "", true);
             return null;
         }
@@ -471,10 +471,10 @@ public class Cli {
             HelpFormatter formatter = new HelpFormatter();
             formatter.printHelp(String.format("%s %s <main option> [<additional arguments OR options...>]\nmain options:", PROGRAM, cmdName), options);
             formatter.printHelp(new PrintWriter(System.out, true), 120, 
-                    String.format("%s %s %s", PROGRAM, cmdName, formatter.DEFAULT_LONG_OPT_PREFIX +  options.getOption("-L").getLongOpt()), 
+                    String.format("%s %s %s", PROGRAM, cmdName, HelpFormatter.DEFAULT_LONG_OPT_PREFIX +  options.getOption("-L").getLongOpt()), 
                     "", list_options, 4, 4, "", true);
             formatter.printHelp(new PrintWriter(System.out, true), 120, 
-                    String.format("%s %s %s", PROGRAM, cmdName, formatter.DEFAULT_LONG_OPT_PREFIX +  options.getOption("-D").getLongOpt()), 
+                    String.format("%s %s %s", PROGRAM, cmdName, HelpFormatter.DEFAULT_LONG_OPT_PREFIX +  options.getOption("-D").getLongOpt()), 
                     "", download_options, 4, 4, "", true);
             return null;
         }
@@ -641,16 +641,16 @@ public class Cli {
             HelpFormatter formatter = new HelpFormatter();
             formatter.printHelp(String.format("%s %s <main option> [<additional arguments OR options...>]\nmain options:", PROGRAM, cmdName), options);
             formatter.printHelp(new PrintWriter(System.out, true), 120, 
-                    String.format("%s %s %s", PROGRAM, cmdName, formatter.DEFAULT_LONG_OPT_PREFIX + options.getOption("-D").getLongOpt()), 
+                    String.format("%s %s %s", PROGRAM, cmdName, HelpFormatter.DEFAULT_LONG_OPT_PREFIX + options.getOption("-D").getLongOpt()), 
                     "", delete_options, 4, 4, "", true);
             formatter.printHelp(new PrintWriter(System.out, true), 120, 
-                    String.format("%s %s %s", PROGRAM, cmdName, formatter.DEFAULT_LONG_OPT_PREFIX +  options.getOption("-L").getLongOpt()), 
+                    String.format("%s %s %s", PROGRAM, cmdName, HelpFormatter.DEFAULT_LONG_OPT_PREFIX +  options.getOption("-L").getLongOpt()), 
                     "", list_options, 4, 4, "", true);
             formatter.printHelp(new PrintWriter(System.out, true), 120, 
-                    String.format("%s %s %s", PROGRAM, cmdName, formatter.DEFAULT_LONG_OPT_PREFIX +  options.getOption("-T").getLongOpt()), 
+                    String.format("%s %s %s", PROGRAM, cmdName, HelpFormatter.DEFAULT_LONG_OPT_PREFIX +  options.getOption("-T").getLongOpt()), 
                     "", new Options(), 4, 4, "", true);
             formatter.printHelp(new PrintWriter(System.out, true), 120,
-                    String.format("%s %s %s", PROGRAM, cmdName, formatter.DEFAULT_LONG_OPT_PREFIX +  options.getOption("-U").getLongOpt()), 
+                    String.format("%s %s %s", PROGRAM, cmdName, HelpFormatter.DEFAULT_LONG_OPT_PREFIX +  options.getOption("-U").getLongOpt()), 
                     "", upload_options, 4, 4, "", true);
             return null;
         }
@@ -801,10 +801,10 @@ public class Cli {
             HelpFormatter formatter = new HelpFormatter();
             formatter.printHelp(String.format("%s %s <main option> [<additional arguments OR options...>]\nmain options:", PROGRAM, cmdName), options);
             formatter.printHelp(new PrintWriter(System.out, true), 120, 
-                    String.format("%s %s %s", PROGRAM, cmdName, formatter.DEFAULT_LONG_OPT_PREFIX +  options.getOption("-L").getLongOpt()), 
+                    String.format("%s %s %s", PROGRAM, cmdName, HelpFormatter.DEFAULT_LONG_OPT_PREFIX +  options.getOption("-L").getLongOpt()), 
                     "", list_options, 4, 4, "", true);
             formatter.printHelp(new PrintWriter(System.out, true), 120,
-                    String.format("%s %s %s", PROGRAM, cmdName, formatter.DEFAULT_LONG_OPT_PREFIX +  options.getOption("-U").getLongOpt()), 
+                    String.format("%s %s %s", PROGRAM, cmdName, HelpFormatter.DEFAULT_LONG_OPT_PREFIX +  options.getOption("-U").getLongOpt()), 
                     "", uuid_options, 4, 4, "", true);
             return null;
         }
@@ -867,10 +867,10 @@ public class Cli {
             HelpFormatter formatter = new HelpFormatter();
             formatter.printHelp(String.format("%s %s <main option> [<additional arguments OR options...>]\nmain options:", PROGRAM, cmdName), options);
             formatter.printHelp(new PrintWriter(System.out, true), 120, 
-                    String.format("%s %s %s", PROGRAM, cmdName, formatter.DEFAULT_LONG_OPT_PREFIX +  options.getOption("-L").getLongOpt()), 
+                    String.format("%s %s %s", PROGRAM, cmdName, HelpFormatter.DEFAULT_LONG_OPT_PREFIX +  options.getOption("-L").getLongOpt()), 
                     "", list_options, 4, 4, "", true);
             formatter.printHelp(new PrintWriter(System.out, true), 120,
-                    String.format("%s %s %s", PROGRAM, cmdName, formatter.DEFAULT_LONG_OPT_PREFIX +  options.getOption("-U").getLongOpt()), 
+                    String.format("%s %s %s", PROGRAM, cmdName, HelpFormatter.DEFAULT_LONG_OPT_PREFIX +  options.getOption("-U").getLongOpt()), 
                     "", uuid_options, 4, 4, "", true);
             return null;
         }
@@ -977,10 +977,10 @@ public class Cli {
             HelpFormatter formatter = new HelpFormatter();
             formatter.printHelp(String.format("%s %s <main option> [<additional arguments OR options...>]\nmain options:", PROGRAM, cmdName), options);
             formatter.printHelp(new PrintWriter(System.out, true), 120, 
-                    String.format("%s %s %s", PROGRAM, cmdName, formatter.DEFAULT_LONG_OPT_PREFIX +  options.getOption("-L").getLongOpt()), 
+                    String.format("%s %s %s", PROGRAM, cmdName, HelpFormatter.DEFAULT_LONG_OPT_PREFIX +  options.getOption("-L").getLongOpt()), 
                     "", list_options, 4, 4, "", true);
             formatter.printHelp(new PrintWriter(System.out, true), 120, 
-                    String.format("%s %s %s", PROGRAM, cmdName, formatter.DEFAULT_LONG_OPT_PREFIX +  options.getOption("-R").getLongOpt()), 
+                    String.format("%s %s %s", PROGRAM, cmdName, HelpFormatter.DEFAULT_LONG_OPT_PREFIX +  options.getOption("-R").getLongOpt()), 
                     "", run_options, 4, 4, "", true);
             return null;
         }
@@ -2282,20 +2282,6 @@ public class Cli {
             for (AssessmentRun arun : apiWrapper.getAllAssessments(projectUuid)){
                 System.out.println(arun.getUUIDString());
             }
-        }
-    }
-
-    public void printAssessment(String assessmentUuid, String projectUuid) {
-        AssessmentRun arun = apiWrapper.getAssessment(assessmentUuid, projectUuid);
-        if (arun == null){
-            System.out.println("Assessment " + assessmentUuid + " not found. Please verify the UUID");
-        }else{
-            System.out.println("Assessment Results on " + arun.getIdentifierString());
-            System.out.println("Package: \t" + (arun.getPkg() == null ? "N/A" : arun.getPkg().getName()));
-            System.out.println("Project: \t" + (arun.getProject() == null ? "N/A" : arun.getProject().getFullName()));
-            System.out.println("Tool:    \t" + (arun.getTool() == null ? "N/A" : arun.getTool().getName()));
-            //TODO: this must be platform version
-            System.out.println("Platform:\t" + (arun.getPlatform() == null ? "N/A" : arun.getPlatform().getName()));
         }
     }
 
