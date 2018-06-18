@@ -57,6 +57,7 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
+import javax.net.ssl.SSLHandshakeException;
 
 /**
  * <p>Created by Jeff Gaynor<br>
@@ -383,13 +384,21 @@ public class SWAMPHttpClient implements Serializable {
             releaseConnection(client, response);
             return myResponse;
 
+        } catch (SSLHandshakeException e) {
+            Throwable ee = e.getCause();
+            
+            if (ee != null && ee.getClass() == sun.security.validator.ValidatorException.class) {
+                e.printStackTrace(); 
+                throw new GeneralException("Server may have a self-signed certificate", e);
+            }
+            
         } catch (IOException e) {
-            e.printStackTrace();     // TODO: don't print the stack trace
+            e.printStackTrace(); 
             throw new GeneralException("Error invoking http client", e);
         } finally {
             clientPool.destroy(client);
         }
-
+        return null;
     }
 
     protected JSON toJSON(String raw) {

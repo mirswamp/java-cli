@@ -24,6 +24,9 @@ import static edu.uiuc.ncsa.security.core.configuration.Configurations.getFirstA
  * on 4/11/16 at  9:41 AM
  */
 public class SWAMPConfigurationLoader<T extends SWAMPServiceEnvironment> extends LoggingConfigLoader<T> implements SWAMPConfigTags {
+    
+    static final String CONFIG_RESOURCE = "config/config.json";
+    
     public SWAMPConfigurationLoader(ConfigurationNode node) {
         super(node);
     }
@@ -152,7 +155,7 @@ public class SWAMPConfigurationLoader<T extends SWAMPServiceEnvironment> extends
           SSLConfiguration sslConfiguration = new SSLConfiguration();
           sslConfiguration.setUseDefaultJavaTrustStore(true);
           SWAMPHttpClient client = new SWAMPHttpClient(serverURL,sslConfiguration, getProxy());
-          MyResponse raw = client.rawGet(serverURL + "config/config.json");
+          MyResponse raw = client.rawGet(serverURL + CONFIG_RESOURCE);
           String version = null;
           if(raw.hasJSON()){
               if(raw.json.containsKey("version")){
@@ -195,7 +198,7 @@ public class SWAMPConfigurationLoader<T extends SWAMPServiceEnvironment> extends
 
             //sslConfiguration.setUseDefaultJavaTrustStore(true);
             SWAMPHttpClient client = new SWAMPHttpClient(serverURL,sslConfiguration, proxy);
-            MyResponse raw = client.rawGet(serverURL + "config/config.json");
+            MyResponse raw = client.rawGet(serverURL + CONFIG_RESOURCE);
             String webServerURL = null;
             if(raw.hasJSON()){
                 if(raw.json.containsKey("servers")){

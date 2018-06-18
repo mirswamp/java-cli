@@ -31,9 +31,11 @@ import org.continuousassurance.swamp.session.util.ConversionMapImpl;
 import org.continuousassurance.swamp.session.util.Proxy;
 import org.continuousassurance.swamp.session.util.SWAMPConfigurationLoader;
 import org.continuousassurance.swamp.util.HandlerFactoryUtil;
+import org.apache.http.client.utils.URIBuilder;
 
 import java.io.*;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
@@ -204,6 +206,15 @@ public class SwampApiWrapper {
         String web_server = SWAMPConfigurationLoader.getWebServiceURL(hostName, sslConfig, proxy);
 		if (web_server == null) {
 			web_server = hostName;
+		}else {
+		   try {
+		       // Throws an exception if web_server is not a URL
+            URL web_server_url = new URL(web_server);
+            } catch (MalformedURLException e) {
+                URI uri = URI.create(hostName);
+                URI uri2 = uri.resolve(web_server.startsWith("/") ? web_server : "/" + web_server);
+                web_server = uri2.toString();
+    		}
 		}
 		
 		setRwsAddress(web_server);
