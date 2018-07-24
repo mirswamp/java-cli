@@ -16,23 +16,29 @@ import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CookieStore;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.config.CookieSpecs;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.*;
 import org.apache.http.client.protocol.HttpClientContext;
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.cookie.Cookie;
+import org.apache.http.cookie.CookieSpec;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.entity.mime.HttpMultipartMode;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.protocol.HTTP;
 import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.http.util.EntityUtils;
+import org.apache.log4j.Logger;
+import org.continuousassurance.swamp.cli.Cli;
 import org.continuousassurance.swamp.exceptions.NoJSONReturnedException;
 import org.continuousassurance.swamp.exceptions.SWAMPException;
 import org.continuousassurance.swamp.session.util.Proxy;
@@ -65,6 +71,9 @@ import javax.net.ssl.SSLHandshakeException;
  */
 public class SWAMPHttpClient implements Serializable {
 
+    //For Debug
+    protected static final Logger LOGGER = Logger.getLogger(SWAMPHttpClient.class);
+    
     public static final int HTTP_STATUS_OK = HttpStatus.SC_OK;
     public static final String ENCODING = "UTF-8";
 
@@ -136,9 +145,11 @@ public class SWAMPHttpClient implements Serializable {
                     getSSLContext(),
                     new String[] { getSSLConfiguration().getTlsVersion() },
                     null,
+                    //new NoopHostnameVerifier());
                     SSLConnectionSocketFactory.getDefaultHostnameVerifier());
 
-            HttpClientBuilder http_client_builder = HttpClientBuilder.create().setSSLSocketFactory(sslsf);
+            HttpClientBuilder http_client_builder = HttpClientBuilder.create()
+                    .setSSLSocketFactory(sslsf);
             
             if (proxy.isConfigured()) {
 
@@ -153,6 +164,7 @@ public class SWAMPHttpClient implements Serializable {
                     http_client_builder = http_client_builder.setDefaultCredentialsProvider(credsProvider);
                 }
             }
+            
             return (T)http_client_builder.build();
 
         }
@@ -359,6 +371,13 @@ public class SWAMPHttpClient implements Serializable {
         Stuff stuff = new Stuff(url, map, Stuff.DO_GET);
         HttpClient client = clientPool.pop();
 
+        //Debug\
+        LOGGER.info("START REQUEST >>>"); 
+        LOGGER.info(":GET:");
+        LOGGER.info(url);
+        LOGGER.info(map);
+        LOGGER.info("<<< END REQUEST"); 
+        
         try {
             HttpResponse response = client.execute(stuff.target, stuff.request, getContext());
             HttpEntity entity = response.getEntity();
@@ -372,6 +391,11 @@ public class SWAMPHttpClient implements Serializable {
             MyResponse myResponse = null;
             try {
                 json = toJSON(raw);
+                //Debug
+                LOGGER.info("START RESPONSE >>>"); 
+                LOGGER.info(json);
+                LOGGER.info(response.getStatusLine());
+                LOGGER.info("<<< END RESPONSE"); 
             } catch (Throwable t) {
                 // not an issue if it is not json
             }
@@ -495,11 +519,20 @@ public class SWAMPHttpClient implements Serializable {
                                      String url,
                                      Map<String, Object> map,
                                      List<File> files) {
+        //Debug\
+        LOGGER.info("START REQUEST >>>"); 
+        LOGGER.info(doPost == true ? ":POST:": ":GET:");
+        LOGGER.info("URL: " + url);
+        LOGGER.info(map);
+        LOGGER.info("<<< END REQUEST"); 
+        
         HttpClient client = clientPool.pop();
         Stuff stuff = null;
         if (doPost) {
             stuff = new Stuff(url, map, Stuff.DO_POST);
-            HttpPost post = (HttpPost) stuff.request;
+            HttpPost post = (HttpPost) stuff.request;            
+            RequestConfig config = RequestConfig.custom().setCookieSpec(CookieSpecs.STANDARD).build();
+            post.setConfig(config);
             try {
                 if (map instanceof JSONObject) {
 
@@ -570,6 +603,12 @@ public class SWAMPHttpClient implements Serializable {
             HttpEntity entity1 = response.getEntity();
             String x0 = EntityUtils.toString(entity1);
             releaseConnection(client, response);
+            //Debug
+            LOGGER.info("START RESPONSE >>>"); 
+            LOGGER.info(toJSON(x0));
+            LOGGER.info(response.getStatusLine());
+            LOGGER.info("<<< END RESPONSE"); 
+            
             return new MyResponse(toJSON(x0), getContext().getCookieStore().getCookies());
         } catch (IOException e) {
             releaseConnection(client, response);

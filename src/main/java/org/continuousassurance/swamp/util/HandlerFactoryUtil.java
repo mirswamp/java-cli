@@ -127,10 +127,11 @@ public class HandlerFactoryUtil {
                                                       String password,
                                                       SSLConfiguration sslConfiguration,
                                                       Proxy proxy) {
-        Session rwsSession = realLogon(rwsServer, hostHeader, originHeader, refererHeader, username, password, sslConfiguration, proxy);
+        //Session rwsSession = realLogon(rwsServer, hostHeader, originHeader, refererHeader, username, password, sslConfiguration, proxy);
         Session csaSession = realLogon(csaServer, hostHeader, originHeader, refererHeader, username, password, sslConfiguration, proxy);
 
-        HandlerFactory hf = new HandlerFactory(rwsSession, csaSession);
+        //HandlerFactory hf = new HandlerFactory(rwsSession, csaSession);
+        HandlerFactory hf = new HandlerFactory(csaSession, csaSession);
         setHandlerFactory(hf);
         return hf;
 
