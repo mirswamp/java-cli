@@ -1,4 +1,11 @@
 -----------------------------------
+java-cli version 1.5.3 (Wed Jul 25 12:16:02 CDT 2018)
+-----------------------------------
+- Cookie policy set to CookieSpecs.STANDAND. This fixes failures with SiB instances that are not current, yet max-age is vaild.
+
+- Removed code for RWS server, which now is removed.
+
+-----------------------------------
 java-cli version 1.5.2 (Mon Jun 18 08:00:22 CDT 2018)
 -----------------------------------
 
