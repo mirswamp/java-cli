@@ -18,25 +18,6 @@
 
 package org.continuousassurance.swamp.cli;
 
-import edu.uiuc.ncsa.security.core.exceptions.GeneralException;
-
-import org.continuousassurance.swamp.api.AssessmentRecord;
-import org.continuousassurance.swamp.api.AssessmentRun;
-import org.continuousassurance.swamp.api.PackageThing;
-import org.continuousassurance.swamp.api.PackageVersion;
-import org.continuousassurance.swamp.api.PlatformVersion;
-import org.continuousassurance.swamp.api.Project;
-import org.continuousassurance.swamp.api.Tool;
-import org.continuousassurance.swamp.api.ToolVersion;
-import org.continuousassurance.swamp.api.User;
-import org.continuousassurance.swamp.session.HTTPException;
-import org.continuousassurance.swamp.session.util.Proxy;
-import org.apache.commons.cli.*;
-import org.apache.log4j.Logger;
-import org.apache.log4j.varia.NullAppender;
-import org.continuousassurance.swamp.cli.exceptions.*;
-import org.continuousassurance.swamp.cli.util.AssessmentStatus;
-
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -58,6 +39,38 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.TimeZone;
 import java.util.regex.Pattern;
+
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.MissingOptionException;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.OptionGroup;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
+import org.apache.log4j.Logger;
+import org.continuousassurance.swamp.api.AssessmentRecord;
+import org.continuousassurance.swamp.api.AssessmentRun;
+import org.continuousassurance.swamp.api.PackageThing;
+import org.continuousassurance.swamp.api.PackageVersion;
+import org.continuousassurance.swamp.api.PlatformVersion;
+import org.continuousassurance.swamp.api.Project;
+import org.continuousassurance.swamp.api.Tool;
+import org.continuousassurance.swamp.api.ToolVersion;
+import org.continuousassurance.swamp.api.User;
+import org.continuousassurance.swamp.cli.exceptions.CommandLineOptionException;
+import org.continuousassurance.swamp.cli.exceptions.ConflictingNamesException;
+import org.continuousassurance.swamp.cli.exceptions.IncompatibleAssessmentTupleException;
+import org.continuousassurance.swamp.cli.exceptions.InvalidIdentifierException;
+import org.continuousassurance.swamp.cli.exceptions.InvalidNameException;
+import org.continuousassurance.swamp.cli.exceptions.SessionExpiredException;
+import org.continuousassurance.swamp.cli.exceptions.SwampApiWrapperException;
+import org.continuousassurance.swamp.cli.exceptions.SwampApiWrapperExitCodes;
+import org.continuousassurance.swamp.cli.util.AssessmentStatus;
+import org.continuousassurance.swamp.session.HTTPException;
+import org.continuousassurance.swamp.session.util.Proxy;
+
+import edu.uiuc.ncsa.security.core.exceptions.GeneralException;
 
 
 public class Cli {
