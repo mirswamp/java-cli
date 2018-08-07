@@ -1,4 +1,9 @@
 -----------------------------------
+java-cli version 1.5.4 (Tue Aug  7 14:29:49 CDT 2018)
+-----------------------------------
+    - Fixed bug with checking availablity of the platforms specified on the CLI
+
+-----------------------------------
 java-cli version 1.5.3 (Wed Jul 25 12:16:02 CDT 2018)
 -----------------------------------
 - Cookie policy set to CookieSpecs.STANDAND. This fixes failures with SiB instances that are not current, yet max-age is vaild.
