@@ -1297,7 +1297,8 @@ public class Cli {
         String package_uuid = null;
 
         if (osDeps != null) {
-            Set<String> unknown_platforms = osDeps.keySet();
+            Set<String> unknown_platforms = new HashSet<String>(osDeps.keySet());
+
             for (String platform: osDeps.keySet()) {
                 for (PlatformVersion platform_version : apiWrapper.getAllPlatformVersionsList()) {
                     if (platform_version.getDisplayString().equalsIgnoreCase(platform)) {
