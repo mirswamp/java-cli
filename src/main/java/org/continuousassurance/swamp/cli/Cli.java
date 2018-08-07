@@ -1297,8 +1297,20 @@ public class Cli {
         String package_uuid = null;
 
         if (osDeps != null) {
+            // Has all platforms initially
             Set<String> unknown_platforms = new HashSet<String>(osDeps.keySet());
-
+            Set<String> swamp_platforms = new HashSet<String>();
+            
+            for (PlatformVersion platform_version : apiWrapper.getAllPlatformVersionsList()) {
+                swamp_platforms.add(platform_version.getDisplayString().toLowerCase());
+            }
+            
+            unknown_platforms.removeAll(swamp_platforms);
+            
+            if (!unknown_platforms.isEmpty()) {
+                throw new CommandLineOptionException("Platform " + unknown_platforms + " do not exist");
+            }
+            /*
             for (String platform: osDeps.keySet()) {
                 for (PlatformVersion platform_version : apiWrapper.getAllPlatformVersionsList()) {
                     if (platform_version.getDisplayString().equalsIgnoreCase(platform)) {
@@ -1309,7 +1321,7 @@ public class Cli {
                 if (!unknown_platforms.isEmpty()) {
                     throw new CommandLineOptionException("Platform " + unknown_platforms + " do not exist");
                 }
-            }
+            }*/
         }
 
         String project_uuid = null;
