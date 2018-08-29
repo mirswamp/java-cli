@@ -42,6 +42,8 @@ The `package.conf` file for a package contains meta data about the package prima
 |`package-type` | Package application type, only applicable for Ruby, the values must be (sinatra\|rails\|padrino)
 |`package-version` | Version number for the package
 |`php-extensions` | PHP extentions required by this package
+|`package-exclude-paths` |  A comma seperated list of paths to exclude from the assessment
+|`package-version-notes` | Notes related to this `package-version` 
 |=======================================================================
 
 [[build_sys]]

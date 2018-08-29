@@ -1,33 +1,39 @@
 -----------------------------------
+java-cli version 1.5.5 (Wed Aug 29 07:03:34 CDT 2018)
+-----------------------------------
+
+  - Now accepts package-exclude-paths, package-version-notes in package.conf, these will be added to 'Exclude Paths' and 'Version notes' respectively
+
+-----------------------------------
 java-cli version 1.5.4 (Tue Aug  7 14:29:49 CDT 2018)
 -----------------------------------
-    - Fixed bug with checking availablity of the platforms specified on the CLI
+  - Fixed bug with checking availablity of the platforms specified on the CLI
 
 -----------------------------------
 java-cli version 1.5.3 (Wed Jul 25 12:16:02 CDT 2018)
 -----------------------------------
-- Cookie policy set to CookieSpecs.STANDAND. This fixes failures with SiB instances that are not current, yet max-age is vaild.
+  - Cookie policy set to CookieSpecs.STANDAND. This fixes failures with SiB instances that are not current, yet max-age is vaild.
 
-- Removed code for RWS server, which now is removed.
+  - Removed code for RWS server, which now is removed.
 
 -----------------------------------
 java-cli version 1.5.2 (Mon Jun 18 08:00:22 CDT 2018)
 -----------------------------------
 
-- Converts SWAMP web api server's URI to URL 
-- Report self-signed certificates exceptions correctly
+  - Converts SWAMP web api server's URI to URL 
+  - Report self-signed certificates exceptions correctly
 
 -----------------------------------
 java-cli version 1.5.0 (Thu May 10 9:22:12 CST 2017)
 -----------------------------------
-- CLI now does not require UUIDs, it has options to work with (package|tool|project) names and versions
+  - CLI now does not require UUIDs, it has options to work with (package|tool|project) names and versions
 
-- Supports assessments with a particular tool version, using <toolname>::<version> syntax
+  - Supports assessments with a particular tool version, using <toolname>::<version> syntax
 
-- Has option to work with local keystores instead of System
+  - Has option to work with local keystores instead of System
 
-- Has option to take proxy from CLI
+  - Has option to take proxy from CLI
 
-- Merged Java-API code into Java-CLI
+  - Merged Java-API code into Java-CLI
 
 
