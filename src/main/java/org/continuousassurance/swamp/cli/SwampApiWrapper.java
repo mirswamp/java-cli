@@ -1083,7 +1083,7 @@ public class SwampApiWrapper {
         map.put("config_dir", pkgConf.getProperty("config-dir", null));
 
         map.put("use_gradle_wrapper", pkgConf.getProperty("gradle-wrapper", "false"));
-        map.put("maven_version", pkgConf.getProperty("maven_version", null));
+        map.put("maven_version", pkgConf.getProperty("maven-version", null));
         
         map.put("version_string", pkgConf.getProperty("package-version"));
         map.put("source_path", pkgConf.getProperty("package-dir"));
@@ -1092,7 +1092,11 @@ public class SwampApiWrapper {
         map.put("bytecode_class_path", pkgConf.getProperty("package-classpath", null));
         map.put("bytecode_aux_class_path", pkgConf.getProperty("package-auxclasspath", null));
         map.put("bytecode_source_path", pkgConf.getProperty("package-srcdir", null));
-
+        
+        map.put("notes", pkgConf.getProperty("package-version-notes", null));
+        map.put("exclude_paths", pkgConf.getProperty("package-exclude-paths", null));
+        //map.put("checkout_argument", pkgConf.getProperty("package-checkout-options", null));
+        
         return map;
     }
 

@@ -4,7 +4,7 @@
 
   <groupId>org.continuousassurance.swamp</groupId>
   <artifactId>java-cli</artifactId>
-  <version>1.5.4</version>
+  <version>1.5.5</version>
   <packaging>jar</packaging>
 
   <name>java-cli</name>
