@@ -1,4 +1,4 @@
-= Package.conf
+== Package.conf
 
 In the SWAMP backend, a software package to be assessed has three components:
 
