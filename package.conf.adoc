@@ -43,7 +43,8 @@ The `package.conf` file for a package contains meta data about the package prima
 |`package-version` | Version number for the package
 |`php-extensions` | PHP extentions required by this package
 |`package-exclude-paths` |  A comma seperated list of paths to exclude from the assessment
-|`package-version-notes` | Notes related to this `package-version` 
+|`package-version-notes` | Notes related to this `package-version`
+|`package-description` | Description string for the package
 |=======================================================================
 
 [[build_sys]]
