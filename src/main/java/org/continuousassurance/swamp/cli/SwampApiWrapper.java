@@ -45,6 +45,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import org.apache.http.HttpException;
 import org.apache.http.client.CookieStore;
 import org.apache.log4j.Logger;
 import org.continuousassurance.swamp.api.AssessmentRecord;
@@ -65,6 +66,8 @@ import org.continuousassurance.swamp.cli.exceptions.NoDefaultPlatformException;
 import org.continuousassurance.swamp.cli.exceptions.SessionExpiredException;
 import org.continuousassurance.swamp.cli.exceptions.SessionRestoreException;
 import org.continuousassurance.swamp.cli.exceptions.SessionSaveException;
+import org.continuousassurance.swamp.cli.exceptions.ToolPermissionException;
+import org.continuousassurance.swamp.session.HTTPException;
 import org.continuousassurance.swamp.session.Session;
 import org.continuousassurance.swamp.session.handlers.HandlerFactory;
 import org.continuousassurance.swamp.session.handlers.PackageHandler;
@@ -720,12 +723,6 @@ public class SwampApiWrapper {
 						toolMap.put(tool.getIdentifierString(), tool);
 					//}
 				}
-			}else {
-			    for (Tool tool : handlerFactory.getToolHandler().getAll()) {
-                    //if (tool.getPolicyCode() == null){    //FIXME: This is temporary
-                        toolMap.put(tool.getIdentifierString(), tool);
-                    //}
-                }
 			}
 		}
 		return toolMap;
@@ -1418,7 +1415,6 @@ public class SwampApiWrapper {
         
         Collections.sort(tool_versions, new Comparator<ToolVersion>() {
             public int compare(ToolVersion i1, ToolVersion i2) {
-                //return (i2.getVersion().compareTo(i1.getVersion()));
                 return mycompare(i2.getVersion(), i1.getVersion());
             }
         });
@@ -1607,6 +1603,11 @@ public class SwampApiWrapper {
 		List<AssessmentRun> arun_list = new ArrayList<AssessmentRun>();
 		for (PlatformVersion platform_version : platformVersions) {
 			for (Tool tool : tools) {
+			    try {
+		            handlerFactory.getToolHandler().hasPermission(tool, project, pkg.getPackageThing());
+		        }catch(HTTPException exp) {
+		            throw new ToolPermissionException("No permission for the tool: " + tool);
+		        }
 				arun_list.add(handlerFactory.getAssessmentHandler().create(project, pkg, platform_version, tool));
 			}
 		}
@@ -1631,6 +1632,12 @@ public class SwampApiWrapper {
 	 *  
 	 */
 	public AssessmentRun runAssessment(PackageVersion pkg, Tool tool, Project project, PlatformVersion platform) {
+	    try {
+            handlerFactory.getToolHandler().hasPermission(tool, project, pkg.getPackageThing());
+        }catch(HTTPException exp) {
+            throw new ToolPermissionException("No permission for the tool: " + tool.getName());
+        }
+	    
 		AssessmentRun arun = handlerFactory.getAssessmentHandler().create(project, pkg, platform, tool);
 		if (handlerFactory.getRunRequestHandler().submitOneTimeRequest(arun, true)) {
 			return arun;
@@ -1653,6 +1660,12 @@ public class SwampApiWrapper {
      */
     public List<AssessmentRun> runAssessment(PackageVersion pkg, ToolVersion toolVersion, Project project, 
             List<PlatformVersion> platformVersions) {
+        
+        try {
+            handlerFactory.getToolHandler().hasPermission(toolVersion.getTool(), project, pkg.getPackageThing());
+        }catch(HTTPException exp) {
+            throw new ToolPermissionException("No permission for the tool: " + toolVersion.getTool().getName());
+        }
         
         List<AssessmentRun> arun_list = new ArrayList<AssessmentRun>(platformVersions.size());
         for (PlatformVersion platform_version : platformVersions) {

@@ -361,6 +361,8 @@ public class SWAMPHttpClient implements Serializable {
      * @return
      */
     public MyResponse rawGet(String url, Map<String, Object> map, boolean isStreamable) {
+        //System.out.println("URL: " + url);
+        
         Stuff stuff = new Stuff(url, map, Stuff.DO_GET);
         HttpClient client = clientPool.pop();
         
@@ -501,6 +503,8 @@ public class SWAMPHttpClient implements Serializable {
                                      Map<String, Object> map,
                                      List<File> files) {
         
+        //System.out.println("URL: " + url + ", Type: " + (doPost ? "POST" : "GET") );
+        
         HttpClient client = clientPool.pop();
         Stuff stuff = null;
         if (doPost) {
@@ -566,16 +570,22 @@ public class SWAMPHttpClient implements Serializable {
                 // t.printStackTrace();    // TODO: do not print strack trace
                 throw new GeneralException("Error contacting server", t);
             }
+            
+            HttpEntity entity1 = response.getEntity();
+            String x0 = EntityUtils.toString(entity1);
+            
             // TODO: what if the repsonse is null
             if (response.getStatusLine().getStatusCode() != HTTP_STATUS_OK) {
                 releaseConnection(client, response);
-                throw new HTTPException(response.getStatusLine().getReasonPhrase() + " code=" + response.getStatusLine().getStatusCode() +
-                        ". error connecting to " + url,
-                        response.getStatusLine().getStatusCode());
+//                for (Header header : response.getAllHeaders()) {
+//                    System.out.println(header);
+//                }
+                
+                throw new HTTPException(x0, response.getStatusLine().getStatusCode());
+
             }
 
-            HttpEntity entity1 = response.getEntity();
-            String x0 = EntityUtils.toString(entity1);
+
             releaseConnection(client, response);
             
             return new MyResponse(toJSON(x0), getContext().getCookieStore().getCookies());
