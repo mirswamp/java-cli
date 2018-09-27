@@ -573,21 +573,17 @@ public class SWAMPHttpClient implements Serializable {
             
             HttpEntity entity1 = response.getEntity();
             String x0 = EntityUtils.toString(entity1);
+            releaseConnection(client, response);
             
             // TODO: what if the repsonse is null
             if (response.getStatusLine().getStatusCode() != HTTP_STATUS_OK) {
-                releaseConnection(client, response);
 //                for (Header header : response.getAllHeaders()) {
 //                    System.out.println(header);
 //                }
-                
                 throw new HTTPException(x0, response.getStatusLine().getStatusCode());
 
             }
 
-
-            releaseConnection(client, response);
-            
             return new MyResponse(toJSON(x0), getContext().getCookieStore().getCookies());
         } catch (IOException e) {
             releaseConnection(client, response);
