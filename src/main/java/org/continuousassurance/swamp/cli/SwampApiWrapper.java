@@ -1586,6 +1586,32 @@ public class SwampApiWrapper {
 		return (handlerFactory.getUserHandler().getCurrentUser() != null);
 	}
 
+	public boolean hasToolPermission(String tool_uuid, String project_uuid, String package_uuid) {
+        try {
+            handlerFactory.getToolHandler().hasPermission(tool_uuid, project_uuid, package_uuid);
+        }catch(HTTPException exp) {
+            /*
+             if (exp.getMessage().equalsIgnoreCase("no_permission") && exp.getStatusCode() == 401) {
+                return false;
+            }*/
+            return false;
+        }
+        return true;
+    }    
+
+	
+	public boolean hasToolPermission(Tool tool, PackageThing pkg, Project project) {
+	    try {
+	        handlerFactory.getToolHandler().hasPermission(tool, project, pkg);
+	    }catch(HTTPException exp) {
+	        /*if (exp.getMessage().equalsIgnoreCase("no_permission") && exp.getStatusCode() == 401) {
+	            return false;
+	        }*/
+	        return false;
+	    }
+	    return true;
+	}    
+
 	/**
 	 * Run multiple assessments, on a package with a set of tools on a set of platforms
 	 *  
@@ -1606,7 +1632,7 @@ public class SwampApiWrapper {
 			    try {
 		            handlerFactory.getToolHandler().hasPermission(tool, project, pkg.getPackageThing());
 		        }catch(HTTPException exp) {
-		            throw new ToolPermissionException("No permission for the tool: " + tool);
+		            throw new ToolPermissionException("No permission for the tool: '" + exp.getMessage() + "', " + tool);
 		        }
 				arun_list.add(handlerFactory.getAssessmentHandler().create(project, pkg, platform_version, tool));
 			}
@@ -1635,7 +1661,7 @@ public class SwampApiWrapper {
 	    try {
             handlerFactory.getToolHandler().hasPermission(tool, project, pkg.getPackageThing());
         }catch(HTTPException exp) {
-            throw new ToolPermissionException("No permission for the tool: " + tool.getName());
+            throw new ToolPermissionException("No permission for the tool: '" + exp.getMessage() + "', " + tool.getName());
         }
 	    
 		AssessmentRun arun = handlerFactory.getAssessmentHandler().create(project, pkg, platform, tool);
@@ -1664,7 +1690,7 @@ public class SwampApiWrapper {
         try {
             handlerFactory.getToolHandler().hasPermission(toolVersion.getTool(), project, pkg.getPackageThing());
         }catch(HTTPException exp) {
-            throw new ToolPermissionException("No permission for the tool: " + toolVersion.getTool().getName());
+            throw new ToolPermissionException("No permission for the tool: '" + exp.getMessage() + "', " + toolVersion.getTool().getName());
         }
         
         List<AssessmentRun> arun_list = new ArrayList<AssessmentRun>(platformVersions.size());
@@ -1678,7 +1704,7 @@ public class SwampApiWrapper {
         }
     }
 
-	/**
+ 	/**
 	 * Run assessments on a package with a set of tools on a set of platforms
 	 *  <p>
 	 *  This method creates multiple assessments on a package with 

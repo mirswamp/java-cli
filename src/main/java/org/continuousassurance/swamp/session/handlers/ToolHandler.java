@@ -96,6 +96,19 @@ public class ToolHandler<T extends Tool> extends AbstractHandler<T> {
         return tools;
     }
 
+    public boolean hasPermission(String tool_uuid, String project_uuid, String package_uuid) {
+        String url = createURL("tools/" + tool_uuid + "/permission");
+        HashMap<String, Object> map = new HashMap<String, Object>();
+        map.put("package_uuid", package_uuid);
+        map.put("project_uid", project_uuid);
+        MyResponse mr = getClient().rawPost(url, map);
+        if(mr.jsonArray == null){
+            return false;
+        }else{
+            return mr.jsonArray.getString(0).equals("granted");
+        }
+    }
+    
     public boolean hasPermission(Tool tool, Project project, PackageThing package_thing) {
     	String url = createURL("tools/" + tool.getUUIDString() + "/permission");
     	HashMap<String, Object> map = new HashMap<String, Object>();
@@ -124,17 +137,6 @@ public class ToolHandler<T extends Tool> extends AbstractHandler<T> {
         setAttributes(map, bAttrib, json, DATA_TYPE_BOOLEAN);
         setAttributes(map, aAttrib, json, DATA_TYPE_ARRAY);
         
-/*
-        tool.setUUID(UUID.fromString(json.getString(TOOL_UUID_KEY)));
-        tool.setName(json.getString(NAME_KEY));
-        tool.setToolSharingStatus(json.getString(TOOL_SHARING_STATUS_KEY));
-        tool.setBuildNeeded(json.getInt(IS_BUILD_NEEDED_KEY) != 0);
-        tool.setPolicyCode(json.getString(POLICY_CODE_KEY));
-        tool.setCreateDate(toSWAMPDate(json, CREATE_DATE_KEY));
-        tool.setUpdateDate(toSWAMPDate(json, UPDATE_DATE_KEY));
-        tool.setOwned(json.getBoolean(IS_OWNED_KEY));
-        tool.setPolicy(json.getString(POLICY_KEY));
-*/
         tool.setConversionMap(map);
         return tool;
     }
