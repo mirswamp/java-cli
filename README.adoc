@@ -585,7 +585,7 @@ To download SCARF results use `--download` option with the `results` sub-command
 [cols="<40%,<60%",options="header",]
 |=======================================================================
 |Option | Value
-| `--filepath <SCARF_FILEPATH>`  | File path to write SCARF Results into
+| `--file-path <SCARF_FILEPATH>`  | File path to write SCARF Results into
 | `--package <PACKAGE>` |             Download results for this package name
 | `--tool <TOOL>` |                  Download results for this tool
 | `--platform <PLATFORM>` |           Download results for this platform
@@ -599,7 +599,7 @@ SCARF results downloaded from the assessment run will be stored into `<SCARF_FIL
 
 .Example 1:
 ```
-./bin/swamp results --download --results-uuid f4856ee8-b402-11e7-92c3-001a4a814413 --filepath $PWD/scarf-results.xml
+./bin/swamp results --download --results-uuid f4856ee8-b402-11e7-92c3-001a4a814413 --file-path $PWD/scarf-results.xml
 ```
 
 .Example 2:
