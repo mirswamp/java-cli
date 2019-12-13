@@ -1,3 +1,16 @@
+Mon Dec  9 14:20:11 CST 2019
+----------------------------
+
+The java-api is now built into the java-cli as it's own copy of the
+API.  Any changes made to the API need to be duplicated here because
+of that.   The "build first and put into the cache" no longer applies.
+
+Also, this 'swamp' java-api is in a different java namespace
+than the old 'continuousassurance' java-api.   I believe this
+change was made because we did not have access to the keys
+to upload our artifacts to maven central under our own aegis.
+
+
 Tue Nov  7 13:53:57 CST 2017
 -----------------------------
 
