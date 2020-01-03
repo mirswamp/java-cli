@@ -1,4 +1,14 @@
 -----------------------------------
+java-cli version 1.5.8 (Fri Jan  3 11:17:01 CST 2020)
+-----------------------------------
+
+- Support 2xx HTTP return codes for newer versions of laravel;
+  the SWAMP uses laravel on the server side;  older laravel
+  versions always returned 200 for success.  Future 
+  laravel (and swamp)  versions will require this
+  backward-compatible change to work correctly.
+
+-----------------------------------
 java-cli version 1.5.7 (Fri Sep 28 16:34:02 CDT 2018)
 -----------------------------------
 
