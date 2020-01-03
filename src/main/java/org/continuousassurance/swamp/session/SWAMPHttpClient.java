@@ -576,7 +576,12 @@ public class SWAMPHttpClient implements Serializable {
             releaseConnection(client, response);
             
             // TODO: what if the repsonse is null
-            if (response.getStatusLine().getStatusCode() != HTTP_STATUS_OK) {
+
+            int code = response.getStatusLine().getStatusCode();
+
+            /* 2xx series codes indicate OK  */
+            /* could be more selective, MIR team indicates all 2xx OK */
+            if (!(code >= 200 && code <= 299)) {
 //                for (Header header : response.getAllHeaders()) {
 //                    System.out.println(header);
 //                }
@@ -635,7 +640,12 @@ public class SWAMPHttpClient implements Serializable {
             } catch (Throwable t) {
                 t.printStackTrace();
             }
-            if (response.getStatusLine().getStatusCode() != HTTP_STATUS_OK) {
+
+            int code = response.getStatusLine().getStatusCode();
+
+            /* 2xx series codes indicate OK  */
+            /* could be more selective, MIR team indicates all 2xx OK */
+            if (!(code >= 200 && code <= 299)) {
                 releaseConnection(client, response);
                 //      say("warning: got a status of " + response.getStatusLine() + " for address " + url);
                 throw new HTTPException(response.getStatusLine().getReasonPhrase() + " code=" + response.getStatusLine().getStatusCode(),

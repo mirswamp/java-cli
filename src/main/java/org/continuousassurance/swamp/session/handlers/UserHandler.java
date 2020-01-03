@@ -57,9 +57,14 @@ public class UserHandler<T extends User> extends AbstractHandler<T> {
             throw new IllegalStateException("Error: There is no current session or user.");
         }
         MyResponse myResponse = getClient().rawGet(createURL(USERS_CURRENT), null);
-        if (myResponse.getHttpResponseCode() == 200){
+        int code = myResponse.getHttpResponseCode();
+
+        /* 2xx series codes indicate OK  */
+        /* could be more selective, MIR team indicates all 2xx OK */
+        if (code >= 200 && code <= 299) {
         	return fromJSON(myResponse.json);
-        }else {
+        }
+        else {
         	return null;
         }
     }
