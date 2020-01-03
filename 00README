@@ -10,6 +10,38 @@ than the old 'continuousassurance' java-api.   I believe this
 change was made because we did not have access to the keys
 to upload our artifacts to maven central under our own aegis.
 
+To make a new version
+
+	edit pom.xml -> increment version number
+
+	mvn clean
+	mvn package -DskipTest
+
+The binaries are generates in the target directory, and have
+the current version embedded in their names.   
+
+	java_cli_ver=1.5.8
+	java_cli_vname=java-cli-${java_cli_ver}
+
+The file w/out dependencies is:
+	target/${java_cli_vname}.jar
+
+The file w/ dependencies addes is:
+	java-cli-1.5.8-jar-with-dependencies.jar
+	target/${java_cli_vname}-jar-with-dependencies.jar
+
+
+To make a github release including these binary components, you
+can upload the binaries manually, using the "binary box"
+in the github GUI to craft release notes
+
+To make a release you need to update ...
+
+	RELEASE_NOTES.txt
+
+Warning: there are embedded out-of-date version numbers in
+the file which should not be updated.
+
 
 Tue Nov  7 13:53:57 CST 2017
 -----------------------------
