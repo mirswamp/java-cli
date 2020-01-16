@@ -1,7 +1,11 @@
 /*
  *  java-cli
  *
- *  Copyright 2016 Vamshi Basupalli <vamshi@cs.wisc.edu>, Malcolm Reid <mreid3@wisc.edu>, Jared Sweetland <jsweetland@wisc.edu>
+ *  Copyright 2016-2020 by
+ *	 Vamshi Basupalli <vamshi@cs.wisc.edu>,
+ *	 Malcolm Reid <mreid3@wisc.edu>,
+ *	 Jared Sweetland <jsweetland@wisc.edu>,
+ * 	 Josef "Bolo" Burger  <bolo@cs.wisc.edu>
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -1451,6 +1455,27 @@ public class SwampApiWrapper {
         return login(userName, password, hostName, proxy, null); 
     }	
 
+	/**
+     * Login into SWAMP ... backward compatible; java doesn't have
+     * default arguments, which requres a shim.
+     *
+     * @param userName: SWAMP Instance's user name
+     * @param password: SWAMP Instance's password 
+     * @param hostName: SWAMP Instance's host name
+     *   
+     * @return SWAMP user-id
+     * @throws MalformedURLException 
+     */
+    
+    public String login(String userName, 
+            String password, 
+            String hostName, 
+            Proxy proxy) throws MalformedURLException
+    {
+       return login(userName, password, hostName, proxy, null);
+    }
+		
+    
 	/**
      * Login into SWAMP
      *
