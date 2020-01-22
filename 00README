@@ -15,7 +15,7 @@ To make a new version
 	edit pom.xml -> increment version number
 
 	mvn clean
-	mvn package -DskipTest
+	mvn package -DskipTests
 
 The binaries are generates in the target directory, and have
 the current version embedded in their names.   
