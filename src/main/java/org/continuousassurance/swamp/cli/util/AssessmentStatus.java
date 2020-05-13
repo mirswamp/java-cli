@@ -84,7 +84,8 @@ public enum AssessmentStatus {
 				"Finished with Errors - Retry",
 				"Terminated");
 		
-		List<String> success_status_list = Arrays.asList("Finished");
+		List<String> success_status_list = Arrays.asList("Finished",
+				"Finished with Warnings");
 		
 		if (inList(inprogess_status_list, status_str)) {
 			return AssessmentStatus.INPROGRESS;
@@ -95,6 +96,14 @@ public enum AssessmentStatus {
 		}
 		
 		if (inList(success_status_list, status_str)) {
+			return AssessmentStatus.SUCCESS;
+		}
+		
+		if (status_str.startsWith("Finish with Errors") {
+			return AssessmentStatus.FAILED;
+		}
+		
+		if (status_str.startsWith("Finished")) {
 			return AssessmentStatus.SUCCESS;
 		}
 		
