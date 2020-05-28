@@ -99,7 +99,7 @@ public enum AssessmentStatus {
 			return AssessmentStatus.SUCCESS;
 		}
 		
-		if (status_str.startsWith("Finish with Errors") {
+		if (status_str.startsWith("Finish with Errors")) {
 			return AssessmentStatus.FAILED;
 		}
 		
