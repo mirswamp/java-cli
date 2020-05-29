@@ -1,4 +1,14 @@
 -----------------------------------
+java-cli version 1.5.9 (Fri May 29 09:55:15 CDT 2020)
+-----------------------------------
+
+- Add support for "finished with warnings" return message
+  from the SWAMP.   This indicates, that for no-build,
+  that not all compilations completed.  This allows
+  viewing and coollection of whatever results are
+  available in a no-build project.
+
+-----------------------------------
 java-cli version 1.5.8 (Fri Jan  3 11:17:01 CST 2020)
 -----------------------------------
 
