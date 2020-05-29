@@ -57,12 +57,14 @@ public enum AssessmentStatus {
 				"vm [raw virsh command]",
 				"vm [raw virsh command] failed",
 				"Obtaining VM IP Address",
+				"Obtaining Viewer Machine IP Address",
 				"Obtained VM IP",
 				"Failed to Obtain VM IP Address",
 				"Starting Assessment Run Script", 
 				"Executing cloc on package",
 				"Performing Assessment",
 				"Shutting Down the VM",
+				"Shutting down the assessment machine",
 				"Extracting Assessment Results",
 				"Failed to extract assessment results",
 				"Post-Processing",
@@ -88,6 +90,7 @@ public enum AssessmentStatus {
 				"Finished with Warnings");
 		
 		if (inList(inprogess_status_list, status_str)) {
+			// System.out.println("inprogress status: '" + status_str + "'");
 			return AssessmentStatus.INPROGRESS;
 		}
 		
@@ -106,6 +109,8 @@ public enum AssessmentStatus {
 		if (status_str.startsWith("Finished")) {
 			return AssessmentStatus.SUCCESS;
 		}
+
+		// System.out.println("unknown status: '" + status_str + "'");
 		
 		return AssessmentStatus.UNKNOWN;
 	}
